@@ -9,28 +9,30 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#ffffff">
 <style>
-  :root { --ink:#000; --paper:#fff; --line:#000; --soft:#e6e6e6; --r:10px; }
+  :root { --ink:#000; --paper:#fff; --line:#000; --soft:#e6e6e6; --r:10px; --fs:1.15; --fw:500; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { margin:0; height:100%; background:var(--paper); color:var(--ink); overflow:hidden;
-    font-family: "Roboto", -apple-system, "Segoe UI", Arial, sans-serif; font-size:15px; }
+    font-family: system-ui, sans-serif; font-size:calc(15px*var(--fs)); font-weight:var(--fw); text-rendering:geometricPrecision; }
+  b, strong, th { font-weight:700; }
   button, select, input, textarea { font:inherit; color:var(--ink); }
   /* ---------- menubar (Boox-artig: flach, dünne Linie) ---------- */
   #menubar { position:fixed; left:0; right:0; top:0; height:44px; border-bottom:1.5px solid var(--line);
     display:flex; align-items:stretch; background:var(--paper); z-index:30; user-select:none; }
   #menubar .brand { font-weight:700; padding:0 14px; display:flex; align-items:center; letter-spacing:.3px; border-right:1.5px solid var(--line); }
   .menu { position:relative; }
-  .menu > .mlabel { height:100%; padding:0 12px; display:flex; align-items:center; cursor:pointer; }
+  .menu > .mlabel { height:100%; padding:0 10px; font-size:calc(15px*min(var(--fs),1.1)); white-space:nowrap; display:flex; align-items:center; cursor:pointer; }
   .menu.open > .mlabel { background:var(--ink); color:var(--paper); }
-  .mdrop { display:none; position:absolute; top:43px; left:0; min-width:270px; background:var(--paper);
+  .mdrop { display:none; position:absolute; top:43px; left:0; min-width:270px; width:max-content; max-width:min(420px, calc(100vw - 12px)); background:var(--paper);
     border:1.5px solid var(--line); border-radius:0 0 var(--r) var(--r); padding:4px 0; }
   .menu.open .mdrop { display:block; }
-  .mitem { padding:11px 16px; display:flex; justify-content:space-between; gap:18px; cursor:pointer; white-space:nowrap; }
+  .mitem { padding:11px 16px; display:flex; justify-content:space-between; gap:18px; cursor:pointer; }
+  .mitem.check { justify-content:flex-start; gap:6px; }
   .mitem:active { background:var(--ink); color:var(--paper); }
   @media (hover:hover) { .mitem:hover { background:var(--ink); color:var(--paper); } }
-  .mitem .key { font-size:13px; }
+  .mitem .key { font-size:calc(13px*var(--fs)); }
   .mitem.check::before { content:"○ "; } .mitem.check.on::before { content:"● "; }
   .msep { border-top:1px solid var(--line); margin:4px 0; }
-  #status { margin-left:auto; display:flex; align-items:center; padding:0 12px; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  #status { margin-left:auto; display:flex; align-items:center; padding:0 12px; font-size:calc(12px*var(--fs)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   /* ---------- block panel (links) ---------- */
   #blockPanel { position:fixed; left:0; top:44px; bottom:0; width:188px; border-right:1.5px solid var(--line);
     background:var(--paper); z-index:15; display:flex; flex-direction:column; }
@@ -38,20 +40,20 @@
   #bpHead { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-bottom:1px solid var(--line); font-weight:700; }
   #bpHead button { border:1.5px solid var(--line); border-radius:8px; background:var(--paper); width:34px; height:30px; }
   #bpList { flex:1; overflow-y:auto; padding:6px 6px 10px; }
-  .grp { font-size:12px; font-weight:700; margin:10px 4px 4px; padding-bottom:3px; border-bottom:1px solid var(--line); }
+  .grp { font-size:calc(12px*var(--fs)); font-weight:700; margin:10px 4px 4px; padding-bottom:3px; border-bottom:1px solid var(--line); }
   .bitem { display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:8px; cursor:pointer; border:1.5px solid transparent; margin:2px 0; }
   .bitem canvas { width:32px; height:32px; flex:0 0 32px; border-radius:4px; }
-  .bitem .bn { font-size:13px; line-height:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .bitem .bid { font-size:11px; }
+  .bitem .bn { font-size:calc(13px*var(--fs)); line-height:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .bitem .bid { font-size:calc(11px*var(--fs)); }
   .bitem.sel { background:var(--ink); color:var(--paper); } .bitem.sel canvas { filter:invert(1); }
-  .bitem.off { opacity:.45; }
+  .bitem.off { opacity:1; } .bitem.off .bn { font-style:italic; } .bitem.off canvas { outline:1.5px dotted #000; }
   .bitem.design { border-style:dashed; border-color:#000; }
   .bitem.design.sel { border-color:#000; }
   #bpParams { border-top:1px solid var(--line); padding:8px; display:none; }
   #bpParams.show { display:block; }
-  #bpParams .pl { font-size:12px; font-weight:700; margin-bottom:5px; }
+  #bpParams .pl { font-size:calc(12px*var(--fs)); font-weight:700; margin-bottom:5px; }
   #bpParams .pgrid { display:flex; flex-wrap:wrap; gap:5px; }
-  .pbtn { border:1.5px solid var(--line); background:var(--paper); border-radius:8px; min-width:38px; height:38px; font-weight:700; font-size:16px; }
+  .pbtn { border:1.5px solid var(--line); background:var(--paper); border-radius:8px; min-width:38px; height:38px; font-weight:700; font-size:calc(16px*var(--fs)); }
   .pbtn.on { background:var(--ink); color:var(--paper); }
   /* ---------- main ---------- */
   #main { position:fixed; left:188px; right:0; top:44px; bottom:0; overflow:hidden; }
@@ -62,14 +64,14 @@
   #toolbar.hidden { display:none; }
   .tb { border:none; background:var(--paper); border-radius:9px; padding:3px 4px 2px; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:54px; }
   .tb canvas { width:32px; height:32px; }
-  .tb span { font-size:10px; line-height:12px; white-space:nowrap; }
+  .tb span { font-size:calc(10px*min(var(--fs),1.15)); line-height:12px; white-space:nowrap; letter-spacing:-.2px; }
   .tb.sel { background:var(--ink); color:var(--paper); } .tb.sel canvas { filter:invert(1); }
   .vsep { width:1px; align-self:stretch; background:var(--line); margin:2px 6px; }
   .seg { display:flex; } .seg button { border:1.5px solid var(--line); background:var(--paper); min-width:44px; height:38px; font-weight:700; }
   .seg button:first-child { border-radius:9px 0 0 9px; } .seg button:last-child { border-radius:0 9px 9px 0; border-left:0; }
   .seg button.on { background:var(--ink); color:var(--paper); }
-  .hidebtn { border:1.5px solid var(--line); background:var(--paper); border-radius:9px; height:38px; min-width:38px; font-size:16px; }
-  #toolTab { pointer-events:auto; display:none; border:1.5px solid var(--line); background:var(--paper); border-radius:12px; padding:6px 14px; font-size:13px; font-weight:700; }
+  .hidebtn { border:1.5px solid var(--line); background:var(--paper); border-radius:9px; height:38px; min-width:38px; font-size:calc(16px*var(--fs)); }
+  #toolTab { pointer-events:auto; display:none; border:1.5px solid var(--line); background:var(--paper); border-radius:12px; padding:6px 14px; font-size:calc(13px*var(--fs)); font-weight:700; }
   #toolTab.show { display:block; }
   #bpTab { position:fixed; left:8px; top:54px; z-index:16; display:none; width:48px; height:48px; border:1.5px solid var(--line); border-radius:12px; background:var(--paper); padding:0; }
   #bpTab.show { display:flex; align-items:center; justify-content:center; }
@@ -78,21 +80,21 @@
   #blockPanel.narrow .bitem { justify-content:center; padding:5px 2px; }
   #blockPanel.narrow #bpHead { justify-content:center; padding:8px 4px; }
   #blockPanel.narrow .grp { text-align:center; margin:10px 2px 4px; }
-  #blockPanel.narrow #bpParams .pl { font-size:11px; }
+  #blockPanel.narrow #bpParams .pl { font-size:calc(11px*var(--fs)); }
   #bpParams { max-height:42vh; overflow-y:auto; }
   #blockPanel.narrow #bpParams { padding:6px 5px; }
   #blockPanel.narrow #bpParams .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
-  #blockPanel.narrow .pbtn { min-width:0; height:32px; font-size:14px; padding:0; }
-  #blockPanel.narrow #bpParams .pbtn[data-shy] { font-size:12px; padding:0 2px; }
+  #blockPanel.narrow .pbtn { min-width:0; height:32px; font-size:calc(14px*var(--fs)); padding:0; }
+  #blockPanel.narrow #bpParams .pbtn[data-shy] { font-size:calc(12px*var(--fs)); padding:0 2px; }
   #gameExit { position:fixed; right:12px; top:54px; z-index:40; display:none; border:1.5px solid var(--line); border-radius:12px; background:var(--ink); color:var(--paper); padding:9px 14px; font-weight:700; }
   #gameExit.show { display:block; }
   /* ---------- block editor ---------- */
   #blockEditor { position:absolute; inset:0; overflow:auto; padding:16px 18px 40px; display:none; background:var(--paper); }
-  #blockEditor h2 { margin:0 0 4px; font-size:21px; }
-  #blockEditor p.hint { margin:0 0 12px; font-size:13px; }
+  #blockEditor h2 { margin:0 0 4px; font-size:calc(21px*var(--fs)); }
+  #blockEditor p.hint { margin:0 0 12px; font-size:calc(13px*var(--fs)); }
   table.blk { border-collapse:collapse; width:100%; }
-  table.blk th { text-align:left; font-size:11px; border-bottom:1.5px solid var(--line); padding:6px 3px; }
-  table.blk td { border-bottom:1px solid var(--line); padding:5px 3px; vertical-align:middle; font-size:13px; }
+  table.blk th { text-align:left; font-size:calc(11px*var(--fs)); border-bottom:1.5px solid var(--line); padding:6px 3px; }
+  table.blk td { border-bottom:1px solid var(--line); padding:5px 3px; vertical-align:middle; font-size:calc(13px*var(--fs)); }
   table.blk input[type=text], table.blk input[type=number], table.blk select { border:1.5px solid var(--line); border-radius:7px; padding:5px 6px; background:var(--paper); }
   table.blk input.bad { border-width:3px; }
   input[type=checkbox] { accent-color:#000; width:20px; height:20px; }
@@ -107,17 +109,17 @@
   #modalBg { position:fixed; inset:0; display:none; z-index:50; align-items:center; justify-content:center; background:rgba(255,255,255,0); }
   #modalBg.show { display:flex; }
   #modal { background:var(--paper); border:2px solid var(--line); border-radius:14px; padding:0 0 14px; width:min(560px, 92vw); max-height:86vh; overflow:auto; }
-  #modal h3 { margin:0; padding:14px 18px; text-align:center; font-weight:500; font-size:19px; border-bottom:1.5px solid var(--line); }
+  #modal h3 { margin:0; padding:14px 18px; text-align:center; font-weight:500; font-size:calc(19px*var(--fs)); border-bottom:1.5px solid var(--line); }
   #modal .body { padding:6px 18px 0; }
-  #modal label { display:block; font-size:13px; margin:10px 0 4px; font-weight:600; }
+  #modal label { display:block; font-size:calc(13px*var(--fs)); margin:10px 0 4px; font-weight:600; }
   #modal input, #modal textarea { width:100%; border:1.5px solid var(--line); border-radius:8px; padding:7px; background:var(--paper); }
-  #modal textarea { min-height:90px; font-size:13px; }
-  #modal textarea.mono { font-family:ui-monospace,Menlo,monospace; font-size:11px; min-height:260px; }
+  #modal textarea { min-height:90px; font-size:calc(13px*var(--fs)); }
+  #modal textarea.mono { font-family:ui-monospace,Menlo,monospace; font-size:calc(11px*var(--fs)); min-height:260px; }
   #modal .row2 { display:flex; gap:10px; } #modal .row2 > div { flex:1; }
   #modal .actions { display:flex; justify-content:flex-end; gap:8px; margin-top:14px; padding:0 18px; }
-  #modal .help p { margin:8px 0; font-size:14px; line-height:1.45; }
+  #modal .help p { margin:8px 0; font-size:calc(14px*var(--fs)); line-height:1.45; }
   #toast { position:fixed; left:50%; top:56px; transform:translateX(-50%); background:var(--ink); color:var(--paper);
-    border-radius:10px; padding:9px 16px; font-size:14px; display:none; z-index:60; max-width:90vw; text-align:center; }
+    border-radius:10px; padding:9px 16px; font-size:calc(14px*var(--fs)); display:none; z-index:60; max-width:90vw; text-align:center; }
 </style>
 </head>
 <body>
@@ -171,6 +173,11 @@
     <div class="mitem check" data-act="toggleDots" id="mi-dots">Punktraster anzeigen</div>
     <div class="mitem check" data-act="toggleLabels" id="mi-labels">Namen unter Werkzeugen</div>
     <div class="mitem check" data-act="toggleBlockNames" id="mi-bnames">Namen in der Blockleiste</div>
+    <div class="msep"></div>
+    <div class="mitem check" data-act="fontM" id="mi-fontM">Schrift: Normal</div>
+    <div class="mitem check" data-act="fontL" id="mi-fontL">Schrift: Groß</div>
+    <div class="mitem check" data-act="fontXL" id="mi-fontXL">Schrift: Sehr groß</div>
+    <div class="mitem check" data-act="toggleBold" id="mi-bold">Fette Schrift</div>
   </div></div>
   <div class="menu" data-menu="help"><div class="mlabel">Hilfe</div><div class="mdrop">
     <div class="mitem" data-act="checkUpdate">Nach Update suchen</div>
@@ -215,9 +222,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "V4.1", APP_VERSION = "4.1.0", FORMAT = "aeventh-planer v2";
+var VERSION = "V4.2", APP_VERSION = "4.2.0", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, showBlocks: true, showTools: true, blockNames: true };
+var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -315,7 +322,14 @@ function updateStatus() {
   set("mi-func", mode === "func"); set("mi-design", mode === "design"); set("mi-other", S.showOther);
   set("mi-eink", S.eink); set("mi-dots", S.dots); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
   set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks");
+  set("mi-fontM", S.fontSize === "M"); set("mi-fontL", S.fontSize === "L"); set("mi-fontXL", S.fontSize === "XL"); set("mi-bold", S.bold);
+  applyFont();
 }
+
+var FONT_SCALE = { M: 1, L: 1.15, XL: 1.3 };
+function fs() { return FONT_SCALE[P.settings.fontSize] || 1.15; }
+function applyFont() { var r = document.documentElement.style; r.setProperty("--fs", fs()); r.setProperty("--fw", P.settings.bold ? 700 : 500); }
+function setFont(k) { P.settings.fontSize = k; applyFont(); resize(); updateStatus(); autosave(); }
 
 /* ================= drawing ================= */
 function hatch(c, x, y, s, step) {
@@ -329,8 +343,8 @@ function drawIcon(c, icon, x, y, s, param, shy, name) {
   var cx = x + s / 2, cy = y + s / 2, p = s * 0.18;
   c.save(); c.strokeStyle = "#000"; c.fillStyle = "#000"; c.lineWidth = Math.max(1.3, s * 0.07);
   c.lineJoin = "round"; c.lineCap = "round"; c.textAlign = "center"; c.textBaseline = "middle";
-  function letter(t, size, dx, dy) { c.font = "bold " + Math.max(6, Math.round(s * (size || 0.6))) + "px Arial, sans-serif"; c.fillText(t, cx + (dx || 0), cy + (dy || 0) + s * 0.03); }
-  function star() { c.font = "bold " + Math.round(s * 0.42) + "px Arial"; c.fillText("*", x + s * 0.82, y + s * 0.27); }
+  function letter(t, size, dx, dy) { c.font = "bold " + Math.max(6, Math.round(s * (size || 0.6))) + "px system-ui, sans-serif"; c.fillText(t, cx + (dx || 0), cy + (dy || 0) + s * 0.03); }
+  function star() { c.font = "bold " + Math.round(s * 0.42) + "px system-ui, sans-serif"; c.fillText("*", x + s * 0.82, y + s * 0.27); }
   function arrowLine(x1, y1, x2, y2) {
     c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
     var a = Math.atan2(y2 - y1, x2 - x1), h = s * 0.15;
@@ -380,7 +394,7 @@ function drawBlock(c, b, x, y, s, param, shy) {
   if (b.image) {
     var im = imgCache[b.uid];
     if (!im || im.__src !== b.image) { im = new Image(); im.__src = b.image; im.onload = function () { render(); }; im.src = b.image; imgCache[b.uid] = im; }
-    if (im.complete && im.naturalWidth) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, s, s); if (param && pvalsOf(b).length) { c.save(); c.fillStyle = "#fff"; c.fillRect(x + s * 0.6, y + s * 0.6, s * 0.4, s * 0.4); c.fillStyle = "#000"; c.font = "bold " + Math.round(s * 0.32) + "px Arial"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(paramLabel(param), x + s * 0.8, y + s * 0.81); c.restore(); } if (shy) { c.save(); c.font = "bold " + Math.round(s * 0.42) + "px Arial"; c.fillStyle = "#000"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("*", x + s * 0.82, y + s * 0.27); c.restore(); } return; }
+    if (im.complete && im.naturalWidth) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, s, s); if (param && pvalsOf(b).length) { c.save(); c.fillStyle = "#fff"; c.fillRect(x + s * 0.6, y + s * 0.6, s * 0.4, s * 0.4); c.fillStyle = "#000"; c.font = "bold " + Math.round(s * 0.32) + "px system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(paramLabel(param), x + s * 0.8, y + s * 0.81); c.restore(); } if (shy) { c.save(); c.font = "bold " + Math.round(s * 0.42) + "px system-ui, sans-serif"; c.fillStyle = "#000"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("*", x + s * 0.82, y + s * 0.27); c.restore(); } return; }
   }
   drawIcon(c, b.icon, x, y, s, param, shy, b.name);
 }
@@ -455,10 +469,10 @@ function drawRoom(room) {
   if (sel) { ctx.setLineDash([8, 5]); ctx.lineWidth = 1.5; ctx.strokeRect(o[0] - 6, o[1] - 6, W + 12, H + 12); ctx.setLineDash([]);
     ctx.fillStyle = "#000"; ctx.fillRect(o[0] + W - 11, o[1] + H - 11, 22, 22); ctx.fillStyle = "#fff"; ctx.fillRect(o[0] + W - 6, o[1] + H - 6, 12, 12); }
   var label = room.nr + (room.name ? " · " + room.name : "") + "   " + room.w + "×" + room.h;
-  ctx.font = "bold 13px Roboto, Arial, sans-serif"; var lw = ctx.measureText(label).width + 16;
-  ctx.fillStyle = "#000"; ctx.fillRect(o[0] - (sel ? 2 : 1.25), o[1] - 24, lw, 24);
-  ctx.fillStyle = "#fff"; ctx.textBaseline = "middle"; ctx.fillText(label, o[0] + 7, o[1] - 12);
-  room.__label = [o[0], o[1] - 24, lw, 24]; ctx.restore();
+  var lh = Math.round(24 * fs()); ctx.font = "bold " + Math.round(13 * fs()) + "px system-ui, sans-serif"; var lw = ctx.measureText(label).width + 16;
+  ctx.fillStyle = "#000"; ctx.fillRect(o[0] - (sel ? 2 : 1.25), o[1] - lh, lw, lh);
+  ctx.fillStyle = "#fff"; ctx.textBaseline = "middle"; ctx.fillText(label, o[0] + 7, o[1] - lh / 2);
+  room.__label = [o[0], o[1] - lh, lw, lh]; ctx.restore();
 }
 function drawLayer(room, layer, o, s) {
   var cells = room[layer], walls = [];
@@ -759,7 +773,7 @@ function buildParams() {
     pv.forEach(function (v) { var x = document.createElement("button"); x.className = "pbtn" + ((curParam[b.uid] || pv[0]) === v ? " on" : ""); x.textContent = paramLabel(v); x.onclick = function () { curParam[b.uid] = v; buildBlockPanel(); updateStatus(); }; gr.appendChild(x); });
     el.appendChild(gr);
   }
-  if (b.shyOpt) { var s = document.createElement("button"); s.className = "pbtn" + (curShy ? " on" : ""); s.textContent = P.settings.blockNames ? "* lichtscheu" : "* scheu"; s.setAttribute("data-shy", "1"); s.style.cssText = "margin-top:6px;padding:0 10px;font-size:14px;width:100%"; s.onclick = function () { curShy = !curShy; buildParams(); updateStatus(); }; el.appendChild(s); }
+  if (b.shyOpt) { var s = document.createElement("button"); s.className = "pbtn" + (curShy ? " on" : ""); s.textContent = P.settings.blockNames ? "* lichtscheu" : "* scheu"; s.setAttribute("data-shy", "1"); s.style.cssText = "margin-top:6px;padding:0 10px;font-size:calc(14px*var(--fs));width:100%"; s.onclick = function () { curShy = !curShy; buildParams(); updateStatus(); }; el.appendChild(s); }
 }
 $("bpHide").onclick = function () { P.settings.showBlocks = false; resize(); updateStatus(); autosave(); };
 $("bpTab").onclick = function () { P.settings.showBlocks = true; resize(); updateStatus(); autosave(); };
@@ -825,7 +839,7 @@ function projectMd() { return ["# " + (P.dungeon || "Dungeon") + " – Räume", 
 function download(name, text, type) { var blob = new Blob([text], { type: type || "text/plain" }), a = document.createElement("a");
   a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
 function copyText(t) {
-  function fallback() { modal('<h3>Text kopieren</h3><div class="body"><p style="font-size:13px">Markieren und kopieren, dann in eine Obsidian-Notiz in der Inbox einfügen.</p><textarea class="mono" id="cpy">' + esc(t) + "</textarea></div>"); var ta = $("cpy"); ta.focus(); ta.select(); try { if (document.execCommand("copy")) toast("Kopiert."); } catch (e) {} }
+  function fallback() { modal('<h3>Text kopieren</h3><div class="body"><p style="font-size:calc(13px*var(--fs))">Markieren und kopieren, dann in eine Obsidian-Notiz in der Inbox einfügen.</p><textarea class="mono" id="cpy">' + esc(t) + "</textarea></div>"); var ta = $("cpy"); ta.focus(); ta.select(); try { if (document.execCommand("copy")) toast("Kopiert."); } catch (e) {} }
   if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(function () { toast("Raum kopiert – in eine Obsidian-Notiz in der Inbox einfügen."); }, fallback); else fallback();
 }
 function stamp() { var d = new Date(); return d.getFullYear() + ("0" + (d.getMonth() + 1)).slice(-2) + ("0" + d.getDate()).slice(-2); }
@@ -840,9 +854,10 @@ function setPage(pg) {
 $("b-backMap").onclick = function () { setPage("map"); };
 
 /* ================= menus ================= */
+function placeDrop(m) { var d = m.querySelector(".mdrop"); d.style.left = "0px"; var r = d.getBoundingClientRect(), over = r.right - (window.innerWidth - 6); if (over > 0) d.style.left = (-Math.min(over, m.getBoundingClientRect().left - 6)) + "px"; }
 function closeMenus() { document.querySelectorAll(".menu.open").forEach(function (m) { m.classList.remove("open"); }); }
 document.querySelectorAll(".menu > .mlabel").forEach(function (l) {
-  l.addEventListener("click", function (ev) { ev.stopPropagation(); var m = l.parentNode, was = m.classList.contains("open"); closeMenus(); if (!was) m.classList.add("open"); });
+  l.addEventListener("click", function (ev) { ev.stopPropagation(); var m = l.parentNode, was = m.classList.contains("open"); closeMenus(); if (!was) { m.classList.add("open"); placeDrop(m); } });
 });
 document.addEventListener("click", function (ev) { if (!ev.target.closest(".menu")) closeMenus(); });
 function needRoom() { var r = roomById(selRoom); if (!r) toast("Erst einen Raum auswählen (Auswahl-Werkzeug oder lange drücken)."); return r; }
@@ -867,6 +882,8 @@ var ACTIONS = {
   modeFunc: function () { setMode("func"); }, modeDesign: function () { setMode("design"); },
   toggleOther: function () { P.settings.showOther = !P.settings.showOther; render(); autosave(); },
   toggleGame: function () { setGame(!gameView); },
+  fontM: function () { setFont("M"); }, fontL: function () { setFont("L"); }, fontXL: function () { setFont("XL"); },
+  toggleBold: function () { P.settings.bold = !P.settings.bold; resize(); updateStatus(); autosave(); },
   toggleBlockNames: function () { P.settings.blockNames = !P.settings.blockNames; resize(); updateStatus(); autosave(); },
   toggleBlocks: function () { P.settings.showBlocks = !P.settings.showBlocks; resize(); updateStatus(); autosave(); },
   toggleTools: function () { P.settings.showTools = !P.settings.showTools; buildTools(); autosave(); },
