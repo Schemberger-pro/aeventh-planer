@@ -89,6 +89,22 @@
   #gameExit { position:fixed; right:12px; top:54px; z-index:40; display:none; border:1.5px solid var(--line); border-radius:12px; background:var(--ink); color:var(--paper); padding:9px 14px; font-weight:700; }
   #gameExit.show { display:block; }
   /* ---------- block editor ---------- */
+  #pixEditor { position:absolute; inset:0; overflow:auto; padding:14px 18px 30px; display:none; background:var(--paper); }
+  #pixEditor h2 { margin:0; font-size:calc(21px*var(--fs)); }
+  .pxHead { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+  .pxHead select { border:1.5px solid var(--line); border-radius:8px; background:var(--paper); height:40px; padding:0 8px; flex:1; min-width:0; max-width:340px; }
+  .pxBody { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
+  #pxCv { touch-action:none; border:2px solid var(--line); display:block; }
+  .pxSide { display:flex; flex-direction:column; gap:12px; min-width:230px; flex:1; max-width:420px; }
+  #pxInfo { font-size:calc(12px*var(--fs)); width:100%; min-height:1.2em; margin-top:-6px; }
+  .pxSide .pl { font-size:calc(12px*var(--fs)); font-weight:700; margin-bottom:5px; }
+  .pxTools { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+  .pxActs { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
+  .pxTools button, .pxActs button { border:1.5px solid var(--line); border-radius:9px; background:var(--paper); min-height:42px; padding:4px 6px; font-weight:600; }
+  .pxTools button.on { background:var(--ink); color:var(--paper); }
+  .pxPrev { display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; }
+  .pxPrev canvas { border:1.5px solid var(--line); image-rendering:pixelated; display:block; }
+  .pxPrev .cap { font-size:calc(11px*var(--fs)); margin-top:3px; }
   #blockEditor { position:absolute; inset:0; overflow:auto; padding:16px 18px 40px; display:none; background:var(--paper); }
   #blockEditor h2 { margin:0 0 4px; font-size:calc(21px*var(--fs)); }
   #blockEditor p.hint { margin:0 0 12px; font-size:calc(13px*var(--fs)); }
@@ -163,6 +179,7 @@
   <div class="menu" data-menu="editor"><div class="mlabel">Editor</div><div class="mdrop">
     <div class="mitem check" data-act="pageMap" id="mi-map">Mapeditor</div>
     <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Blockeditor</div>
+    <div class="mitem check" data-act="pagePixels" id="mi-pixedit">Pixeleditor</div>
   </div></div>
   <div class="menu" data-menu="settings"><div class="mlabel">Einstellungen</div><div class="mdrop">
     <div class="mitem check" data-act="toggleEink" id="mi-eink">E-Ink-Modus (Neuzeichnen erst beim Loslassen)</div>
@@ -208,6 +225,26 @@
       <th>Bild</th><th>ID</th><th>Name</th><th>Art</th><th>Gruppe</th><th>Kürzel</th><th>Symbol</th><th>Parameter</th><th>Bild</th><th></th>
     </tr></thead><tbody id="blkBody"></tbody></table>
   </div>
+  <div id="pixEditor">
+    <div class="pxHead"><h2>Pixeleditor</h2><select id="pxSel"></select>
+      <button class="bigbtn dark" id="px-backMap">Zurück zum Mapeditor</button><div id="pxInfo"></div></div>
+    <div class="pxBody">
+      <canvas id="pxCv"></canvas>
+      <div class="pxSide">
+        <div><div class="pl">Werkzeug</div><div class="pxTools">
+          <button data-pt="pen">Stift</button><button data-pt="erase">Radierer</button><button data-pt="fill">Füllen</button></div></div>
+        <div><div class="pl">Bearbeiten</div><div class="pxActs">
+          <button data-pa="undo">↶ Zurück</button><button data-pa="redo">↷ Vor</button>
+          <button data-pa="flipH">Spiegeln ↔</button><button data-pa="flipV">Spiegeln ↕</button>
+          <button data-pa="rot">Drehen 90°</button><button data-pa="inv">Invertieren</button>
+          <button data-pa="clear">Leeren</button><button data-pa="grab">Symbol laden</button>
+          <button data-pa="remove" style="grid-column:span 2">Pixelbild entfernen</button></div></div>
+        <div><div class="pl">Vorschau</div><div class="pxPrev">
+          <div><canvas id="pxP1"></canvas><div class="cap">Einzeln</div></div>
+          <div><canvas id="pxP3"></canvas><div class="cap">Gekachelt 3×3</div></div></div></div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <button id="bpTab" title="Blockleiste anzeigen"><svg viewBox="0 0 30 30" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"><path d="M15 3 26 9v12l-11 6-11-6V9z"/><path d="M4 9l11 6 11-6M15 15v12"/></svg></button>
@@ -222,7 +259,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.4.4", APP_VERSION = "0.4.4", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.4.5", APP_VERSION = "0.4.5", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
 
@@ -269,7 +306,7 @@ var view = { z: 24, px: 60, py: 60 };
 var ZOOMS = [4, 8, 12, 18, 24, 36, 48, 64];
 var mode = "func", page = "map", tool = "brush";
 var curBlock = null, curParam = {}, selRoom = null;
-var undoStack = [], redoStack = [], imgCache = {}, gameView = false;
+var undoStack = [], redoStack = [], imgCache = {}, imgT = null, gameView = false;
 var TOOLS = [
   { id: "select", name: "Auswahl", icon: "t-select" },
   { id: "hand", name: "Hand", icon: "t-hand" },
@@ -306,8 +343,8 @@ function loadSaved() {
 }
 function snapshot() { return JSON.stringify(P.rooms); }
 function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 60) undoStack.shift(); redoStack = []; }
-function undo() { if (!undoStack.length) return; redoStack.push(snapshot()); P.rooms = JSON.parse(undoStack.pop()); if (selRoom && !roomById(selRoom)) selRoom = null; render(); autosave(); }
-function redo() { if (!redoStack.length) return; undoStack.push(snapshot()); P.rooms = JSON.parse(redoStack.pop()); render(); autosave(); }
+function undo() { if (page === "pixels") return pxAct("undo"); if (!undoStack.length) return; redoStack.push(snapshot()); P.rooms = JSON.parse(undoStack.pop()); if (selRoom && !roomById(selRoom)) selRoom = null; render(); autosave(); }
+function redo() { if (page === "pixels") return pxAct("redo"); if (!redoStack.length) return; undoStack.push(snapshot()); P.rooms = JSON.parse(redoStack.pop()); render(); autosave(); }
 
 /* ================= toast / status ================= */
 var toastT = null;
@@ -323,7 +360,7 @@ function updateStatus() {
   var set = function (id, on) { $(id).classList.toggle("on", !!on); };
   set("mi-func", mode === "func"); set("mi-design", mode === "design"); set("mi-other", S.showOther);
   set("mi-eink", S.eink); set("mi-dots", S.dots); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
-  set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks");
+  set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks"); set("mi-pixedit", page === "pixels");
   set("mi-fontM", S.fontSize === "M"); set("mi-fontL", S.fontSize === "L"); set("mi-fontXL", S.fontSize === "XL"); set("mi-bold", S.bold);
   applyFont();
 }
@@ -394,7 +431,7 @@ function drawIcon(c, icon, x, y, s, param, name) {
 function drawBlock(c, b, x, y, s, param) {
   if (b.image) {
     var im = imgCache[b.uid];
-    if (!im || im.__src !== b.image) { im = new Image(); im.__src = b.image; im.onload = function () { render(); }; im.src = b.image; imgCache[b.uid] = im; }
+    if (!im || im.__src !== b.image) { im = new Image(); im.__src = b.image; im.onload = function () { render(); clearTimeout(imgT); imgT = setTimeout(function () { if (page === "map") buildBlockPanel(); else if (page === "blocks") renderBlockEditor(); }, 60); }; im.src = b.image; imgCache[b.uid] = im; }
     if (im.complete && im.naturalWidth) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, s, s); if (param && pvalsOf(b).length) { c.save(); c.fillStyle = "#fff"; c.fillRect(x + s * 0.6, y + s * 0.6, s * 0.4, s * 0.4); c.fillStyle = "#000"; c.font = "bold " + Math.round(s * 0.32) + "px system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(paramLabel(param), x + s * 0.8, y + s * 0.81); c.restore(); } return; }
   }
   drawIcon(c, b.icon, x, y, s, param, b.name);
@@ -849,8 +886,8 @@ function stamp() { var d = new Date(); return d.getFullYear() + ("0" + (d.getMon
 /* ================= pages ================= */
 function setPage(pg) {
   page = pg; var map = pg === "map";
-  if (!map) gameView = false; $("cv").style.display = map ? "block" : "none"; $("blockEditor").style.display = map ? "none" : "block";
-  resize(); if (map) { buildTools(); buildBlockPanel(); render(); } else renderBlockEditor();
+  if (!map) gameView = false; $("cv").style.display = map ? "block" : "none"; $("blockEditor").style.display = pg === "blocks" ? "block" : "none"; $("pixEditor").style.display = pg === "pixels" ? "block" : "none";
+  resize(); if (map) { buildTools(); buildBlockPanel(); render(); } else if (pg === "blocks") renderBlockEditor(); else pxLayout();
   updateStatus();
 }
 $("b-backMap").onclick = function () { setPage("map"); };
@@ -889,7 +926,7 @@ var ACTIONS = {
   toggleBlockNames: function () { P.settings.blockNames = !P.settings.blockNames; resize(); updateStatus(); autosave(); },
   toggleBlocks: function () { P.settings.showBlocks = !P.settings.showBlocks; resize(); updateStatus(); autosave(); },
   toggleTools: function () { P.settings.showTools = !P.settings.showTools; buildTools(); autosave(); },
-  pageMap: function () { setPage("map"); }, pageBlocks: function () { setPage("blocks"); },
+  pageMap: function () { setPage("map"); }, pageBlocks: function () { setPage("blocks"); }, pagePixels: function () { openPix(curBlock); },
   toggleEink: function () { P.settings.eink = !P.settings.eink; updateStatus(); autosave(); },
   togglePenBtn: function () { P.settings.penBtnErase = !P.settings.penBtnErase; updateStatus(); autosave(); },
   togglePalm: function () { P.settings.palm = !P.settings.palm; updateStatus(); autosave(); },
@@ -903,7 +940,7 @@ var ACTIONS = {
     "<p><b>Links:</b> Blöcke, gruppiert. Antippen = Pinsel mit diesem Block. Erneutes Antippen schaltet den Parameter weiter (Tür-Nr., Richtung …); die Auswahl steht auch unten in der Blockleiste.</p>" +
     "<p><b>Unten:</b> Werkzeuge und der Schalter 16 / 8 (Funktions- bzw. Designmodus). ▾ blendet die Leiste aus.</p>" +
     "<p><b>Räume:</b> Bearbeiten → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
-    "<p><b>Editor</b> (Menü): zwischen Mapeditor und Blockeditor wechseln.</p>" +
+    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Blockeditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Blocks (Funktion 16×16, Design 8×8, schwarz/weiß); es ersetzt im Mapeditor das Symbol, die Funktion bleibt.</p>" +
     "<p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
   about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Blockeditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
@@ -932,6 +969,135 @@ document.addEventListener("keydown", function (ev) {
   else if (k === "Escape") { closeMenus(); closeModal(); if (gameView) setGame(false); }
 });
 
+
+/* ================= pixel editor ================= */
+var px = { uid: null, n: 16, d: null, tool: "pen", undo: [], redo: [], cell: 20, drawing: null, penAt: 0 };
+function pxSize(b) { return b.kind === "design" ? 8 : 16; }
+function pxFromLook(b, n) {
+  // aktuelles Symbol/Bild rastern: hochauflösend zeichnen, dann je Pixel Schwellwert
+  var S = n * 8, c = document.createElement("canvas"); c.width = S; c.height = S; var g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, S, S);
+  var keep = b.image; if (b.pix) b.image = null; drawBlock(g, b, 0, 0, S, pvalsOf(b)[0]); b.image = keep;
+  var im = g.getImageData(0, 0, S, S).data, out = [];
+  for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
+    var sum = 0; for (var yy = 0; yy < 8; yy++) for (var xx = 0; xx < 8; xx++) { var i = ((y * 8 + yy) * S + x * 8 + xx) * 4; sum += im[i] + im[i + 1] + im[i + 2]; }
+    out.push(sum / (64 * 3) < 170 ? 1 : 0);
+  }
+  return out;
+}
+function pxResample(pix, n) {
+  var src = pix.d, m = pix.n, out = [];
+  for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) out.push(+src.charAt(Math.floor(y * m / n) * m + Math.floor(x * m / n)) || 0);
+  return out;
+}
+function openPix(uid) {
+  var b = blockByUid(uid) || sortedBlocks()[0]; if (!b) return;
+  px.uid = b.uid; px.n = pxSize(b); px.undo = []; px.redo = [];
+  if (b.pix && b.pix.n === px.n) px.d = b.pix.d.split("").map(Number);
+  else if (b.pix) px.d = pxResample(b.pix, px.n);
+  else px.d = pxFromLook(b, px.n);
+  var sl = $("pxSel"); sl.innerHTML = "";
+  sortedBlocks().forEach(function (o) { var op = document.createElement("option"); op.value = o.uid; op.textContent = "ID " + o.id + " · " + o.name + " (" + pxSize(o) + "×" + pxSize(o) + ")"; if (o.uid === b.uid) op.selected = true; sl.appendChild(op); });
+  $("pxInfo").textContent = b.pix ? "" : "Vorlage aus Symbol – wird beim ersten Strich gespeichert";
+  if (page !== "pixels") setPage("pixels"); else pxLayout();
+}
+function pxLayout() {
+  var m = $("main"), top = $("pxCv").getBoundingClientRect().top - m.getBoundingClientRect().top + $("pixEditor").scrollTop;
+  var W = m.clientWidth - 36, H = m.clientHeight - top - 24;
+  var avail = W - 250 >= 300 ? Math.min(W - 250, H) : Math.min(W, H - 380);
+  px.cell = Math.max(8, Math.floor(Math.max(160, avail) / px.n));
+  var cv2 = $("pxCv"), dpr = window.devicePixelRatio || 1, S = px.cell * px.n;
+  cv2.width = S * dpr; cv2.height = S * dpr; cv2.style.width = S + "px"; cv2.style.height = S + "px";
+  document.querySelectorAll(".pxTools button").forEach(function (e) { e.classList.toggle("on", e.getAttribute("data-pt") === px.tool); });
+  pxRender();
+}
+function pxRender() {
+  var cv2 = $("pxCv"), g = cv2.getContext("2d"), dpr = window.devicePixelRatio || 1, n = px.n, c = px.cell, S = n * c;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.fillStyle = "#000";
+  for (var i = 0; i < n * n; i++) if (px.d[i]) g.fillRect((i % n) * c, Math.floor(i / n) * c, c, c);
+  // Raster: dünn, alle 4 Pixel kräftiger; auf schwarzen Pixeln weiß
+  for (var k = 1; k < n; k++) {
+    var w = k % 4 === 0 ? 2 : 1;
+    for (var j = 0; j < n; j++) {
+      var a = px.d[j * n + k - 1] && px.d[j * n + k], b2 = px.d[(k - 1) * n + j] && px.d[k * n + j];
+      g.fillStyle = a ? "#fff" : "#000"; g.fillRect(k * c - w / 2, j * c, w, c);
+      g.fillStyle = b2 ? "#fff" : "#000"; g.fillRect(j * c, k * c - w / 2, c, w);
+    }
+  }
+  pxPreview();
+}
+function pxPreview() {
+  var n = px.n, s1 = n <= 8 ? 8 : 4, c1 = $("pxP1"), c3 = $("pxP3");
+  c1.width = n; c1.height = n; c1.style.width = n * s1 + "px"; c1.style.height = n * s1 + "px";
+  c3.width = n * 3; c3.height = n * 3; c3.style.width = n * 3 * (s1 / 2) + "px"; c3.style.height = n * 3 * (s1 / 2) + "px";
+  var g1 = c1.getContext("2d"), id = g1.createImageData(n, n);
+  for (var i = 0; i < n * n; i++) { var v = px.d[i] ? 0 : 255; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+  g1.putImageData(id, 0, 0);
+  var g3 = c3.getContext("2d"); for (var ty = 0; ty < 3; ty++) for (var tx = 0; tx < 3; tx++) g3.putImageData(id, tx * n, ty * n);
+}
+function pxSave() {
+  var b = blockByUid(px.uid); if (!b) return;
+  b.pix = { n: px.n, d: px.d.join("") }; b.image = $("pxP1").toDataURL("image/png");
+  delete imgCache[b.uid]; $("pxInfo").textContent = ""; autosave();
+}
+function pxPush() { px.undo.push(px.d.join("")); if (px.undo.length > 80) px.undo.shift(); px.redo = []; }
+function pxAct(a) {
+  var n = px.n, d = px.d, o = [], x, y;
+  if (a === "undo") { if (!px.undo.length) return; px.redo.push(d.join("")); px.d = px.undo.pop().split("").map(Number); }
+  else if (a === "redo") { if (!px.redo.length) return; px.undo.push(d.join("")); px.d = px.redo.pop().split("").map(Number); }
+  else if (a === "remove") { var b = blockByUid(px.uid); if (!b || !confirm("Pixelbild von „" + b.name + "“ entfernen? Der Block nutzt dann wieder sein Symbol.")) return;
+    b.image = null; delete b.pix; delete imgCache[b.uid]; autosave(); openPix(b.uid); toast("Symbol wird wieder genutzt."); return; }
+  else {
+    pxPush();
+    if (a === "flipH") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[y * n + n - 1 - x]); }
+    else if (a === "flipV") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[(n - 1 - y) * n + x]); }
+    else if (a === "rot") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[(n - 1 - x) * n + y]); }
+    else if (a === "inv") o = d.map(function (v) { return v ? 0 : 1; });
+    else if (a === "clear") o = d.map(function () { return 0; });
+    else if (a === "grab") { var bb = blockByUid(px.uid); o = pxFromLook(bb, n); }
+    px.d = o;
+  }
+  pxSave(); pxRender();
+}
+function pxCell(ev) { var r = $("pxCv").getBoundingClientRect(); return [Math.floor((ev.clientX - r.left) / px.cell), Math.floor((ev.clientY - r.top) / px.cell)]; }
+function pxSet(x, y, v) { if (x < 0 || y < 0 || x >= px.n || y >= px.n) return; px.d[y * px.n + x] = v; }
+function pxLine(x0, y0, x1, y1, v) {
+  var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
+  for (var i = 0; i < 200; i++) { pxSet(x0, y0, v); if (x0 === x1 && y0 === y1) break; var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+}
+function pxFill(x, y, v) {
+  var n = px.n; if (x < 0 || y < 0 || x >= n || y >= n) return; var from = px.d[y * n + x]; if (from === v) return;
+  var st = [[x, y]]; while (st.length) { var p = st.pop(), i = p[1] * n + p[0];
+    if (p[0] < 0 || p[1] < 0 || p[0] >= n || p[1] >= n || px.d[i] !== from) continue; px.d[i] = v;
+    st.push([p[0] + 1, p[1]], [p[0] - 1, p[1]], [p[0], p[1] + 1], [p[0], p[1] - 1]); }
+}
+(function () {
+  var cv2 = $("pxCv");
+  cv2.addEventListener("pointerdown", function (ev) {
+    if (ev.pointerType === "pen") px.penAt = Date.now();
+    else if (ev.pointerType === "touch" && P.settings.palm && Date.now() - px.penAt < 600) return;
+    if (px.drawing) return; ev.preventDefault();
+    var eraseBtn = ev.button === 5 || (ev.buttons & 32) || (P.settings.penBtnErase && (ev.buttons & 2));
+    var c = pxCell(ev); pxPush();
+    if (px.tool === "fill") { pxFill(c[0], c[1], eraseBtn ? 0 : (px.d[c[1] * px.n + c[0]] ? 0 : 1)); pxSave(); pxRender(); return; }
+    var v = (px.tool === "erase" || eraseBtn) ? 0 : 1;
+    px.drawing = { id: ev.pointerId, v: v, last: c }; try { cv2.setPointerCapture(ev.pointerId); } catch (e) {}
+    pxSet(c[0], c[1], v); pxRender();
+  });
+  cv2.addEventListener("pointermove", function (ev) {
+    var dr = px.drawing; if (!dr || dr.id !== ev.pointerId) return; if (ev.pointerType === "pen") px.penAt = Date.now();
+    var c = pxCell(ev); if (c[0] === dr.last[0] && c[1] === dr.last[1]) return;
+    pxLine(dr.last[0], dr.last[1], c[0], c[1], dr.v); dr.last = c; pxRender();
+  });
+  function end(ev) { var dr = px.drawing; if (!dr || dr.id !== ev.pointerId) return; px.drawing = null; if (px.undo.length && px.undo[px.undo.length - 1] === px.d.join("")) px.undo.pop(); else pxSave(); }
+  cv2.addEventListener("pointerup", end); cv2.addEventListener("pointercancel", end);
+  cv2.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
+  document.querySelectorAll(".pxTools button").forEach(function (e) { e.onclick = function () { px.tool = e.getAttribute("data-pt"); pxLayout(); }; });
+  document.querySelectorAll(".pxActs button").forEach(function (e) { e.onclick = function () { pxAct(e.getAttribute("data-pa")); }; });
+  $("pxSel").onchange = function () { openPix($("pxSel").value); };
+  $("px-backMap").onclick = function () { setPage("map"); };
+})();
+
 /* ================= block editor ================= */
 var ICONS = [["wall","Wand"],["start","Start"],["checkpoint","Checkpoint"],["crystal","Kristall"],["redirect","Richtungswechsel"],["door","Tür"],["stone","Stein"],["breakable","Zerstörbar"],["yoku","Yoku"],["hazard","Gefahr"],["flyer","Flieger"],["shooter","Schütze"],["teleporter","Teleporter"],["crack","Riss"],["moss","Moos"],["rune","Rune"],["letter","Buchstabe"]];
 var imgTarget = null;
@@ -955,8 +1121,9 @@ function renderBlockEditor() {
     pl.onchange = function () { b.plabel = pl.value.trim(); commit(); };
     pvI.onchange = function () { b.pvals = pvI.value.split(",").map(function (s) { return s.trim().charAt(0); }).filter(function (s) { return s; }).join(","); commit(); };
     pt.appendChild(pl); pt.appendChild(document.createElement("br")); pt.appendChild(pvI); td(pt);
-    var imgBox = document.createElement("div"); imgBox.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
-    if (b.image) imgBox.appendChild(btn("Entfernen", function () { b.image = null; delete imgCache[b.uid]; commit(); })); td(imgBox);
+    var imgBox = document.createElement("div"); imgBox.appendChild(btn("Zeichnen", function () { openPix(b.uid); }));
+    imgBox.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
+    if (b.image) imgBox.appendChild(btn("Entfernen", function () { b.image = null; delete b.pix; delete imgCache[b.uid]; commit(); })); td(imgBox);
     td(btn("Löschen", function () { var n = usage(b.uid); if (!confirm("Block „" + b.name + "“ löschen?" + (n ? " Er ist " + n + "× gesetzt – diese Zellen werden geleert." : ""))) return;
       P.rooms.forEach(function (r) { ["func","design"].forEach(function (l) { for (var k in r[l]) if (r[l][k].b === b.uid) delete r[l][k]; }); });
       P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; commit(); }));
@@ -982,7 +1149,7 @@ $("fileImg").addEventListener("change", function () {
     im.onload = function () { var S = 64, c = document.createElement("canvas"); c.width = S; c.height = S; var g = c.getContext("2d");
       g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.imageSmoothingEnabled = im.width > S;
       var sc = Math.min(S / im.width, S / im.height), w = im.width * sc, h = im.height * sc; g.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
-      try { b.image = c.toDataURL("image/png"); } catch (e) { b.image = rd.result; }
+      try { b.image = c.toDataURL("image/png"); } catch (e) { b.image = rd.result; } delete b.pix;
       delete imgCache[b.uid]; commit(); toast("Bild für „" + b.name + "“ übernommen."); };
     im.src = rd.result; };
   rd.readAsDataURL(f);
@@ -1021,7 +1188,7 @@ if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
 
 /* ================= start ================= */
 var restored = loadSaved();
-window.addEventListener("resize", resize);
+window.addEventListener("resize", function () { resize(); if (page === "pixels") pxLayout(); });
 setPage("map");
 if (!restored) { fitRoom(); toast("Willkommen! Hilfe → Kurzanleitung erklärt Stift und Gesten."); } else render();
 
