@@ -93,6 +93,7 @@
   #pixEditor h2 { margin:0; font-size:calc(21px*var(--fs)); }
   .pxHead { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
   .pxHead select { border:1.5px solid var(--line); border-radius:8px; background:var(--paper); height:40px; padding:0 8px; flex:1; min-width:0; max-width:340px; }
+  .pxHead #pxVar { flex:0 1 auto; max-width:220px; }
   .pxBody { display:flex; gap:18px; align-items:flex-start; flex-wrap:wrap; }
   #pxCv { touch-action:none; border:2px solid var(--line); display:block; }
   .pxSide { display:flex; flex-direction:column; gap:12px; min-width:230px; flex:1; max-width:420px; }
@@ -226,7 +227,7 @@
     </tr></thead><tbody id="blkBody"></tbody></table>
   </div>
   <div id="pixEditor">
-    <div class="pxHead"><h2>Pixeleditor</h2><select id="pxSel"></select>
+    <div class="pxHead"><h2>Pixeleditor</h2><select id="pxSel"></select><select id="pxVar"></select>
       <button class="bigbtn dark" id="px-backMap">Zurück zum Mapeditor</button><div id="pxInfo"></div></div>
     <div class="pxBody">
       <canvas id="pxCv"></canvas>
@@ -259,7 +260,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.4.5", APP_VERSION = "0.4.5", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.4.6", APP_VERSION = "0.4.6", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
 
@@ -428,11 +429,18 @@ function drawIcon(c, icon, x, y, s, param, name) {
   }
   c.restore();
 }
+function getImg(key, src) {
+  var im = imgCache[key];
+  if (!im || im.__src !== src) { im = new Image(); im.__src = src; im.onload = function () { render(); clearTimeout(imgT); imgT = setTimeout(function () { if (page === "map") buildBlockPanel(); else if (page === "blocks") renderBlockEditor(); }, 60); }; im.src = src; imgCache[key] = im; }
+  return im.complete && im.naturalWidth ? im : null;
+}
+function dropImgs(b) { for (var k in imgCache) if (k === b.uid || k.indexOf(b.uid + "|") === 0) delete imgCache[k]; }
 function drawBlock(c, b, x, y, s, param) {
+  var pv = pvalsOf(b), vp = param || pv[0];
+  if (vp && b.imgV && b.imgV[vp]) { var iv = getImg(b.uid + "|" + vp, b.imgV[vp]); if (iv) { c.imageSmoothingEnabled = false; c.drawImage(iv, x, y, s, s); return; } }
   if (b.image) {
-    var im = imgCache[b.uid];
-    if (!im || im.__src !== b.image) { im = new Image(); im.__src = b.image; im.onload = function () { render(); clearTimeout(imgT); imgT = setTimeout(function () { if (page === "map") buildBlockPanel(); else if (page === "blocks") renderBlockEditor(); }, 60); }; im.src = b.image; imgCache[b.uid] = im; }
-    if (im.complete && im.naturalWidth) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, s, s); if (param && pvalsOf(b).length) { c.save(); c.fillStyle = "#fff"; c.fillRect(x + s * 0.6, y + s * 0.6, s * 0.4, s * 0.4); c.fillStyle = "#000"; c.font = "bold " + Math.round(s * 0.32) + "px system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(paramLabel(param), x + s * 0.8, y + s * 0.81); c.restore(); } return; }
+    var im = getImg(b.uid, b.image);
+    if (im) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, s, s); if (vp && pv.length) { c.save(); c.fillStyle = "#fff"; c.fillRect(x + s * 0.6, y + s * 0.6, s * 0.4, s * 0.4); c.fillStyle = "#000"; c.font = "bold " + Math.round(s * 0.32) + "px system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(paramLabel(vp), x + s * 0.8, y + s * 0.81); c.restore(); } return; }
   }
   drawIcon(c, b.icon, x, y, s, param, b.name);
 }
@@ -940,7 +948,7 @@ var ACTIONS = {
     "<p><b>Links:</b> Blöcke, gruppiert. Antippen = Pinsel mit diesem Block. Erneutes Antippen schaltet den Parameter weiter (Tür-Nr., Richtung …); die Auswahl steht auch unten in der Blockleiste.</p>" +
     "<p><b>Unten:</b> Werkzeuge und der Schalter 16 / 8 (Funktions- bzw. Designmodus). ▾ blendet die Leiste aus.</p>" +
     "<p><b>Räume:</b> Bearbeiten → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
-    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Blockeditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Blocks (Funktion 16×16, Design 8×8, schwarz/weiß); es ersetzt im Mapeditor das Symbol, die Funktion bleibt.</p>" +
+    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Blockeditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Blocks (Funktion 16×16, Design 8×8, schwarz/weiß); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
     "<p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
   about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Blockeditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
@@ -971,17 +979,18 @@ document.addEventListener("keydown", function (ev) {
 
 
 /* ================= pixel editor ================= */
-var px = { uid: null, n: 16, d: null, tool: "pen", undo: [], redo: [], cell: 20, drawing: null, penAt: 0 };
+var px = { uid: null, v: "", n: 16, d: null, tool: "pen", undo: [], redo: [], cell: 20, drawing: null, penAt: 0 };
 function pxSize(b) { return b.kind === "design" ? 8 : 16; }
-function pxFromLook(b, n) {
-  // aktuelles Symbol/Bild rastern: hochauflösend zeichnen, dann je Pixel Schwellwert
+function pxFromLook(b, n, v, symbolOnly) {
+  // Symbol (oder hochgeladenes Bild) rastern: hochauflösend zeichnen, dann je Pixel Schwellwert
   var S = n * 8, c = document.createElement("canvas"); c.width = S; c.height = S; var g = c.getContext("2d");
   g.fillStyle = "#fff"; g.fillRect(0, 0, S, S);
-  var keep = b.image; if (b.pix) b.image = null; drawBlock(g, b, 0, 0, S, pvalsOf(b)[0]); b.image = keep;
+  var im = (!symbolOnly && !v && b.image && !b.pix) ? getImg(b.uid, b.image) : null;
+  if (im) { g.imageSmoothingEnabled = true; g.drawImage(im, 0, 0, S, S); } else drawIcon(g, b.icon, 0, 0, S, v || pvalsOf(b)[0], b.name);
   var im = g.getImageData(0, 0, S, S).data, out = [];
   for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
     var sum = 0; for (var yy = 0; yy < 8; yy++) for (var xx = 0; xx < 8; xx++) { var i = ((y * 8 + yy) * S + x * 8 + xx) * 4; sum += im[i] + im[i + 1] + im[i + 2]; }
-    out.push(sum / (64 * 3) < 170 ? 1 : 0);
+    out.push(sum / (64 * 3) < 195 ? 1 : 0);
   }
   return out;
 }
@@ -990,15 +999,27 @@ function pxResample(pix, n) {
   for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) out.push(+src.charAt(Math.floor(y * m / n) * m + Math.floor(x * m / n)) || 0);
   return out;
 }
-function openPix(uid) {
+function pxGetSrc(b, v) { return v ? (b.pixV && b.pixV[v]) : b.pix; }
+function openPix(uid, v) {
   var b = blockByUid(uid) || sortedBlocks()[0]; if (!b) return;
-  px.uid = b.uid; px.n = pxSize(b); px.undo = []; px.redo = [];
-  if (b.pix && b.pix.n === px.n) px.d = b.pix.d.split("").map(Number);
-  else if (b.pix) px.d = pxResample(b.pix, px.n);
-  else px.d = pxFromLook(b, px.n);
+  var pv = pvalsOf(b);
+  if (v == null) v = (uid === px.uid && page === "pixels") ? px.v : (pv.length ? (curParam[b.uid] || pv[0]) : "");
+  if (v && pv.indexOf(v) < 0) v = pv.length ? pv[0] : "";
+  if (!pv.length) v = "";
+  px.uid = b.uid; px.v = v; px.n = pxSize(b); px.undo = []; px.redo = [];
+  var src = pxGetSrc(b, v), own = !!src;
+  if (!src && v && b.pix) src = b.pix; // Version ohne eigenes Bild: Grundbild als Vorlage
+  if (src) px.d = src.n === px.n ? src.d.split("").map(Number) : pxResample(src, px.n);
+  else px.d = pxFromLook(b, px.n, v);
+  var vs = $("pxVar"); vs.innerHTML = ""; vs.style.display = pv.length ? "" : "none";
+  if (pv.length) {
+    [""].concat(pv).forEach(function (val) { var op = document.createElement("option"); op.value = val;
+      var has = val ? !!(b.pixV && b.pixV[val]) : !!b.pix;
+      op.textContent = (val ? (b.plabel || "Wert") + ": " + paramLabel(val) : "Grundbild (alle)") + (has ? " ✓" : ""); if (val === v) op.selected = true; vs.appendChild(op); });
+  }
   var sl = $("pxSel"); sl.innerHTML = "";
   sortedBlocks().forEach(function (o) { var op = document.createElement("option"); op.value = o.uid; op.textContent = "ID " + o.id + " · " + o.name + " (" + pxSize(o) + "×" + pxSize(o) + ")"; if (o.uid === b.uid) op.selected = true; sl.appendChild(op); });
-  $("pxInfo").textContent = b.pix ? "" : "Vorlage aus Symbol – wird beim ersten Strich gespeichert";
+  $("pxInfo").textContent = own ? "" : (v && b.pix ? "Version ohne eigenes Bild – Vorlage ist das Grundbild" : "Vorlage aus Symbol") + " – wird beim ersten Strich gespeichert";
   if (page !== "pixels") setPage("pixels"); else pxLayout();
 }
 function pxLayout() {
@@ -1037,16 +1058,20 @@ function pxPreview() {
 }
 function pxSave() {
   var b = blockByUid(px.uid); if (!b) return;
-  b.pix = { n: px.n, d: px.d.join("") }; b.image = $("pxP1").toDataURL("image/png");
-  delete imgCache[b.uid]; $("pxInfo").textContent = ""; autosave();
+  var data = { n: px.n, d: px.d.join("") }, url = $("pxP1").toDataURL("image/png");
+  if (px.v) { b.pixV = b.pixV || {}; b.imgV = b.imgV || {}; b.pixV[px.v] = data; b.imgV[px.v] = url; }
+  else { b.pix = data; b.image = url; }
+  dropImgs(b); $("pxInfo").textContent = ""; pxMarkVar(b); autosave();
 }
 function pxPush() { px.undo.push(px.d.join("")); if (px.undo.length > 80) px.undo.shift(); px.redo = []; }
 function pxAct(a) {
   var n = px.n, d = px.d, o = [], x, y;
   if (a === "undo") { if (!px.undo.length) return; px.redo.push(d.join("")); px.d = px.undo.pop().split("").map(Number); }
   else if (a === "redo") { if (!px.redo.length) return; px.undo.push(d.join("")); px.d = px.redo.pop().split("").map(Number); }
-  else if (a === "remove") { var b = blockByUid(px.uid); if (!b || !confirm("Pixelbild von „" + b.name + "“ entfernen? Der Block nutzt dann wieder sein Symbol.")) return;
-    b.image = null; delete b.pix; delete imgCache[b.uid]; autosave(); openPix(b.uid); toast("Symbol wird wieder genutzt."); return; }
+  else if (a === "remove") { var b = blockByUid(px.uid); if (!b) return;
+    if (px.v) { if (!confirm("Eigenes Bild der Version „" + paramLabel(px.v) + "“ entfernen? Sie nutzt dann das Grundbild bzw. Symbol.")) return; if (b.pixV) delete b.pixV[px.v]; if (b.imgV) delete b.imgV[px.v]; }
+    else { if (!confirm("Grundbild von „" + b.name + "“ entfernen? Der Block nutzt dann wieder sein Symbol.")) return; b.image = null; delete b.pix; }
+    dropImgs(b); autosave(); openPix(b.uid, px.v); toast("Bild entfernt."); return; }
   else {
     pxPush();
     if (a === "flipH") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[y * n + n - 1 - x]); }
@@ -1054,11 +1079,13 @@ function pxAct(a) {
     else if (a === "rot") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[(n - 1 - x) * n + y]); }
     else if (a === "inv") o = d.map(function (v) { return v ? 0 : 1; });
     else if (a === "clear") o = d.map(function () { return 0; });
-    else if (a === "grab") { var bb = blockByUid(px.uid); o = pxFromLook(bb, n); }
+    else if (a === "grab") { var bb = blockByUid(px.uid); o = pxFromLook(bb, n, px.v, true); }
     px.d = o;
   }
   pxSave(); pxRender();
 }
+function pxMarkVar(b) { var vs = $("pxVar"); for (var i = 0; i < vs.options.length; i++) { var op = vs.options[i], val = op.value, has = val ? !!(b.pixV && b.pixV[val]) : !!b.pix;
+  op.textContent = (val ? (b.plabel || "Wert") + ": " + paramLabel(val) : "Grundbild (alle)") + (has ? " ✓" : ""); } }
 function pxCell(ev) { var r = $("pxCv").getBoundingClientRect(); return [Math.floor((ev.clientX - r.left) / px.cell), Math.floor((ev.clientY - r.top) / px.cell)]; }
 function pxSet(x, y, v) { if (x < 0 || y < 0 || x >= px.n || y >= px.n) return; px.d[y * px.n + x] = v; }
 function pxLine(x0, y0, x1, y1, v) {
@@ -1095,6 +1122,7 @@ function pxFill(x, y, v) {
   document.querySelectorAll(".pxTools button").forEach(function (e) { e.onclick = function () { px.tool = e.getAttribute("data-pt"); pxLayout(); }; });
   document.querySelectorAll(".pxActs button").forEach(function (e) { e.onclick = function () { pxAct(e.getAttribute("data-pa")); }; });
   $("pxSel").onchange = function () { openPix($("pxSel").value); };
+  $("pxVar").onchange = function () { openPix(px.uid, $("pxVar").value); };
   $("px-backMap").onclick = function () { setPage("map"); };
 })();
 
@@ -1123,7 +1151,7 @@ function renderBlockEditor() {
     pt.appendChild(pl); pt.appendChild(document.createElement("br")); pt.appendChild(pvI); td(pt);
     var imgBox = document.createElement("div"); imgBox.appendChild(btn("Zeichnen", function () { openPix(b.uid); }));
     imgBox.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
-    if (b.image) imgBox.appendChild(btn("Entfernen", function () { b.image = null; delete b.pix; delete imgCache[b.uid]; commit(); })); td(imgBox);
+    if (b.image || b.imgV) imgBox.appendChild(btn("Entfernen", function () { if (!confirm("Alle Bilder von „" + b.name + "“ entfernen (inkl. Versionen)?")) return; b.image = null; delete b.pix; delete b.pixV; delete b.imgV; dropImgs(b); commit(); })); td(imgBox);
     td(btn("Löschen", function () { var n = usage(b.uid); if (!confirm("Block „" + b.name + "“ löschen?" + (n ? " Er ist " + n + "× gesetzt – diese Zellen werden geleert." : ""))) return;
       P.rooms.forEach(function (r) { ["func","design"].forEach(function (l) { for (var k in r[l]) if (r[l][k].b === b.uid) delete r[l][k]; }); });
       P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; commit(); }));
@@ -1150,7 +1178,7 @@ $("fileImg").addEventListener("change", function () {
       g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.imageSmoothingEnabled = im.width > S;
       var sc = Math.min(S / im.width, S / im.height), w = im.width * sc, h = im.height * sc; g.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
       try { b.image = c.toDataURL("image/png"); } catch (e) { b.image = rd.result; } delete b.pix;
-      delete imgCache[b.uid]; commit(); toast("Bild für „" + b.name + "“ übernommen."); };
+      dropImgs(b); commit(); toast("Bild für „" + b.name + "“ übernommen."); };
     im.src = rd.result; };
   rd.readAsDataURL(f);
 });
