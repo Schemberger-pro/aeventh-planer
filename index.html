@@ -85,7 +85,6 @@
   #blockPanel.narrow #bpParams { padding:6px 5px; }
   #blockPanel.narrow #bpParams .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
   #blockPanel.narrow .pbtn { min-width:0; height:32px; font-size:calc(14px*var(--fs)); padding:0; }
-  #blockPanel.narrow #bpParams .pbtn[data-shy] { font-size:calc(12px*var(--fs)); padding:0 2px; }
   #gameExit { position:fixed; right:12px; top:54px; z-index:40; display:none; border:1.5px solid var(--line); border-radius:12px; background:var(--ink); color:var(--paper); padding:9px 14px; font-weight:700; }
   #gameExit.show { display:block; }
   /* ---------- block editor ---------- */
@@ -205,7 +204,7 @@
       <button class="bigbtn dark" id="b-backMap">Zurück zum Mapeditor</button>
     </div>
     <table class="blk"><thead><tr>
-      <th>Bild</th><th>ID</th><th>Name</th><th>Art</th><th>Gruppe</th><th>Kürzel</th><th>Symbol</th><th>Parameter</th><th>Licht-<br>scheu</th><th>Bild</th><th></th>
+      <th>Bild</th><th>ID</th><th>Name</th><th>Art</th><th>Gruppe</th><th>Kürzel</th><th>Symbol</th><th>Parameter</th><th>Bild</th><th></th>
     </tr></thead><tbody id="blkBody"></tbody></table>
   </div>
 </div>
@@ -222,7 +221,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "V4.2", APP_VERSION = "4.2.0", FORMAT = "aeventh-planer v2";
+var VERSION = "V4.3", APP_VERSION = "4.3.0", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
 
@@ -239,16 +238,16 @@ function defaultBlocks() {
     [8, "Zerstörbare Wand", "func", 2, "X1", "breakable", "Stärke", "1,2,3"],
     [9, "Erscheinender Block", "func", 2, "Y1", "yoku", "Takt-Gruppe", "1,2,3"],
     [10, "Gefahr", "func", 2, "^ ", "hazard"],
-    [11, "Flieger", "func", 2, "F|", "flyer", "Achse", "|,-", true],
-    [12, "Linienschütze", "func", 2, "L>", "shooter", "Richtung", ">,<,^,v,-,|,+", true],
-    [13, "Teleporter", "func", 2, "T ", "teleporter", "", "", true],
+    [11, "Flieger", "func", 2, "F|", "flyer", "Achse", "|,-"],
+    [12, "Linienschütze", "func", 2, "L>", "shooter", "Richtung", ">,<,^,v,-,|,+"],
+    [13, "Teleporter", "func", 2, "T ", "teleporter"],
     [101, "Riss", "design", 3, "r ", "crack"],
     [102, "Moos", "design", 3, "m ", "moss"],
     [103, "Rune", "design", 3, "u ", "rune"]
   ];
   return B.map(function (b, i) {
     return { uid: "b" + (i + 1), id: b[0], name: b[1], kind: b[2], toolbar: b[3], code: b[4], icon: b[5],
-      plabel: b[6] || "", pvals: b[7] || "", shyOpt: !!b[8], image: null };
+      plabel: b[6] || "", pvals: b[7] || "", image: null };
   });
 }
 function newRoom(nr, x, y, w, h) {
@@ -268,7 +267,7 @@ P.settings = Object.assign({}, SETTINGS_DEFAULT);
 var view = { z: 24, px: 60, py: 60 };
 var ZOOMS = [4, 8, 12, 18, 24, 36, 48, 64];
 var mode = "func", page = "map", tool = "brush";
-var curBlock = null, curParam = {}, curShy = false, selRoom = null;
+var curBlock = null, curParam = {}, selRoom = null;
 var undoStack = [], redoStack = [], imgCache = {}, gameView = false;
 var TOOLS = [
   { id: "select", name: "Auswahl", icon: "t-select" },
@@ -293,12 +292,13 @@ function autosave() {
     catch (e) { toast("Speichern im Browser fehlgeschlagen – bitte „Projekt speichern“ nutzen."); }
   }, 400);
 }
+function stripShy(p) { (p.blocks || []).forEach(function (b) { delete b.shyOpt; }); (p.rooms || []).forEach(function (r) { ["func", "design"].forEach(function (k) { var m = r[k] || {}; for (var key in m) if (m[key] && m[key].s) delete m[key].s; }); }); }
 function loadSaved() {
   try {
     var s = localStorage.getItem(KEY); if (!s) return false;
     var o = JSON.parse(s); if (!o || !o.P || !o.P.rooms) return false;
     P = o.P; if (o.view) view = o.view; if (o.mode) mode = o.mode;
-    P.settings = Object.assign({}, SETTINGS_DEFAULT, P.settings || {});
+    P.settings = Object.assign({}, SETTINGS_DEFAULT, P.settings || {}); stripShy(P);
     return true;
   } catch (e) { return false; }
 }
@@ -315,7 +315,7 @@ function paramLabel(v) { return PLABEL[v] || v; }
 function updateStatus() {
   var r = roomById(selRoom), b = blockByUid(curBlock);
   var tl = TOOLS.filter(function (t) { return t.id === tool; })[0];
-  var what = (tool === "brush" || tool === "rect") ? (b ? b.name + (pvalsOf(b).length ? " " + paramLabel(curParam[b.uid] || pvalsOf(b)[0]) : "") + (curShy && b.shyOpt ? " *" : "") : "kein Block") : "";
+  var what = (tool === "brush" || tool === "rect") ? (b ? b.name + (pvalsOf(b).length ? " " + paramLabel(curParam[b.uid] || pvalsOf(b)[0]) : "") : "kein Block") : "";
   $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + (mode === "func" ? "16×16" : "8×8") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
   var S = P.settings;
   var set = function (id, on) { $(id).classList.toggle("on", !!on); };
@@ -339,12 +339,11 @@ function hatch(c, x, y, s, step) {
   for (var k = k0; k <= k1; k++) { var q = k * step; c.moveTo(q - y, y); c.lineTo(q - y - s, y + s); }
   c.stroke(); c.restore();
 }
-function drawIcon(c, icon, x, y, s, param, shy, name) {
+function drawIcon(c, icon, x, y, s, param, name) {
   var cx = x + s / 2, cy = y + s / 2, p = s * 0.18;
   c.save(); c.strokeStyle = "#000"; c.fillStyle = "#000"; c.lineWidth = Math.max(1.3, s * 0.07);
   c.lineJoin = "round"; c.lineCap = "round"; c.textAlign = "center"; c.textBaseline = "middle";
   function letter(t, size, dx, dy) { c.font = "bold " + Math.max(6, Math.round(s * (size || 0.6))) + "px system-ui, sans-serif"; c.fillText(t, cx + (dx || 0), cy + (dy || 0) + s * 0.03); }
-  function star() { c.font = "bold " + Math.round(s * 0.42) + "px system-ui, sans-serif"; c.fillText("*", x + s * 0.82, y + s * 0.27); }
   function arrowLine(x1, y1, x2, y2) {
     c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2); c.stroke();
     var a = Math.atan2(y2 - y1, x2 - x1), h = s * 0.15;
@@ -367,13 +366,13 @@ function drawIcon(c, icon, x, y, s, param, shy, name) {
       c.lineWidth = Math.max(1.1, s * 0.05);
       if (param === "-") { letter("F", 0.5, 0, -s * 0.12); arrowLine(cx, y + s * 0.82, cx + s * 0.32, y + s * 0.82); arrowLine(cx, y + s * 0.82, cx - s * 0.32, y + s * 0.82); }
       else { letter("F", 0.5, -s * 0.14, 0); arrowLine(cx + s * 0.24, cy, cx + s * 0.24, cy + s * 0.32); arrowLine(cx + s * 0.24, cy, cx + s * 0.24, cy - s * 0.32); }
-      if (shy) star(); break;
+      break;
     case "shooter":
       letter("L", 0.5); var e = s * 0.43, m = s * 0.12;
       var map = { ">": [0], "<": [Math.PI], "^": [-Math.PI / 2], "v": [Math.PI / 2], "-": [0, Math.PI], "|": [-Math.PI / 2, Math.PI / 2], "+": [0, Math.PI / 2, Math.PI, -Math.PI / 2] };
       (map[param] || [0]).forEach(function (ang) { c.save(); c.translate(cx, cy); c.rotate(ang); c.beginPath(); c.moveTo(e - m, -m * 0.8); c.lineTo(e, 0); c.lineTo(e - m, m * 0.8); c.closePath(); c.fill(); c.restore(); });
-      if (shy) star(); break;
-    case "teleporter": letter("T"); c.setLineDash([Math.max(1.5, s * 0.08), Math.max(1.5, s * 0.08)]); c.beginPath(); c.arc(cx, cy, s * 0.42, 0, 7); c.stroke(); c.setLineDash([]); if (shy) star(); break;
+      break;
+    case "teleporter": letter("T"); c.setLineDash([Math.max(1.5, s * 0.08), Math.max(1.5, s * 0.08)]); c.beginPath(); c.arc(cx, cy, s * 0.42, 0, 7); c.stroke(); c.setLineDash([]); break;
     case "crack": c.lineWidth = Math.max(1, s * 0.06); c.beginPath(); c.moveTo(x + s * 0.2, y + s * 0.1); c.lineTo(x + s * 0.45, y + s * 0.4); c.lineTo(x + s * 0.35, y + s * 0.55); c.lineTo(x + s * 0.65, y + s * 0.9); c.moveTo(x + s * 0.45, y + s * 0.4); c.lineTo(x + s * 0.75, y + s * 0.35); c.stroke(); break;
     case "moss": var pts = [[.2,.7],[.35,.55],[.5,.75],[.62,.5],[.8,.68],[.3,.85],[.7,.85],[.45,.6],[.55,.9],[.85,.5]];
       pts.forEach(function (q) { c.beginPath(); c.arc(x + q[0] * s, y + q[1] * s, Math.max(0.8, s * 0.05), 0, 7); c.fill(); }); break;
@@ -390,13 +389,13 @@ function drawIcon(c, icon, x, y, s, param, shy, name) {
   }
   c.restore();
 }
-function drawBlock(c, b, x, y, s, param, shy) {
+function drawBlock(c, b, x, y, s, param) {
   if (b.image) {
     var im = imgCache[b.uid];
     if (!im || im.__src !== b.image) { im = new Image(); im.__src = b.image; im.onload = function () { render(); }; im.src = b.image; imgCache[b.uid] = im; }
-    if (im.complete && im.naturalWidth) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, s, s); if (param && pvalsOf(b).length) { c.save(); c.fillStyle = "#fff"; c.fillRect(x + s * 0.6, y + s * 0.6, s * 0.4, s * 0.4); c.fillStyle = "#000"; c.font = "bold " + Math.round(s * 0.32) + "px system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(paramLabel(param), x + s * 0.8, y + s * 0.81); c.restore(); } if (shy) { c.save(); c.font = "bold " + Math.round(s * 0.42) + "px system-ui, sans-serif"; c.fillStyle = "#000"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText("*", x + s * 0.82, y + s * 0.27); c.restore(); } return; }
+    if (im.complete && im.naturalWidth) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, s, s); if (param && pvalsOf(b).length) { c.save(); c.fillStyle = "#fff"; c.fillRect(x + s * 0.6, y + s * 0.6, s * 0.4, s * 0.4); c.fillStyle = "#000"; c.font = "bold " + Math.round(s * 0.32) + "px system-ui, sans-serif"; c.textAlign = "center"; c.textBaseline = "middle"; c.fillText(paramLabel(param), x + s * 0.8, y + s * 0.81); c.restore(); } return; }
   }
-  drawIcon(c, b.icon, x, y, s, param, shy, b.name);
+  drawIcon(c, b.icon, x, y, s, param, b.name);
 }
 
 
@@ -482,7 +481,7 @@ function drawLayer(room, layer, o, s) {
     var xy = k.split(","), cx = +xy[0], cy = +xy[1], x = o[0] + cx * s, y = o[1] + cy * s;
     if (b.icon === "wall" && !b.image) { walls.push([cx, cy, x, y]); continue; }
     ctx.save(); ctx.fillStyle = "#fff"; ctx.fillRect(x + 1, y + 1, s - 2, s - 2); ctx.restore();
-    drawBlock(ctx, b, x, y, s, v.p, !!v.s);
+    drawBlock(ctx, b, x, y, s, v.p);
   }
   if (!walls.length) return;
   ctx.save(); ctx.fillStyle = "#fff"; ctx.beginPath();
@@ -566,7 +565,7 @@ cv.addEventListener("pointercancel", upHandler);
 function cancelPending() { pending = null; }
 
 function pickValue(v) {
-  curBlock = v.b; if (v.p) curParam[v.b] = v.p; curShy = !!v.s; tool = "brush";
+  curBlock = v.b; if (v.p) curParam[v.b] = v.p; tool = "brush";
   var b = blockByUid(v.b); buildTools(); buildBlockPanel(); render(); toast("Aufgenommen: " + (b ? b.name : "?"));
 }
 
@@ -678,13 +677,13 @@ cv.addEventListener("wheel", function (ev) {
 }, { passive: false });
 
 function curValidBlock() { var b = blockByUid(curBlock); return b && b.kind === mode ? b : null; }
-function cellValue() { var b = curValidBlock(); var v = { b: b.uid }, pv = pvalsOf(b); if (pv.length) v.p = curParam[b.uid] || pv[0]; if (b.shyOpt && curShy) v.s = 1; return v; }
+function cellValue() { var b = curValidBlock(); var v = { b: b.uid }, pv = pvalsOf(b); if (pv.length) v.p = curParam[b.uid] || pv[0]; return v; }
 function paintAt(ci, useTool) {
   var cells = ci.room[mode], f = mode === "design" ? 2 : 1;
   if (ci.x < 0 || ci.y < 0 || ci.x >= ci.room.w * f || ci.y >= ci.room.h * f) return false;
   if (useTool === "erase") { if (cells[ci.key]) { delete cells[ci.key]; return true; } return false; }
   var v = cellValue(), old = cells[ci.key];
-  if (old && old.b === v.b && old.p === v.p && !!old.s === !!v.s) return false;
+  if (old && old.b === v.b && old.p === v.p) return false;
   cells[ci.key] = v; return true;
 }
 function clipRoom(r) {
@@ -753,7 +752,7 @@ function buildBlockPanel() {
       var t = document.createElement("div"); t.innerHTML = '<div class="bn"></div><div class="bid"></div>';
       t.firstChild.textContent = b.name; t.lastChild.textContent = "ID " + b.id + (b.kind === "design" ? " · Design" : ""); t.style.minWidth = "0"; it.appendChild(t);
       it.onclick = function () {
-        if (curBlock !== b.uid) curShy = false; curBlock = b.uid; if (tool !== "rect") tool = "brush";
+        curBlock = b.uid; if (tool !== "rect") tool = "brush";
         if (b.kind !== mode) { mode = b.kind; toast(mode === "func" ? "Funktionsmodus (16×16)" : "Designmodus (8×8)"); }
         buildTools(); buildBlockPanel(); render(); autosave();
       };
@@ -765,7 +764,7 @@ function buildBlockPanel() {
 function buildParams() {
   var el = $("bpParams"); el.innerHTML = ""; var b = blockByUid(curBlock);
   if (!b || !(tool === "brush" || tool === "rect")) { el.classList.remove("show"); return; }
-  var pv = pvalsOf(b); if (!pv.length && !b.shyOpt) { el.classList.remove("show"); return; }
+  var pv = pvalsOf(b); if (!pv.length) { el.classList.remove("show"); return; }
   el.classList.add("show");
   if (pv.length) {
     var l = document.createElement("div"); l.className = "pl"; l.textContent = b.name + " – " + (b.plabel || "Wert"); el.appendChild(l);
@@ -773,7 +772,6 @@ function buildParams() {
     pv.forEach(function (v) { var x = document.createElement("button"); x.className = "pbtn" + ((curParam[b.uid] || pv[0]) === v ? " on" : ""); x.textContent = paramLabel(v); x.onclick = function () { curParam[b.uid] = v; buildBlockPanel(); updateStatus(); }; gr.appendChild(x); });
     el.appendChild(gr);
   }
-  if (b.shyOpt) { var s = document.createElement("button"); s.className = "pbtn" + (curShy ? " on" : ""); s.textContent = P.settings.blockNames ? "* lichtscheu" : "* scheu"; s.setAttribute("data-shy", "1"); s.style.cssText = "margin-top:6px;padding:0 10px;font-size:calc(14px*var(--fs));width:100%"; s.onclick = function () { curShy = !curShy; buildParams(); updateStatus(); }; el.appendChild(s); }
 }
 $("bpHide").onclick = function () { P.settings.showBlocks = false; resize(); updateStatus(); autosave(); };
 $("bpTab").onclick = function () { P.settings.showBlocks = true; resize(); updateStatus(); autosave(); };
@@ -818,7 +816,7 @@ function openRoomProps() {
 
 /* ================= export ================= */
 function cellCode(v) { var b = blockByUid(v.b); if (!b) return "??"; var c = ((b.code || "??") + "  ").slice(0, 2);
-  if (v.p) c = c.charAt(0) + String(v.p).charAt(0); if (v.s) c = c.charAt(0).toLowerCase() + c.charAt(1); return c; }
+  if (v.p) c = c.charAt(0) + String(v.p).charAt(0); return c; }
 function roomText(r) {
   var out = ["## Raum " + r.nr + (r.name ? " – " + r.name : ""), "", "- Position (Welt, Zellen): " + r.x + ", " + r.y, "- Größe: " + r.w + "x" + r.h,
     "- Dunkelheit: " + (r.dark || "–"), "- Notizen: " + (r.notes || "").replace(/\n/g, " / "), "", "Funktionsebene (16×16):", "```raum"];
@@ -830,9 +828,9 @@ function roomText(r) {
   return out.join("\n");
 }
 function legendText() {
-  var l = ["## Legende", "", "2 Zeichen pro Zelle, `. ` = leer. Koordinaten ab 0 oben links (x rechts, y unten). Bei Parametern ersetzt der Wert das 2. Zeichen, Kleinbuchstabe am Anfang = lichtscheu.", "",
+  var l = ["## Legende", "", "2 Zeichen pro Zelle, `. ` = leer. Koordinaten ab 0 oben links (x rechts, y unten). Bei Parametern ersetzt der Wert das 2. Zeichen.", "",
     "| ID | Kürzel | Name | Art | Parameter |", "|---|---|---|---|---|"];
-  sortedBlocks().forEach(function (b) { l.push("| " + b.id + " | `" + b.code + "` | " + b.name + " | " + (b.kind === "func" ? "Funktion" : "Design") + " | " + (b.pvals ? (b.plabel || "Wert") + ": " + b.pvals : "") + (b.shyOpt ? " · lichtscheu möglich" : "") + " |"); });
+  sortedBlocks().forEach(function (b) { l.push("| " + b.id + " | `" + b.code + "` | " + b.name + " | " + (b.kind === "func" ? "Funktion" : "Design") + " | " + (b.pvals ? (b.plabel || "Wert") + ": " + b.pvals : "") + " |"); });
   return l.join("\n");
 }
 function projectMd() { return ["# " + (P.dungeon || "Dungeon") + " – Räume", "", "- Format: " + FORMAT, "- Räume: " + P.rooms.length, "", legendText(), ""].concat(P.rooms.map(roomText)).join("\n\n"); }
@@ -910,7 +908,7 @@ document.querySelectorAll(".mitem").forEach(function (it) { it.addEventListener(
 $("fileOpen").addEventListener("change", function () {
   var f = this.files[0]; if (!f) return; var rd = new FileReader();
   rd.onload = function () { try { var o = JSON.parse(rd.result), np = o.P || o; if (!np.rooms || !np.blocks) throw new Error();
-      P = np; P.settings = Object.assign({}, SETTINGS_DEFAULT, P.settings || {}); selRoom = null; undoStack = []; redoStack = []; curBlock = null;
+      P = np; stripShy(P); P.settings = Object.assign({}, SETTINGS_DEFAULT, P.settings || {}); selRoom = null; undoStack = []; redoStack = []; curBlock = null;
       buildTools(); buildBlockPanel(); renderBlockEditor(); resize(); fitAll(); autosave(); toast("Projekt geöffnet."); }
     catch (e) { toast("Datei ist kein gültiges Planer-Projekt."); } };
   rd.readAsText(f); this.value = "";
@@ -953,7 +951,6 @@ function renderBlockEditor() {
     pl.onchange = function () { b.plabel = pl.value.trim(); commit(); };
     pvI.onchange = function () { b.pvals = pvI.value.split(",").map(function (s) { return s.trim().charAt(0); }).filter(function (s) { return s; }).join(","); commit(); };
     pt.appendChild(pl); pt.appendChild(document.createElement("br")); pt.appendChild(pvI); td(pt);
-    var sh = document.createElement("input"); sh.type = "checkbox"; sh.checked = !!b.shyOpt; sh.onchange = function () { b.shyOpt = sh.checked; commit(); }; td(sh).style.textAlign = "center";
     var imgBox = document.createElement("div"); imgBox.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
     if (b.image) imgBox.appendChild(btn("Entfernen", function () { b.image = null; delete imgCache[b.uid]; commit(); })); td(imgBox);
     td(btn("Löschen", function () { var n = usage(b.uid); if (!confirm("Block „" + b.name + "“ löschen?" + (n ? " Er ist " + n + "× gesetzt – diese Zellen werden geleert." : ""))) return;
@@ -969,7 +966,7 @@ function commit() { renderBlockEditor(); buildBlockPanel(); autosave(); }
 function addBlock(kind) {
   var maxId = 0; P.blocks.forEach(function (b) { if ((kind === "func" ? b.id < 100 : b.id >= 100) && b.id > maxId) maxId = b.id; });
   var id = maxId ? maxId + 1 : (kind === "func" ? 1 : 101); while (P.blocks.some(function (b) { return b.id === id; })) id++;
-  P.blocks.push({ uid: "b" + (P.nextUid++), id: id, name: kind === "func" ? "Neuer Block" : "Neues Design", kind: kind, toolbar: kind === "func" ? 2 : 3, code: "? ", icon: "letter", plabel: "", pvals: "", shyOpt: false, image: null });
+  P.blocks.push({ uid: "b" + (P.nextUid++), id: id, name: kind === "func" ? "Neuer Block" : "Neues Design", kind: kind, toolbar: kind === "func" ? 2 : 3, code: "? ", icon: "letter", plabel: "", pvals: "", image: null });
   commit();
 }
 $("b-addFunc").onclick = function () { addBlock("func"); };
