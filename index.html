@@ -40,16 +40,14 @@
   #blockPanel.hidden { display:none; }
   #bpHead { display:flex; align-items:center; justify-content:space-between; padding:8px 10px; border-bottom:1px solid var(--line); font-weight:700; }
   #bpHead button { border:1.5px solid var(--line); border-radius:8px; background:var(--paper); width:34px; height:30px; }
-  #bpList { flex:1; overflow-y:auto; padding:6px 6px 10px; }
+  #bpList { flex:1; overflow-y:auto; padding:0; }
   .grp { font-size:calc(12px*var(--fs)); font-weight:700; margin:10px 4px 4px; padding-bottom:3px; border-bottom:1px solid var(--line); }
-  .bitem { display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:8px; cursor:pointer; border:1.5px solid transparent; margin:2px 0; }
+  .bitem { display:flex; align-items:center; gap:8px; padding:7px 10px; cursor:pointer; border:0; border-bottom:1px dashed transparent; margin:0; }
   .bitem canvas { width:32px; height:32px; flex:0 0 32px; border-radius:4px; }
   .bitem .bn { font-size:calc(13px*var(--fs)); line-height:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .bitem .bid { font-size:calc(11px*var(--fs)); }
   .bitem.sel { background:var(--ink); color:var(--paper); } .bitem.sel canvas { filter:invert(1); }
   .bitem.off { opacity:1; } .bitem.off .bn { font-style:italic; } .bitem.off canvas { outline:1.5px dotted #000; }
-  .bitem.design { border-style:dashed; border-color:#000; }
-  .bitem.design.sel { border-color:#000; }
   #bpParams { border-top:1px solid var(--line); padding:8px; display:none; }
   #bpParams.show { display:block; }
   #bpParams .pl { font-size:calc(12px*var(--fs)); font-weight:700; margin-bottom:5px; }
@@ -60,29 +58,40 @@
   #main { position:fixed; left:188px; right:0; top:44px; bottom:0; overflow:hidden; }
   #cv { position:absolute; left:0; top:0; touch-action:none; transform-origin:0 0; }
   /* ---------- tools (unten) ---------- */
+  #zoomPop { position:fixed; z-index:31; display:none; background:var(--paper); border:1.5px solid var(--line); border-radius:12px; overflow:hidden; flex-direction:column; }
+  #zoomPop.show { display:flex; }
+  #zoomPop button { border:0; border-bottom:1px solid var(--line); background:var(--paper); padding:10px 22px; font-weight:600; text-align:center; }
+  #zoomPop button:last-child { border-bottom:0; } #zoomPop button.on { background:var(--ink); color:var(--paper); }
   #toolWrap { position:fixed; left:188px; right:0; bottom:12px; display:flex; justify-content:center; pointer-events:none; z-index:12; }
-  #toolbar { pointer-events:auto; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; display:flex; align-items:center; gap:2px; padding:5px 6px; max-width:calc(100% - 24px); overflow-x:auto; }
+  #toolbar { pointer-events:auto; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; display:flex; flex-wrap:wrap; justify-content:center; align-items:stretch; gap:0; padding:0; max-width:calc(100% - 16px); overflow:hidden; }
   #toolbar.hidden { display:none; }
-  .tb { border:none; background:var(--paper); border-radius:9px; padding:3px 4px 2px; display:flex; flex-direction:column; align-items:center; cursor:pointer; min-width:54px; }
+  .tb { border:none; background:var(--paper); border-radius:0; padding:7px 3px 5px; display:flex; flex-direction:column; align-items:center; justify-content:center; cursor:pointer; min-width:46px; user-select:none; }
+  #toolbar.compact .tb { min-width:38px; padding:7px 2px 5px; } #toolbar.compact .tb span { font-size:calc(9px*min(var(--fs),1.15)); letter-spacing:-.3px; }
+  #toolbar.nolabel .tb span { display:none; }
+  .tb .pct { height:32px; display:flex; align-items:center; font-weight:700; font-size:calc(14px*min(var(--fs),1.15)); white-space:nowrap; }
   .tb canvas { width:32px; height:32px; }
   .tb span { font-size:calc(10px*min(var(--fs),1.15)); line-height:12px; white-space:nowrap; letter-spacing:-.2px; }
   .tb.sel { background:var(--ink); color:var(--paper); } .tb.sel canvas { filter:invert(1); }
-  .vsep { width:1px; align-self:stretch; background:var(--line); margin:2px 6px; }
+  .vsep { width:1.5px; align-self:stretch; background:var(--line); margin:0; }
   .seg { display:flex; } .seg button { border:1.5px solid var(--line); background:var(--paper); min-width:44px; height:38px; font-weight:700; }
   .seg button:first-child { border-radius:9px 0 0 9px; } .seg button:last-child { border-radius:0 9px 9px 0; border-left:0; }
   .seg button.on { background:var(--ink); color:var(--paper); }
   .hidebtn { border:1.5px solid var(--line); background:var(--paper); border-radius:9px; height:38px; min-width:38px; font-size:calc(16px*var(--fs)); }
-  #toolTab { pointer-events:auto; display:none; border:1.5px solid var(--line); background:var(--paper); border-radius:12px; padding:6px 14px; font-size:calc(13px*var(--fs)); font-weight:700; }
-  #toolTab.show { display:block; }
+  #toolTab { pointer-events:auto; display:none; border:1.5px solid var(--line); background:var(--paper); border-radius:14px; padding:0; overflow:hidden; }
+  #toolTab.show { display:flex; }
   #bpTab { position:fixed; left:8px; top:54px; z-index:16; display:none; width:48px; height:48px; border:1.5px solid var(--line); border-radius:12px; background:var(--paper); padding:0; }
   #bpTab.show { display:flex; align-items:center; justify-content:center; }
   #bpTab svg { width:28px; height:28px; }
   #blockPanel.narrow #bpHead span, #blockPanel.narrow .bitem > div, #blockPanel.narrow .grp span.gt { display:none; }
-  #blockPanel.narrow .bitem { justify-content:center; padding:5px 2px; }
+  #blockPanel.narrow .bitem { justify-content:center; padding:7px 2px; }
   #blockPanel.narrow #bpHead { justify-content:center; padding:8px 4px; }
   #blockPanel.narrow .grp { text-align:center; margin:10px 2px 4px; }
   #blockPanel.narrow #bpParams .pl { font-size:calc(11px*var(--fs)); }
   #bpParams { max-height:42vh; overflow-y:auto; }
+  #bpFoot { border-top:1px solid var(--line); display:flex; flex-direction:column; align-items:center; padding:8px 4px 10px; cursor:pointer; user-select:none; }
+  #bpFoot .ring { width:44px; height:44px; border:2px solid var(--line); border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:calc(17px*min(var(--fs),1.15)); }
+  #bpFoot .cap { font-size:calc(11px*min(var(--fs),1.15)); margin-top:3px; white-space:nowrap; }
+  #blockPanel.narrow #bpFoot .cap { font-size:calc(10px*min(var(--fs),1.1)); }
   #blockPanel.narrow #bpParams { padding:6px 5px; }
   #blockPanel.narrow #bpParams .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
   #blockPanel.narrow .pbtn { min-width:0; height:32px; font-size:calc(14px*var(--fs)); padding:0; }
@@ -185,6 +194,7 @@
   <div class="menu" data-menu="settings"><div class="mlabel">Einstellungen</div><div class="mdrop">
     <div class="mitem check" data-act="toggleEink" id="mi-eink">E-Ink-Modus (Neuzeichnen erst beim Loslassen)</div>
     <div class="mitem check" data-act="togglePenBtn" id="mi-penbtn">Stifttaste radiert</div>
+    <div class="mitem check" data-act="toggleEraserUndo" id="mi-erundo">Radiererende macht rückgängig (statt radieren)</div>
     <div class="mitem check" data-act="togglePalm" id="mi-palm">Finger ignorieren, solange der Stift aufliegt</div>
     <div class="mitem check" data-act="toggleFingerPaint" id="mi-fpaint">Ein Finger malt beim Ziehen (statt verschieben)</div>
     <div class="msep"></div>
@@ -210,6 +220,7 @@
   <div id="bpHead"><span>Blöcke</span><button id="bpHide" title="Blockleiste ausblenden">‹</button></div>
   <div id="bpList"></div>
   <div id="bpParams"></div>
+  <div id="bpFoot" title="Nächste Blockleiste"><div class="ring" id="bpGrpNr">2</div><div class="cap" id="bpGrpCap">Leiste</div></div>
 </div>
 
 <div id="main">
@@ -250,8 +261,9 @@
 
 <button id="bpTab" title="Blockleiste anzeigen"><svg viewBox="0 0 30 30" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"><path d="M15 3 26 9v12l-11 6-11-6V9z"/><path d="M4 9l11 6 11-6M15 15v12"/></svg></button>
 <button id="gameExit">✕ Spielansicht beenden</button>
-<div id="toolWrap"><div id="toolbar"></div><button id="toolTab">▴ Werkzeuge</button></div>
+<div id="toolWrap"><div id="toolbar"></div><div id="toolTab" title="Werkzeugleiste anzeigen"></div></div>
 
+<div id="zoomPop"></div>
 <div id="modalBg"><div id="modal"></div></div>
 <div id="toast"></div>
 <input type="file" id="fileOpen" accept=".json,application/json" style="display:none">
@@ -260,9 +272,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.4.6", APP_VERSION = "0.4.6", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.4.7", APP_VERSION = "0.4.7", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -357,10 +369,11 @@ function updateStatus() {
   var tl = TOOLS.filter(function (t) { return t.id === tool; })[0];
   var what = (tool === "brush" || tool === "rect") ? (b ? b.name + (pvalsOf(b).length ? " " + paramLabel(curParam[b.uid] || pvalsOf(b)[0]) : "") : "kein Block") : "";
   $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + (mode === "func" ? "16×16" : "8×8") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
+  if ($("tbZoom")) $("tbZoom").textContent = Math.round(view.z / 24 * 100) + " %";
   var S = P.settings;
   var set = function (id, on) { $(id).classList.toggle("on", !!on); };
   set("mi-func", mode === "func"); set("mi-design", mode === "design"); set("mi-other", S.showOther);
-  set("mi-eink", S.eink); set("mi-dots", S.dots); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
+  set("mi-eink", S.eink); set("mi-dots", S.dots); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-erundo", S.eraserUndo); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
   set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks"); set("mi-pixedit", page === "pixels");
   set("mi-fontM", S.fontSize === "M"); set("mi-fontL", S.fontSize === "L"); set("mi-fontXL", S.fontSize === "XL"); set("mi-bold", S.bold);
   applyFont();
@@ -423,6 +436,14 @@ function drawIcon(c, icon, x, y, s, param, name) {
     case "t-erase": c.save(); c.translate(cx, cy); c.rotate(-0.7); c.strokeRect(-s * 0.32, -s * 0.16, s * 0.64, s * 0.32); c.fillRect(-s * 0.32, -s * 0.16, s * 0.24, s * 0.32); c.restore(); c.beginPath(); c.moveTo(x + s * 0.2, y + s * 0.88); c.lineTo(x + s * 0.85, y + s * 0.88); c.stroke(); break;
     case "t-rect": c.strokeRect(x + p, y + p * 1.3, s - 2 * p, s - 2.6 * p); hatch(c, x + p + 2, y + p * 1.3 + 2, Math.min(s - 2 * p, s - 2.6 * p) - 4, Math.max(3, s / 5)); break;
     case "t-pick": c.beginPath(); c.moveTo(x + s * 0.2, y + s * 0.8); c.lineTo(x + s * 0.62, y + s * 0.38); c.stroke(); c.beginPath(); c.arc(x + s * 0.7, y + s * 0.3, s * 0.13, 0, 7); c.fill(); c.beginPath(); c.moveTo(x + s * 0.15, y + s * 0.85); c.lineTo(x + s * 0.22, y + s * 0.78); c.stroke(); break;
+    case "t-undo": case "t-redo": c.save(); if (icon === "t-redo") { c.translate(x + s, 0); c.scale(-1, 1); c.translate(-x, 0); }
+      c.lineWidth = Math.max(1.5, s * 0.08); c.beginPath(); c.arc(cx + s * 0.04, cy + s * 0.06, s * 0.26, Math.PI * 1.05, Math.PI * 0.55, false); c.stroke();
+      c.beginPath(); c.moveTo(x + s * 0.12, y + s * 0.42); c.lineTo(x + s * 0.32, y + s * 0.2); c.lineTo(x + s * 0.4, y + s * 0.48); c.closePath(); c.fill(); c.restore(); break;
+    case "t-zin": case "t-zout": c.lineWidth = Math.max(1.5, s * 0.08); c.beginPath(); c.arc(x + s * 0.42, y + s * 0.42, s * 0.24, 0, 7); c.stroke();
+      c.beginPath(); c.moveTo(x + s * 0.6, y + s * 0.6); c.lineTo(x + s * 0.84, y + s * 0.84); c.moveTo(x + s * 0.31, y + s * 0.42); c.lineTo(x + s * 0.53, y + s * 0.42);
+      if (icon === "t-zin") { c.moveTo(x + s * 0.42, y + s * 0.31); c.lineTo(x + s * 0.42, y + s * 0.53); } c.stroke(); break;
+    case "t-down": case "t-up": c.lineWidth = Math.max(1.8, s * 0.09); c.beginPath(); var dy2 = icon === "t-down" ? 1 : -1;
+      c.moveTo(x + s * 0.25, cy - dy2 * s * 0.12); c.lineTo(cx, cy + dy2 * s * 0.14); c.lineTo(x + s * 0.75, cy - dy2 * s * 0.12); c.stroke(); break;
     case "t-text": letter("T", 0.62); c.beginPath(); c.moveTo(x + s * 0.25, y + s * 0.88); c.lineTo(x + s * 0.75, y + s * 0.88); c.stroke(); break;
     case "t-room": c.lineWidth = Math.max(1.5, s * 0.08); c.strokeRect(x + p, y + p * 1.5, s - 2 * p, s - 3 * p); c.fillRect(x + p, y + p * 0.6, s * 0.36, p * 0.9); letter("+", 0.45, s * 0.05, s * 0.06); break;
     default: letter((name || "?").charAt(0).toUpperCase(), 0.55);
@@ -562,11 +583,13 @@ var drag = null, rafPending = false, pointers = {}, pinch = null, pending = null
 function schedule() { if (rafPending) return; rafPending = true; requestAnimationFrame(function () { rafPending = false; render(); }); }
 function pos(ev) { var r = $("main").getBoundingClientRect(); return [ev.clientX - r.left, ev.clientY - r.top]; }
 function touchIds() { return Object.keys(pointers).filter(function (k) { return pointers[k].type === "touch"; }); }
-function isEraserPen(ev) { return ev.pointerType === "pen" && ((ev.buttons & 32) || ev.button === 5 || (P.settings.penBtnErase && (ev.buttons & 2))); }
+function isEraserEnd(ev) { return ev.pointerType === "pen" && ((ev.buttons & 32) || ev.button === 5); }
+function isEraserPen(ev) { return ev.pointerType === "pen" && ((isEraserEnd(ev) && !P.settings.eraserUndo) || (P.settings.penBtnErase && (ev.buttons & 2))); }
 
 cv.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
 cv.addEventListener("pointerdown", function (ev) {
   ev.preventDefault(); closeMenus();
+  if (P.settings.eraserUndo && isEraserEnd(ev)) { if (undoStack.length) { undo(); toast("Rückgängig"); } else toast("Nichts zum Rückgängigmachen."); return; }
   var p = pos(ev);
   pointers[ev.pointerId] = { x: p[0], y: p[1], type: ev.pointerType };
   try { cv.setPointerCapture(ev.pointerId); } catch (e) {}
@@ -612,7 +635,7 @@ cv.addEventListener("pointercancel", upHandler);
 function cancelPending() { pending = null; }
 
 function pickValue(v) {
-  curBlock = v.b; if (v.p) curParam[v.b] = v.p; tool = "brush";
+  curBlock = v.b; if (v.p) curParam[v.b] = v.p; tool = "brush"; var pb = blockByUid(v.b); if (pb) bpGroup = +pb.toolbar || 2;
   var b = blockByUid(v.b); buildTools(); buildBlockPanel(); render(); toast("Aufgenommen: " + (b ? b.name : "?"));
 }
 
@@ -763,35 +786,59 @@ function iconCanvas(drawFn, size) {
   c.width = size * dpr; c.height = size * dpr; var g = c.getContext("2d"); g.setTransform(dpr, 0, 0, dpr, 0, 0);
   g.fillStyle = "#fff"; g.fillRect(0, 0, size, size); drawFn(g, size); return c;
 }
+function tbBtn(icon, label, title, fn, sel) {
+  var b = document.createElement("div"); b.className = "tb" + (sel ? " sel" : ""); b.title = title || label;
+  b.appendChild(iconCanvas(function (g, sz) { drawIcon(g, icon, 2, 2, sz - 4); }));
+  if (P.settings.labels) { var sp = document.createElement("span"); sp.textContent = label; b.appendChild(sp); }
+  b.onclick = fn; return b;
+}
+function toggleZoomPop(anchor) {
+  var zp = $("zoomPop"); if (zp.classList.contains("show")) { zp.classList.remove("show"); return; }
+  zp.innerHTML = "";
+  ZOOMS.slice().reverse().forEach(function (z) { var b = document.createElement("button"); b.textContent = Math.round(z / 24 * 100) + " %"; if (Math.abs(view.z - z) < 0.01) b.className = "on";
+    b.onclick = function () { zp.classList.remove("show"); zoomTo(z); }; zp.appendChild(b); });
+  [["Raum einpassen", fitRoom], ["Alles zeigen", fitAll]].forEach(function (o) { var b = document.createElement("button"); b.textContent = o[0]; b.onclick = function () { zp.classList.remove("show"); o[1](); }; zp.appendChild(b); });
+  zp.classList.add("show"); var r = anchor.getBoundingClientRect(), h = zp.offsetHeight, w = zp.offsetWidth;
+  zp.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + "px"; zp.style.top = Math.max(50, r.top - h - 8) + "px";
+}
+function fitToolbar() {
+  var tb = $("toolbar"); tb.classList.remove("compact", "nolabel"); if (!P.settings.showTools || tb.offsetParent === null) return;
+  var one = function () { var f = tb.firstChild; return !f || tb.offsetHeight <= f.offsetHeight + 4; };
+  if (one()) return; tb.classList.add("compact"); if (one()) return; tb.classList.add("nolabel");
+}
+function vsep() { var d = document.createElement("div"); d.className = "vsep"; return d; }
 function buildTools() {
   var tb = $("toolbar"); tb.innerHTML = "";
   tb.classList.toggle("hidden", !P.settings.showTools); $("toolTab").classList.toggle("show", !P.settings.showTools);
-  TOOLS.forEach(function (t) {
-    var b = document.createElement("div"); b.className = "tb" + (tool === t.id ? " sel" : ""); b.title = t.name;
-    b.appendChild(iconCanvas(function (g, s) { drawIcon(g, t.icon, 2, 2, s - 4); }));
-    if (P.settings.labels) { var s = document.createElement("span"); s.textContent = t.name; b.appendChild(s); }
-    b.onclick = function () { tool = t.id; buildTools(); buildBlockPanel(); render(); };
-    tb.appendChild(b);
-  });
-  var sep = document.createElement("div"); sep.className = "vsep"; tb.appendChild(sep);
-  var seg = document.createElement("div"); seg.className = "seg";
-  [["func", "16"], ["design", "8"]].forEach(function (m) { var b = document.createElement("button"); b.textContent = m[1]; b.title = m[0] === "func" ? "Funktionsmodus 16×16" : "Designmodus 8×8"; if (mode === m[0]) b.className = "on"; b.onclick = function () { setMode(m[0]); }; seg.appendChild(b); });
-  tb.appendChild(seg);
-  var sep2 = document.createElement("div"); sep2.className = "vsep"; tb.appendChild(sep2);
-  var hb = document.createElement("button"); hb.className = "hidebtn"; hb.textContent = "▾"; hb.title = "Werkzeugleiste ausblenden"; hb.onclick = function () { P.settings.showTools = false; buildTools(); updateStatus(); autosave(); };
-  tb.appendChild(hb);
+  TOOLS.forEach(function (t) { tb.appendChild(tbBtn(t.icon, t.name, t.name, function () { tool = t.id; buildTools(); buildBlockPanel(); render(); }, tool === t.id)); });
+  tb.appendChild(vsep());
+  tb.appendChild(tbBtn("t-undo", "Zurück", "Rückgängig", function () { undo(); }));
+  tb.appendChild(tbBtn("t-redo", "Vor", "Wiederherstellen", function () { redo(); }));
+  tb.appendChild(vsep());
+  var zb = document.createElement("div"); zb.className = "tb"; zb.title = "Zoomstufe wählen";
+  var pc = document.createElement("div"); pc.className = "pct"; pc.id = "tbZoom"; zb.appendChild(pc);
+  if (P.settings.labels) { var zs = document.createElement("span"); zs.textContent = "Zoom"; zb.appendChild(zs); }
+  zb.onclick = function (ev) { ev.stopPropagation(); toggleZoomPop(zb); }; tb.appendChild(zb);
+  tb.appendChild(vsep());
+  tb.appendChild(tbBtn("t-down", "Zu", "Werkzeugleiste ausblenden", function () { P.settings.showTools = false; buildTools(); updateStatus(); autosave(); }));
+  fitToolbar();
+  var tt = $("toolTab"); tt.innerHTML = "";
+  tt.appendChild(tbBtn("t-up", "Werkzeuge", "Werkzeugleiste anzeigen", function () { P.settings.showTools = true; buildTools(); autosave(); }));
   updateStatus();
 }
-$("toolTab").onclick = function () { P.settings.showTools = true; buildTools(); autosave(); };
 
 /* ================= block panel (links) ================= */
+var bpGroup = null;
+function blockGroups() { var g = {}; sortedBlocks().forEach(function (b) { var k = +b.toolbar || 2; (g[k] = g[k] || []).push(b); }); return g; }
 function buildBlockPanel() {
   var list = $("bpList"); list.innerHTML = "";
-  var groups = {}; sortedBlocks().forEach(function (b) { var g = +b.toolbar || 2; (groups[g] = groups[g] || []).push(b); });
-  Object.keys(groups).sort(function (a, b) { return a - b; }).forEach(function (g) {
-    var bl = groups[g], hasF = bl.some(function (b) { return b.kind === "func"; }), hasD = bl.some(function (b) { return b.kind === "design"; });
-    var h = document.createElement("div"); h.className = "grp"; h.innerHTML = g + '<span class="gt"> · ' + (hasF && hasD ? "gemischt" : hasD ? "Design 8×8" : "Funktion 16×16") + "</span>"; list.appendChild(h);
-    bl.forEach(function (b) {
+  var groups = blockGroups(), keys = Object.keys(groups).map(Number).sort(function (a, b) { return a - b; });
+  if (bpGroup == null || keys.indexOf(bpGroup) < 0) { var cb = blockByUid(curBlock); bpGroup = cb && keys.indexOf(+cb.toolbar) >= 0 ? +cb.toolbar : keys[0]; }
+  $("bpGrpNr").textContent = bpGroup == null ? "–" : bpGroup;
+  var bl = groups[bpGroup] || [], hasF = bl.some(function (b) { return b.kind === "func"; }), hasD = bl.some(function (b) { return b.kind === "design"; });
+  $("bpGrpCap").textContent = P.settings.blockNames ? (hasF && hasD ? "Gemischt" : hasD ? "Design 8×8" : "Funktion 16×16") : (hasD && !hasF ? "8×8" : "16×16");
+  $("bpFoot").style.display = keys.length ? "" : "none";
+  bl.forEach(function (b) {
       var pv = pvalsOf(b), par = curParam[b.uid] || pv[0];
       var it = document.createElement("div");
       it.className = "bitem" + (b.kind === "design" ? " design" : "") + (curBlock === b.uid && (tool === "brush" || tool === "rect") ? " sel" : "") + (b.kind !== mode ? " off" : "");
@@ -806,7 +853,6 @@ function buildBlockPanel() {
         buildTools(); buildBlockPanel(); render(); autosave();
       };
       list.appendChild(it);
-    });
   });
   buildParams();
 }
@@ -823,6 +869,10 @@ function buildParams() {
   }
 }
 $("bpHide").onclick = function () { P.settings.showBlocks = false; resize(); updateStatus(); autosave(); };
+$("bpFoot").onclick = function () {
+  var keys = Object.keys(blockGroups()).map(Number).sort(function (a, b) { return a - b; }); if (!keys.length) return;
+  bpGroup = keys[(keys.indexOf(bpGroup) + 1) % keys.length]; buildBlockPanel(); $("bpList").scrollTop = 0;
+};
 $("bpTab").onclick = function () { P.settings.showBlocks = true; resize(); updateStatus(); autosave(); };
 $("gameExit").onclick = function () { setGame(false); };
 function setGame(on) { if (page !== "map") { setPage("map"); } gameView = on; preview = null; drag = null; resize(); updateStatus(); toast(on ? "Spielansicht – zum Beenden oben rechts tippen oder Taste P" : "Bearbeiten"); }
@@ -906,7 +956,7 @@ function closeMenus() { document.querySelectorAll(".menu.open").forEach(function
 document.querySelectorAll(".menu > .mlabel").forEach(function (l) {
   l.addEventListener("click", function (ev) { ev.stopPropagation(); var m = l.parentNode, was = m.classList.contains("open"); closeMenus(); if (!was) { m.classList.add("open"); placeDrop(m); } });
 });
-document.addEventListener("click", function (ev) { if (!ev.target.closest(".menu")) closeMenus(); });
+document.addEventListener("click", function (ev) { if (!ev.target.closest(".menu")) closeMenus(); if (!ev.target.closest("#zoomPop")) $("zoomPop").classList.remove("show"); });
 function needRoom() { var r = roomById(selRoom); if (!r) toast("Erst einen Raum auswählen (Auswahl-Werkzeug oder lange drücken)."); return r; }
 var ACTIONS = {
   newProject: function () { if (confirm("Neues Projekt anlegen? Nicht gespeicherte Änderungen gehen verloren (vorher „Projekt speichern“).")) { var s = P.settings; P = defaultProject(); P.settings = s; selRoom = null; undoStack = []; redoStack = []; curBlock = null; buildTools(); buildBlockPanel(); renderBlockEditor(); fitRoom(); autosave(); } },
@@ -931,22 +981,23 @@ var ACTIONS = {
   toggleGame: function () { setGame(!gameView); },
   fontM: function () { setFont("M"); }, fontL: function () { setFont("L"); }, fontXL: function () { setFont("XL"); },
   toggleBold: function () { P.settings.bold = !P.settings.bold; resize(); updateStatus(); autosave(); },
-  toggleBlockNames: function () { P.settings.blockNames = !P.settings.blockNames; resize(); updateStatus(); autosave(); },
+  toggleBlockNames: function () { P.settings.blockNames = !P.settings.blockNames; resize(); buildBlockPanel(); buildTools(); updateStatus(); autosave(); },
   toggleBlocks: function () { P.settings.showBlocks = !P.settings.showBlocks; resize(); updateStatus(); autosave(); },
   toggleTools: function () { P.settings.showTools = !P.settings.showTools; buildTools(); autosave(); },
   pageMap: function () { setPage("map"); }, pageBlocks: function () { setPage("blocks"); }, pagePixels: function () { openPix(curBlock); },
   toggleEink: function () { P.settings.eink = !P.settings.eink; updateStatus(); autosave(); },
+  toggleEraserUndo: function () { P.settings.eraserUndo = !P.settings.eraserUndo; updateStatus(); autosave(); },
   togglePenBtn: function () { P.settings.penBtnErase = !P.settings.penBtnErase; updateStatus(); autosave(); },
   togglePalm: function () { P.settings.palm = !P.settings.palm; updateStatus(); autosave(); },
   toggleFingerPaint: function () { P.settings.fingerPaint = !P.settings.fingerPaint; updateStatus(); autosave(); },
   toggleDots: function () { P.settings.dots = !P.settings.dots; render(); autosave(); },
   toggleLabels: function () { P.settings.labels = !P.settings.labels; buildTools(); autosave(); },
   help: function () { modal("<h3>Kurzanleitung</h3><div class='body help'>" +
-    "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende oder Stifttaste (falls vorhanden und vom Browser gemeldet) radiert.</p>" +
+    "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende antippen = Rückgängig (umstellbar unter Einstellungen). Stifttaste radiert (falls vorhanden und vom Browser gemeldet).</p>" +
     "<p><b>Ein Finger:</b> Tippen wendet das Werkzeug auf eine Zelle an. Ziehen verschiebt die Ansicht (umstellbar unter Einstellungen).</p>" +
     "<p><b>Zwei Finger:</b> verschieben und zoomen (Pinch). Beim Loslassen rastet der Zoom auf die nächste Stufe ein.</p>" +
-    "<p><b>Links:</b> Blöcke, gruppiert. Antippen = Pinsel mit diesem Block. Erneutes Antippen schaltet den Parameter weiter (Tür-Nr., Richtung …); die Auswahl steht auch unten in der Blockleiste.</p>" +
-    "<p><b>Unten:</b> Werkzeuge und der Schalter 16 / 8 (Funktions- bzw. Designmodus). ▾ blendet die Leiste aus.</p>" +
+    "<p><b>Links:</b> Blöcke einer Leiste. Der Kreis unten mit der Zahl schaltet zur nächsten Leiste. Antippen = Pinsel mit diesem Block. Erneutes Antippen schaltet den Parameter weiter (Tür-Nr., Richtung …); die Auswahl steht auch unten in der Blockleiste.</p>" +
+    "<p><b>Unten:</b> Werkzeuge, Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Funktions- bzw. Designmodus wechselt automatisch mit dem gewählten Block (oder Ansicht-Menü, Taste F/D).</p>" +
     "<p><b>Räume:</b> Bearbeiten → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
     "<p><b>Editor</b> (Menü): zwischen Mapeditor, Blockeditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Blocks (Funktion 16×16, Design 8×8, schwarz/weiß); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
     "<p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
@@ -1104,7 +1155,8 @@ function pxFill(x, y, v) {
     if (ev.pointerType === "pen") px.penAt = Date.now();
     else if (ev.pointerType === "touch" && P.settings.palm && Date.now() - px.penAt < 600) return;
     if (px.drawing) return; ev.preventDefault();
-    var eraseBtn = ev.button === 5 || (ev.buttons & 32) || (P.settings.penBtnErase && (ev.buttons & 2));
+    if (P.settings.eraserUndo && isEraserEnd(ev)) { ev.preventDefault(); if (px.undo.length) { pxAct("undo"); toast("Rückgängig"); } return; }
+    var eraseBtn = (ev.pointerType === "pen" && (ev.button === 5 || (ev.buttons & 32))) || (P.settings.penBtnErase && (ev.buttons & 2));
     var c = pxCell(ev); pxPush();
     if (px.tool === "fill") { pxFill(c[0], c[1], eraseBtn ? 0 : (px.d[c[1] * px.n + c[0]] ? 0 : 1)); pxSave(); pxRender(); return; }
     var v = (px.tool === "erase" || eraseBtn) ? 0 : 1;
@@ -1216,7 +1268,7 @@ if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
 
 /* ================= start ================= */
 var restored = loadSaved();
-window.addEventListener("resize", function () { resize(); if (page === "pixels") pxLayout(); });
+window.addEventListener("resize", function () { resize(); fitToolbar(); if (page === "pixels") pxLayout(); });
 setPage("map");
 if (!restored) { fitRoom(); toast("Willkommen! Hilfe → Kurzanleitung erklärt Stift und Gesten."); } else render();
 
