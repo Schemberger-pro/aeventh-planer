@@ -1,1 +1,1 @@
-{ "version": "4.3.0", "notes": "Lichtscheu entfernt (Option, Stern-Markierung und Kleinbuchstaben im Export)." }
+{ "version": "4.4.0", "app": "0.4.4", "notes": "Alpha 0.4.4: Versionsnummer neu (Alpha) und immer sichtbar oben links. Erneutes Antippen eines Blocks schaltet den Parameter weiter (z. B. Richtung)." }

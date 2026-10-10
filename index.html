@@ -18,7 +18,8 @@
   /* ---------- menubar (Boox-artig: flach, dünne Linie) ---------- */
   #menubar { position:fixed; left:0; right:0; top:0; height:44px; border-bottom:1.5px solid var(--line);
     display:flex; align-items:stretch; background:var(--paper); z-index:30; user-select:none; }
-  #menubar .brand { font-weight:700; padding:0 14px; display:flex; align-items:center; letter-spacing:.3px; border-right:1.5px solid var(--line); }
+  #menubar .brand { font-weight:700; padding:0 14px; display:flex; flex-direction:column; justify-content:center; line-height:1.1; letter-spacing:.3px; border-right:1.5px solid var(--line); }
+  #verTag { font-size:calc(11px*min(var(--fs),1.15)); font-weight:600; letter-spacing:0; white-space:nowrap; }
   .menu { position:relative; }
   .menu > .mlabel { height:100%; padding:0 10px; font-size:calc(15px*min(var(--fs),1.1)); white-space:nowrap; display:flex; align-items:center; cursor:pointer; }
   .menu.open > .mlabel { background:var(--ink); color:var(--paper); }
@@ -124,7 +125,7 @@
 <body>
 
 <div id="menubar">
-  <div class="brand">ÆVENTH</div>
+  <div class="brand"><span>ÆVENTH</span><span id="verTag"></span></div>
   <div class="menu" data-menu="file"><div class="mlabel">Datei</div><div class="mdrop">
     <div class="mitem" data-act="newProject">Neues Projekt</div>
     <div class="mitem" data-act="openProject">Projekt öffnen …</div>
@@ -221,7 +222,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "V4.3", APP_VERSION = "4.3.0", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.4.4", APP_VERSION = "0.4.4", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
 
@@ -293,6 +294,7 @@ function autosave() {
   }, 400);
 }
 function stripShy(p) { (p.blocks || []).forEach(function (b) { delete b.shyOpt; }); (p.rooms || []).forEach(function (r) { ["func", "design"].forEach(function (k) { var m = r[k] || {}; for (var key in m) if (m[key] && m[key].s) delete m[key].s; }); }); }
+$("verTag").textContent = VERSION;
 function loadSaved() {
   try {
     var s = localStorage.getItem(KEY); if (!s) return false;
@@ -752,6 +754,8 @@ function buildBlockPanel() {
       var t = document.createElement("div"); t.innerHTML = '<div class="bn"></div><div class="bid"></div>';
       t.firstChild.textContent = b.name; t.lastChild.textContent = "ID " + b.id + (b.kind === "design" ? " · Design" : ""); t.style.minWidth = "0"; it.appendChild(t);
       it.onclick = function () {
+        var wasSel = curBlock === b.uid && (tool === "brush" || tool === "rect");
+        if (wasSel && pv.length > 1) { var nx = pv[(pv.indexOf(curParam[b.uid] || pv[0]) + 1) % pv.length]; curParam[b.uid] = nx; toast(b.name + " – " + (b.plabel || "Wert") + ": " + paramLabel(nx)); updateStatus(); }
         curBlock = b.uid; if (tool !== "rect") tool = "brush";
         if (b.kind !== mode) { mode = b.kind; toast(mode === "func" ? "Funktionsmodus (16×16)" : "Designmodus (8×8)"); }
         buildTools(); buildBlockPanel(); render(); autosave();
@@ -896,7 +900,7 @@ var ACTIONS = {
     "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende oder Stifttaste (falls vorhanden und vom Browser gemeldet) radiert.</p>" +
     "<p><b>Ein Finger:</b> Tippen wendet das Werkzeug auf eine Zelle an. Ziehen verschiebt die Ansicht (umstellbar unter Einstellungen).</p>" +
     "<p><b>Zwei Finger:</b> verschieben und zoomen (Pinch). Beim Loslassen rastet der Zoom auf die nächste Stufe ein.</p>" +
-    "<p><b>Links:</b> Blöcke, gruppiert. Antippen = Pinsel mit diesem Block. Parameter (Tür-Nr., Richtung …) erscheinen unten in der Blockleiste.</p>" +
+    "<p><b>Links:</b> Blöcke, gruppiert. Antippen = Pinsel mit diesem Block. Erneutes Antippen schaltet den Parameter weiter (Tür-Nr., Richtung …); die Auswahl steht auch unten in der Blockleiste.</p>" +
     "<p><b>Unten:</b> Werkzeuge und der Schalter 16 / 8 (Funktions- bzw. Designmodus). ▾ blendet die Leiste aus.</p>" +
     "<p><b>Räume:</b> Bearbeiten → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
     "<p><b>Editor</b> (Menü): zwischen Mapeditor und Blockeditor wechseln.</p>" +
@@ -991,8 +995,8 @@ function checkUpdate(manual) {
   if (!/^https?:/.test(location.protocol)) { if (manual) toast("Update-Suche geht nur in der Web-App, nicht in der lokalen Datei."); return; }
   if (!navigator.onLine) { if (manual) toast("Keine Internetverbindung – Update-Suche später erneut versuchen."); return; }
   fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (v) {
-    if (cmpVer(v.version, APP_VERSION) > 0) {
-      if (manual) modal("<h3>Update verfügbar</h3><div class='body help'><p>Installiert: " + APP_VERSION + "<br>Neu: <b>" + esc(v.version) + "</b></p>" + (v.notes ? "<p>" + esc(v.notes) + "</p>" : "") + "<p>Deine Räume und Blöcke bleiben erhalten.</p></div>", function () { applyUpdate(); }, "Jetzt aktualisieren");
+    var nv = v.app || v.version; if (cmpVer(nv, APP_VERSION) > 0) {
+      if (manual) modal("<h3>Update verfügbar</h3><div class='body help'><p>Installiert: " + APP_VERSION + "<br>Neu: <b>" + esc(nv) + "</b></p>" + (v.notes ? "<p>" + esc(v.notes) + "</p>" : "") + "<p>Deine Räume und Blöcke bleiben erhalten.</p></div>", function () { applyUpdate(); }, "Jetzt aktualisieren");
       else toast("Update " + v.version + " verfügbar – Hilfe → Nach Update suchen");
     } else if (manual) toast("Du hast die neueste Version (" + APP_VERSION + ").");
   }).catch(function () { if (manual) toast("Update-Server nicht erreichbar."); });
