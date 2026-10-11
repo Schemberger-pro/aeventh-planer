@@ -6,6 +6,14 @@ Online: https://schemberger-pro.github.io/aeventh-planer/
 - Update: im Planer **Hilfe → Nach Update suchen**.
 - Daten (Räume, Blöcke) bleiben nur im Browser des Geräts. Sicherung: **Datei → Projekt speichern**.
 
-Versionierung: Alpha 0.x.y (1.0 = fertig).
-Release: `APP_VERSION` in `index.html`, `VERSION` in `sw.js` und `app` in `version.json` gemeinsam erhöhen.
-`version` in `version.json` war nur für den Umstieg von 4.3.0 auf 0.4.4 nötig (alte Versionen lesen nur dieses Feld); ab 0.4.5 einfach gleich `app` setzen.
+## Versionierung
+
+**Alpha JJJJ.WW.Build** – z. B. `Alpha 2026.41.1`
+
+- `JJJJ` = Jahr, `WW` = ISO-Kalenderwoche (zweistellig, 01–53), `Build` = laufende Nummer innerhalb der Woche, beginnt jede Woche bei 1.
+- Um den Jahreswechsel gilt das ISO-Wochenjahr (z. B. Mo 29.12.2025 = `2026.01.x`).
+- „Alpha“ bleibt, bis die App fertig ist; danach Beta bzw. Release (Phase im Namen, Schema bleibt).
+- Vorgänger: 0.4.4 – 0.9.2 (semantisch). 2026.41.1 ist die erste Version im neuen Schema; die Update-Prüfung vergleicht numerisch, alte Installationen erkennen sie daher als neuer.
+
+Release: `APP_VERSION`/`VERSION` in `index.html`, `VERSION` in `sw.js` sowie `app` und `version` in `version.json` gemeinsam setzen.
+`deploy_planer.sh` bricht ab, wenn die drei Dateien nicht übereinstimmen oder das Format nicht passt.
