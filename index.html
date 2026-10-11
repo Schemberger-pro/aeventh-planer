@@ -314,9 +314,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.7.0", APP_VERSION = "0.7.0", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.7.1", APP_VERSION = "0.7.1", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -469,12 +469,12 @@ function updateStatus() {
   var r = roomById(selRoom), b = blockByUid(curBlock);
   var tl = TOOLS.filter(function (t) { return t.id === tool; })[0];
   var what = (tool === "brush" || tool === "rect") ? (b ? b.name + (pvalsOf(b).length ? " " + paramLabel(curParam[b.uid] || pvalsOf(b)[0]) : "") : "kein Objekt") : "";
-  $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + ((layerById(mode) || {}).num || "") + " " + ((layerById(mode) || {}).name || "") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
+  $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + ((layerById(mode) || {}).num || "") + " " + ((layerById(mode) || {}).name || "") + (P.settings.soloLayer || !P.settings.showOther ? " (allein)" : "") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
   if ($("tbZoom")) $("tbZoom").textContent = Math.round(view.z / 24 * 100) + " %";
   var S = P.settings;
   var set = function (id, on) { var e = $(id); if (e) e.classList.toggle("on", !!on); };
   ["select","hand","move","brush","erase","rect","pick","text"].forEach(function (t) { set("mi-t-" + t, page === "map" && tool === t); });
-  set("mi-other", S.showOther);
+  set("mi-other", S.showOther && !S.soloLayer);
   set("mi-eink", S.eink); set("mi-dots", +S.raster > 0); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-erundo", S.eraserUndo); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
   set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks"); set("mi-pixedit", page === "pixels");
   set("mi-fontM", S.fontSize === "M"); set("mi-fontL", S.fontSize === "L"); set("mi-fontXL", S.fontSize === "XL"); set("mi-bold", S.bold);
@@ -641,7 +641,7 @@ function drawRoom(room) {
   if (o[0] > CW || o[1] > CH || o[0] + W < 0 || o[1] + H < -30) { room.__label = null; return; }
   ctx.fillStyle = "#fff"; ctx.fillRect(o[0], o[1], W, H);
   drawRaster(room, o, z);
-  P.layers.forEach(function (l) { if (!l.visible || l.id === "move") return; var a = l.id === mode ? 1 : (P.settings.showOther ? 0.3 : 0); if (a <= 0) return;
+  P.layers.forEach(function (l) { if (!l.visible || l.id === "move") return; var a = l.id === mode ? 1 : (P.settings.soloLayer ? 0 : P.settings.showOther ? 0.3 : 0); if (a <= 0) return;
     ctx.save(); ctx.globalAlpha = a; if (l.id === "func") drawLayer(room, "func", o, z); else drawObjs(room, l.id, o, z, false); ctx.restore(); });
   room.texts.forEach(function (t) {
     ctx.save(); ctx.font = "bold " + Math.max(10, Math.round(z * 0.55)) + "px 'Comic Sans MS','Chalkboard SE','Comic Neue',cursive,sans-serif"; ctx.textBaseline = "middle";
@@ -740,7 +740,7 @@ function findDoor(n, ex, ey) { var hit = null; P.rooms.forEach(function (r) { fo
 function cellCenter(c) { return w2s(c[0] + 0.5, c[1] + 0.5); }
 function arrowHead(a, b, sz) { var ang = Math.atan2(b[1] - a[1], b[0] - a[0]); ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - sz * Math.cos(ang - 0.45), b[1] - sz * Math.sin(ang - 0.45)); ctx.lineTo(b[0] - sz * Math.cos(ang + 0.45), b[1] - sz * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill(); }
 function drawPaths() {
-  var L = layerById("move"); if (!L || !L.visible || !P.paths || !P.paths.length) return; var z = view.z;
+  var L = layerById("move"); if (!L || !L.visible || !P.paths || !P.paths.length) return; if (mode !== "move" && (P.settings.soloLayer || !P.settings.showOther)) return; var z = view.z;
   ctx.save(); ctx.globalAlpha = mode === "move" ? 1 : 0.55; ctx.strokeStyle = "#000"; ctx.fillStyle = "#000"; ctx.lineJoin = "round"; ctx.lineCap = "round";
   P.paths.forEach(function (pa, idx) {
     var sel = pa === activeSim, lw = Math.max(2, z * (pa.kind === "sim" ? 0.16 : 0.1)), ah = Math.max(7, z * 0.42);
@@ -1262,8 +1262,8 @@ function buildLayerMenu() {
     d.appendChild(it);
   });
   var sep = document.createElement("div"); sep.className = "msep"; d.appendChild(sep);
-  [["nextLayer", "Nächste Ebene"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden"], ["layerSettings", "Ebenen verwalten …"]].forEach(function (a) {
-    var it = document.createElement("div"); it.className = "mitem"; it.setAttribute("data-act", a[0]); it.textContent = a[1];
+  [["nextLayer", "Nächste Ebene"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden"], ["toggleSolo", "Nur aktive Ebene anzeigen", P.settings.soloLayer], ["toggleOther", "Andere Ebenen blass anzeigen", P.settings.showOther && !P.settings.soloLayer], ["layerSettings", "Ebenen verwalten …"]].forEach(function (a) {
+    var it = document.createElement("div"); it.className = "mitem" + (a.length > 2 ? " check" + (a[2] ? " on" : "") : ""); it.setAttribute("data-act", a[0]); it.textContent = a[1];
     it.onclick = function (ev) { ev.stopPropagation(); closeMenus(); ACTIONS[a[0]](); }; d.appendChild(it);
   });
   updateMenuKeys();
@@ -1298,7 +1298,7 @@ var KEYDEFS = [
   ["Raum", [["newRoom", "Neuer Raum", "N"], ["roomProps", "Eigenschaften", "Enter"], ["dupRoom", "Duplizieren", "Ctrl+D"], ["borderWall", "Rand mit Wand füllen", ""], ["clearRoom", "Ebene leeren", ""], ["delRoom", "Raum löschen", "Delete"]]],
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
     ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
-  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
+  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["toggleSolo", "Nur aktive Ebene anzeigen", "Shift+O"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
   ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
 ];
 var KEYLABEL = {}; KEYDEFS.forEach(function (g) { g[1].forEach(function (k) { KEYLABEL[k[0]] = k[1]; }); });
@@ -1466,7 +1466,8 @@ var ACTIONS = {
   newRoom: function () { var x = 0, y = 0; if (P.rooms.length) { var last = P.rooms[P.rooms.length - 1]; x = last.x + last.w; y = last.y; }
     pushUndo(); var r = addRoomLayers(newRoom(nextNr(), x, y)); P.rooms.push(r); selRoom = r.rid; fitRoom(); toast("Raum " + r.nr + " angelegt."); },
   roomProps: openRoomProps,
-  layerSettings: function () { openLayerSettings(); }, layer1: function () { setMode("bg"); }, layer3: function () { setMode("fg"); }, layer4: function () { setMode("move"); },
+  layerSettings: function () { openLayerSettings(); },
+  toggleSolo: function () { P.settings.soloLayer = !P.settings.soloLayer; render(); updateStatus(); autosave(); toast(P.settings.soloLayer ? "Nur aktive Ebene" : "Alle Ebenen"); }, layer1: function () { setMode("bg"); }, layer3: function () { setMode("fg"); }, layer4: function () { setMode("move"); },
   nextLayer: function () { $("bpFoot").onclick(); },
   toggleLayerVis: function () { var l = layerById(mode); if (!l) return; l.visible = !l.visible; render(); autosave(); toast("„" + l.name + "“ " + (l.visible ? "eingeblendet" : "ausgeblendet")); },
   settings: function () { openSettings(); }, keysHelp: function () { openSettings("keys"); },
@@ -1484,7 +1485,7 @@ var ACTIONS = {
   delRoom: function () { var r = needRoom(); if (!r) return; if (!confirm("Raum " + r.nr + " löschen?")) return; pushUndo(); P.rooms.splice(P.rooms.indexOf(r), 1); selRoom = null; render(); autosave(); },
   zoomIn: function () { zoomStep(1); }, zoomOut: function () { zoomStep(-1); }, fitRoom: fitRoom, fitAll: fitAll,
   modeFunc: function () { setMode("func"); }, modeDesign: function () { setMode("design"); },
-  toggleOther: function () { P.settings.showOther = !P.settings.showOther; render(); autosave(); },
+  toggleOther: function () { if (P.settings.soloLayer) { P.settings.soloLayer = false; P.settings.showOther = true; } else P.settings.showOther = !P.settings.showOther; render(); updateStatus(); autosave(); toast(P.settings.showOther ? "Andere Ebenen blass" : "Andere Ebenen ausgeblendet"); },
   toggleGame: function () { setGame(!gameView); },
   fontM: function () { setFont("M"); }, fontL: function () { setFont("L"); }, fontXL: function () { setFont("XL"); },
   toggleBold: function () { P.settings.bold = !P.settings.bold; resize(); updateStatus(); autosave(); },

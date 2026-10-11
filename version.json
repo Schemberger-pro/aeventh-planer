@@ -1,1 +1,1 @@
-{ "version": "0.7.0", "app": "0.7.0", "notes": "Neue Ebene 4 Bewegung: Spielerwege per Rutsch-Simulation (nach GDD-Regeln) oder frei zeichnen." }
+{ "version": "0.7.1", "app": "0.7.1", "notes": "Ebenen-Menü: Nur aktive Ebene anzeigen (⇧O) und Andere Ebenen blass anzeigen." }
