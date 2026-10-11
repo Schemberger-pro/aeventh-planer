@@ -91,7 +91,8 @@
   #blockPanel.narrow .bitem > div { display:none; }
   #blockPanel.narrow .grp { text-align:center; margin:10px 2px 4px; }
   #blockPanel.narrow #bpParams .pl { font-size:calc(11px*var(--fs)); }
-  #bpFloat { position:fixed; z-index:17; display:none; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; overflow:hidden; flex-wrap:wrap; max-width:calc(100vw - 80px); }
+  #bpFloat { position:fixed; z-index:17; display:none; flex-direction:column; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; overflow-x:hidden; overflow-y:auto; max-height:calc(100vh - 64px); }
+  #bpFloat .tb { min-width:52px; }
   #bpFloat.show { display:flex; }
   #bpFloat .tb .pv { height:32px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:calc(17px*min(var(--fs),1.15)); }
   #blockPanel.narrow #bpParams { padding:6px 5px; }
@@ -293,9 +294,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.4.10", APP_VERSION = "0.4.10", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.4.11", APP_VERSION = "0.4.11", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: true, floatSecs: "4", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -625,7 +626,7 @@ function runPenOnce(a, undoFn, redoFn, canUndo, canRedo) {
 
 cv.addEventListener("contextmenu", function (ev) { ev.preventDefault(); });
 cv.addEventListener("pointerdown", function (ev) {
-  ev.preventDefault(); closeMenus();
+  ev.preventDefault(); closeMenus(); closeFloat();
   var pa = penAction(ev);
   if (pa && runPenOnce(pa, undo, redo, function () { return undoStack.length > 0; }, function () { return redoStack.length > 0; })) return;
   var p = pos(ev);
@@ -891,14 +892,19 @@ function buildBlockPanel() {
         curBlock = b.uid; if (tool !== "rect") tool = "brush";
         if (b.kind !== mode) { mode = b.kind; toast(mode === "func" ? "Funktionsmodus (16×16)" : "Designmodus (8×8)"); }
         buildTools(); buildBlockPanel(); render(); autosave();
+        if (pv.length) openFloat(); else closeFloat();
       };
       list.appendChild(it);
   });
   buildParams();
 }
+var floatOpen = false, floatT = null;
+function openFloat() { floatOpen = true; buildParams(); armFloat(); }
+function armFloat() { clearTimeout(floatT); var sec = +P.settings.floatSecs; if (floatOpen && sec > 0) floatT = setTimeout(closeFloat, sec * 1000); }
+function closeFloat() { clearTimeout(floatT); if (!floatOpen) return; floatOpen = false; buildParams(); }
 function buildParams() {
   var el = $("bpFloat"); el.innerHTML = ""; el.classList.remove("show"); var b = blockByUid(curBlock);
-  if (!b || !(tool === "brush" || tool === "rect") || page !== "map" || gameView || !P.settings.showBlocks) return;
+  if (!floatOpen || !b || !(tool === "brush" || tool === "rect") || page !== "map" || gameView || !P.settings.showBlocks) return;
   var pv = pvalsOf(b); if (!pv.length) return;
   var item = $("bpList").querySelector(".bitem.sel"); if (!item) return;
   var cur = curParam[b.uid] || pv[0], hasImg = b.imgV && Object.keys(b.imgV).length;
@@ -908,7 +914,7 @@ function buildParams() {
     if (useIcon) c.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 2, 2, sz - 4, v); }));
     else { var t = document.createElement("div"); t.className = "pv"; t.textContent = paramLabel(v); c.appendChild(t); }
     if (useIcon && P.settings.labels) { var sp = document.createElement("span"); sp.textContent = paramLabel(v); c.appendChild(sp); }
-    c.onclick = function (ev) { ev.stopPropagation(); curParam[b.uid] = v; buildBlockPanel(); updateStatus(); render(); };
+    c.onclick = function (ev) { ev.stopPropagation(); curParam[b.uid] = v; floatOpen = false; clearTimeout(floatT); buildBlockPanel(); updateStatus(); render(); };
     el.appendChild(c);
   });
   el.classList.add("show"); placeFloat();
@@ -986,7 +992,8 @@ function openSettings(tab) {
   var html = '<h3>Einstellungen</h3><div class="stabs">' + [["view", "Darstellung"], ["pen", "Stift & Touch"], ["keys", "Tastenkürzel"]].map(function (t) { return '<button data-tab="' + t[0] + '" class="' + (setTab === t[0] ? "on" : "") + '">' + t[1] + "</button>"; }).join("") + '</div><div class="body sbody">';
   if (setTab === "view") {
     html += seg("fontSize", "Schriftgröße", [["M", "Normal"], ["L", "Groß"], ["XL", "Sehr groß"]]) + tog("bold", "Fette Schrift") +
-      tog("labels", "Namen unter Werkzeugen") + tog("blockNames", "Namen in der Blockleiste") + tog("dots", "Punktraster") + tog("showOther", "Andere Ebene blass anzeigen") +
+      tog("labels", "Namen unter Werkzeugen") + tog("blockNames", "Namen in der Blockleiste") +
+      seg("floatSecs", "Variantenleiste ausblenden nach", [["2", "2 s"], ["4", "4 s"], ["8", "8 s"], ["15", "15 s"], ["0", "Nie"]], "Die Leiste neben dem Block schließt sich nach der Auswahl, beim Tippen auf die Karte oder nach dieser Zeit.") + tog("dots", "Punktraster") + tog("showOther", "Andere Ebene blass anzeigen") +
       tog("eink", "E-Ink-Modus", "Beim Zoomen und Verschieben erst beim Loslassen neu zeichnen.");
   } else if (setTab === "pen") {
     var acts = [["undo", "Rückgängig"], ["redo", "Wiederh."], ["erase", "Radieren"], ["hand", "Verschieben"], ["pick", "Pipette"], ["none", "Nichts"]];
@@ -1149,7 +1156,7 @@ var ACTIONS = {
     "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende antippen = Rückgängig, Stifttaste = Radieren. Beides ist umstellbar unter Datei → Einstellungen → Stift & Touch.</p>" +
     "<p><b>Ein Finger:</b> Tippen wendet das Werkzeug auf eine Zelle an. Ziehen verschiebt die Ansicht (umstellbar unter Datei → Einstellungen).</p>" +
     "<p><b>Zwei Finger:</b> verschieben und zoomen (Pinch). Beim Loslassen rastet der Zoom auf die nächste Stufe ein.</p>" +
-    "<p><b>Links:</b> Blöcke einer Leiste. Der Kreis unten mit der Zahl schaltet zur nächsten Leiste. Antippen = Pinsel mit diesem Block. Erneutes Antippen schaltet den Parameter weiter (Tür-Nr., Richtung …); die Auswahl steht auch unten in der Blockleiste.</p>" +
+    "<p><b>Links:</b> Blöcke einer Leiste. Der Kreis unten mit der Zahl schaltet zur nächsten Leiste. Antippen = Pinsel mit diesem Block. Daneben öffnet sich eine senkrechte Leiste mit den Varianten (Tür-Nr., Richtung …); sie schließt sich nach der Auswahl oder nach einigen Sekunden (einstellbar). Erneutes Antippen schaltet die Variante weiter.</p>" +
     "<p><b>Unten:</b> Werkzeuge, Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Funktions- bzw. Designmodus wechselt automatisch mit dem gewählten Block (oder Ansicht-Menü).</p>" +
     "<p><b>Räume:</b> Menü Raum → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
     "<p><b>Editor</b> (Menü): zwischen Mapeditor, Blockeditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Blocks (Funktion 16×16, Design 8×8, schwarz/weiß); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +

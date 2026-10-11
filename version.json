@@ -1,1 +1,1 @@
-{ "version": "0.4.10", "app": "0.4.10", "notes": "Varianten (Richtung, Tür-Nr. …) erscheinen als schwebende Leiste neben dem gewählten Block. Auswahlpunkte im Menü mittig." }
+{ "version": "0.4.11", "app": "0.4.11", "notes": "Variantenleiste senkrecht; schließt nach Auswahl, beim Tippen auf die Karte oder nach einstellbarer Zeit (Datei → Einstellungen)." }
