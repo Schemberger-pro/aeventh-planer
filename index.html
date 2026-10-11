@@ -264,7 +264,6 @@
     <div class="mitem" data-act="dupRoom">Duplizieren</div>
     <div class="msep"></div>
     <div class="mitem" data-act="borderWall">Rand mit Wand füllen</div>
-    <div class="mitem" data-act="clearRoom">Aktuelle Ebene leeren</div>
     <div class="msep"></div>
     <div class="mitem" data-act="centerGuides">Hilfslinien in die Mitte setzen</div>
     <div class="mitem" data-act="clearGuides">Hilfslinien entfernen</div>
@@ -349,7 +348,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.9.0", APP_VERSION = "0.9.0", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.9.1", APP_VERSION = "0.9.1", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { showGuides: true, guideCenter: false, eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
@@ -1321,7 +1320,7 @@ function buildLayerMenu() {
     d.appendChild(it);
   });
   var sep = document.createElement("div"); sep.className = "msep"; d.appendChild(sep);
-  [["nextLayer", "Nächste Ebene"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden"], ["toggleSolo", "Nur aktive Ebene anzeigen", P.settings.soloLayer], ["toggleOther", "Andere Ebenen blass anzeigen", P.settings.showOther && !P.settings.soloLayer], ["layerSettings", "Ebenen verwalten …"]].forEach(function (a) {
+  [["nextLayer", "Nächste Ebene"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden"], ["toggleSolo", "Nur aktive Ebene anzeigen", P.settings.soloLayer], ["toggleOther", "Andere Ebenen blass anzeigen", P.settings.showOther && !P.settings.soloLayer], ["clearRoom", "Aktive Ebene im Raum leeren …"], ["layerSettings", "Ebenen verwalten …"]].forEach(function (a) {
     var it = document.createElement("div"); it.className = "mitem" + (a.length > 2 ? " check" + (a[2] ? " on" : "") : ""); it.setAttribute("data-act", a[0]); it.textContent = a[1];
     it.onclick = function (ev) { ev.stopPropagation(); closeMenus(); ACTIONS[a[0]](); }; d.appendChild(it);
   });
@@ -1354,10 +1353,10 @@ var KEYDEFS = [
   ["Bearbeiten", [["undo", "Rückgängig", "Ctrl+Z"], ["redo", "Wiederherstellen", "Ctrl+Shift+Z"]]],
   ["Werkzeuge", [["tool_select", "Auswahl", "V"], ["tool_hand", "Hand", "H"], ["tool_move", "Verschieben", "M"], ["tool_brush", "Pinsel", "B"], ["tool_erase", "Radierer", "E"], ["tool_rect", "Rechteck", "R"], ["tool_pick", "Pipette", "I"], ["tool_text", "Text", "T"], ["tool_guide", "Hilfslinie", "G"]]],
   ["Objekte", [["nextParam", "Variante weiterschalten", "Q"]]],
-  ["Raum", [["newRoom", "Neuer Raum", "N"], ["roomProps", "Eigenschaften", "Enter"], ["dupRoom", "Duplizieren", "Ctrl+D"], ["borderWall", "Rand mit Wand füllen", ""], ["centerGuides", "Hilfslinien in die Mitte", ""], ["clearGuides", "Hilfslinien entfernen", ""], ["clearRoom", "Ebene leeren", ""], ["delRoom", "Raum löschen", "Delete"]]],
+  ["Raum", [["newRoom", "Neuer Raum", "N"], ["roomProps", "Eigenschaften", "Enter"], ["dupRoom", "Duplizieren", "Ctrl+D"], ["borderWall", "Rand mit Wand füllen", ""], ["centerGuides", "Hilfslinien in die Mitte", ""], ["clearGuides", "Hilfslinien entfernen", ""], ["delRoom", "Raum löschen", "Delete"]]],
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
     ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGuides", "Hilfslinien an/aus", "Shift+G"], ["toggleCenter", "Raummitte an/aus", ""], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
-  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["toggleSolo", "Nur aktive Ebene anzeigen", "Shift+O"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
+  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["toggleSolo", "Nur aktive Ebene anzeigen", "Shift+O"], ["layerSettings", "Ebenen verwalten", "Ctrl+L", ["clearRoom", "Aktive Ebene im Raum leeren", ""]]]],
   ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
 ];
 var KEYLABEL = {}; KEYDEFS.forEach(function (g) { g[1].forEach(function (k) { KEYLABEL[k[0]] = k[1]; }); });
@@ -1610,7 +1609,13 @@ var ACTIONS = {
     var wall = P.blocks.filter(function (b) { return b.icon === "wall" && b.kind === "func"; })[0]; if (!wall) { toast("Kein Block mit Symbol „Wand“ vorhanden."); return; }
     pushUndo(); for (var x = 0; x < r.w; x++) { r.func[x + ",0"] = { b: wall.uid }; r.func[x + "," + (r.h - 1)] = { b: wall.uid }; }
     for (var y = 0; y < r.h; y++) { r.func["0," + y] = { b: wall.uid }; r.func[(r.w - 1) + "," + y] = { b: wall.uid }; } render(); autosave(); },
-  clearRoom: function () { var r = needRoom(); if (!r) return; if (!confirm("Ebene „" + layerById(mode).name + "“ von Raum " + r.nr + " leeren?")) return; pushUndo(); if (isObjLayer(mode)) r.objs[mode] = []; else r.func = {}; render(); autosave(); },
+  clearRoom: function () { var r = needRoom(); if (!r) return; var L = layerById(mode), inR = function (c) { return roomAtWorld(c[0] + 0.5, c[1] + 0.5) === r; };
+    var pathsIn = (P.paths || []).filter(function (pa) { return pa.kind === "sim" ? inR(pa.start) : pa.pts && pa.pts.length && inR(pa.pts[0]); });
+    var n = mode === "move" ? pathsIn.length : isObjLayer(mode) ? (r.objs[mode] || []).length : Object.keys(r.func).length;
+    if (!n) { toast("Ebene " + L.num + " " + L.name + " ist in Raum " + r.nr + " schon leer."); return; }
+    if (!confirm("Alles auf Ebene " + L.num + " „" + L.name + "“ in Raum " + r.nr + " löschen (" + n + (mode === "move" ? " Weg(e)" : " Einträge") + ")? Andere Ebenen und Räume bleiben unverändert.")) return;
+    pushUndo(); if (mode === "move") P.paths = P.paths.filter(function (pa) { return pathsIn.indexOf(pa) < 0; }); else if (isObjLayer(mode)) r.objs[mode] = []; else r.func = {};
+    activeSim = null; render(); autosave(); toast("Ebene " + L.num + " in Raum " + r.nr + " geleert – Rückgängig möglich."); },
   delRoom: function () { var r = needRoom(); if (!r) return; if (!confirm("Raum " + r.nr + " löschen?")) return; pushUndo(); P.rooms.splice(P.rooms.indexOf(r), 1); selRoom = null; render(); autosave(); },
   zoomIn: function () { zoomStep(1); }, zoomOut: function () { zoomStep(-1); }, fitRoom: fitRoom, fitAll: fitAll,
   modeFunc: function () { setMode("func"); }, modeDesign: function () { setMode("design"); },
