@@ -92,6 +92,12 @@
   #blockPanel.narrow .bitem > div { display:none; }
   #blockPanel.narrow .grp { text-align:center; margin:10px 2px 4px; }
   #blockPanel.narrow #bpParams .pl { font-size:calc(11px*var(--fs)); }
+  #simPad { position:fixed; right:14px; bottom:96px; z-index:18; display:none; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; padding:8px; }
+  #simPad.show { display:block; }
+  #simPad .sp-h { font-weight:700; font-size:calc(12px*min(var(--fs),1.15)); text-align:center; margin-bottom:6px; max-width:170px; }
+  #simPad .sp-g { display:grid; grid-template-columns:repeat(3, 52px); grid-auto-rows:52px; gap:4px; }
+  #simPad button { border:1.5px solid var(--line); border-radius:10px; background:var(--paper); font-size:calc(22px*min(var(--fs),1.15)); font-weight:700; }
+  #simPad button[data-sd=done] { background:var(--ink); color:var(--paper); }
   #bpFloat { position:fixed; z-index:17; display:none; flex-direction:column; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; overflow-x:hidden; overflow-y:auto; max-height:calc(100vh - 64px); }
   #bpFloat .tb { min-width:52px; }
   #bpFloat.show { display:flex; }
@@ -299,6 +305,7 @@
 
 <div id="zoomPop"></div>
 <div id="bpFloat"></div>
+<div id="simPad"><div class="sp-h" id="spInfo">Richtung wählen</div><div class="sp-g"><span></span><button data-sd="u">↑</button><span></span><button data-sd="l">←</button><button data-sd="back" title="Letzte Richtung entfernen">⌫</button><button data-sd="r">→</button><span></span><button data-sd="d">↓</button><button data-sd="done" title="Fertig">✓</button></div></div>
 <div id="modalBg"><div id="modal"></div></div>
 <div id="toast"></div>
 <input type="file" id="fileOpen" accept=".json,application/json" style="display:none">
@@ -307,9 +314,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.6.2", APP_VERSION = "0.6.2", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.7.0", APP_VERSION = "0.7.0", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -336,8 +343,8 @@ function defaultBlocks() {
       plabel: b[6] || "", pvals: b[7] || "", image: null, layer: b[2] === "func" ? 2 : 3, par: 1, anim: "off" }; if (o.layer !== 2) { o.w = 8; o.h = 8; } return o;
   });
 }
-var LAYERS = [{ id: "bg", num: 1, name: "Hintergrund" }, { id: "func", num: 2, name: "Spielebene" }, { id: "fg", num: 3, name: "Vordergrund" }];
-var LAYER_TYPES = { bg: "Hintergrund", func: "Spielebene", fg: "Vordergrund" };
+var LAYERS = [{ id: "bg", num: 1, name: "Hintergrund" }, { id: "func", num: 2, name: "Spielebene" }, { id: "fg", num: 3, name: "Vordergrund" }, { id: "move", num: 4, name: "Bewegung" }];
+var LAYER_TYPES = { bg: "Hintergrund", func: "Spielebene", fg: "Vordergrund", move: "Bewegung" };
 function layerById(id) { return (P.layers || []).filter(function (l) { return l.id === id; })[0]; }
 function layerByNum(n) { return (P.layers || []).filter(function (l) { return l.num === +n; })[0]; }
 function isObjLayer(id) { return id === "bg" || id === "fg"; }
@@ -373,7 +380,9 @@ function ensureLayers(p) {
     if (p.settings && p.settings.raster == null) p.settings.raster = p.settings.dots === false ? "0" : "16";
     p.layersV3 = true;
   }
-  if (!p.layers || p.layers.length !== 3) p.layers = LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: true }; });
+  if (!p.layers || p.layers.length < 3) p.layers = LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: true }; });
+  if (!p.layers.some(function (l) { return l.id === "move"; })) p.layers.push({ id: "move", num: 4, name: "Bewegung", visible: true });
+  if (!p.paths) p.paths = [];
   (p.rooms || []).forEach(function (r) { if (!r.func) r.func = {}; r.objs = r.objs || {}; if (!r.objs.bg) r.objs.bg = []; if (!r.objs.fg) r.objs.fg = []; });
   migrateBlocks(p);
 }
@@ -443,12 +452,13 @@ function loadSaved() {
     return true;
   } catch (e) { return false; }
 }
-function snapshot() { return JSON.stringify(P.rooms); }
+function snapshot() { return JSON.stringify({ r: P.rooms, p: P.paths || [] }); }
+function restoreSnap(t) { var o = JSON.parse(t); if (Array.isArray(o)) { P.rooms = o; return; } P.rooms = o.r; P.paths = o.p || []; }
 var redoKeep = [];
 function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 60) undoStack.shift(); redoKeep = redoStack; redoStack = []; }
 function dropUndo() { undoStack.pop(); redoStack = redoKeep; }
-function undo() { if (page === "pixels") return pxAct("undo"); if (!undoStack.length) return; redoStack.push(snapshot()); P.rooms = JSON.parse(undoStack.pop()); if (selRoom && !roomById(selRoom)) selRoom = null; render(); autosave(); }
-function redo() { if (page === "pixels") return pxAct("redo"); if (!redoStack.length) return; undoStack.push(snapshot()); P.rooms = JSON.parse(redoStack.pop()); render(); autosave(); }
+function undo() { if (page === "pixels") return pxAct("undo"); if (!undoStack.length) return; redoStack.push(snapshot()); restoreSnap(undoStack.pop()); activeSim = null; showSimPad(); if (selRoom && !roomById(selRoom)) selRoom = null; render(); autosave(); }
+function redo() { if (page === "pixels") return pxAct("redo"); if (!redoStack.length) return; undoStack.push(snapshot()); restoreSnap(redoStack.pop()); activeSim = null; showSimPad(); render(); autosave(); }
 
 /* ================= toast / status ================= */
 var toastT = null;
@@ -523,6 +533,12 @@ function drawIcon(c, icon, x, y, s, param, name) {
       pts.forEach(function (q) { c.beginPath(); c.arc(x + q[0] * s, y + q[1] * s, Math.max(0.8, s * 0.05), 0, 7); c.fill(); }); break;
     case "rune": c.lineWidth = Math.max(1, s * 0.06); c.beginPath(); c.moveTo(cx, y + p); c.lineTo(cx, y + s - p); c.moveTo(cx, y + s * 0.35); c.lineTo(x + s * 0.72, y + p); c.moveTo(cx, y + s * 0.55); c.lineTo(x + s * 0.3, y + s * 0.38); c.stroke(); break;
     case "t-select": c.beginPath(); c.moveTo(x + s * 0.28, y + s * 0.15); c.lineTo(x + s * 0.28, y + s * 0.8); c.lineTo(x + s * 0.45, y + s * 0.64); c.lineTo(x + s * 0.58, y + s * 0.88); c.lineTo(x + s * 0.68, y + s * 0.83); c.lineTo(x + s * 0.56, y + s * 0.6); c.lineTo(x + s * 0.78, y + s * 0.6); c.closePath(); c.stroke(); break;
+    case "t-path": c.save(); c.setLineDash([Math.max(2, s * 0.1), Math.max(2, s * 0.08)]); c.lineWidth = Math.max(1.5, s * 0.08); c.beginPath(); c.moveTo(x + s * 0.15, y + s * 0.8); c.lineTo(x + s * 0.15, y + s * 0.3); c.lineTo(x + s * 0.7, y + s * 0.3); c.stroke(); c.restore();
+      c.beginPath(); c.moveTo(x + s * 0.88, y + s * 0.3); c.lineTo(x + s * 0.68, y + s * 0.17); c.lineTo(x + s * 0.68, y + s * 0.43); c.closePath(); c.fill(); break;
+    case "t-sim": c.lineWidth = Math.max(1.6, s * 0.09); c.beginPath(); c.moveTo(x + s * 0.12, cy); c.lineTo(x + s * 0.58, cy); c.stroke();
+      c.beginPath(); c.moveTo(x + s * 0.7, cy); c.lineTo(x + s * 0.52, y + s * 0.34); c.lineTo(x + s * 0.52, y + s * 0.66); c.closePath(); c.fill();
+      c.lineWidth = Math.max(1.2, s * 0.05); c.strokeRect(x + s * 0.74, y + s * 0.16, s * 0.16, s * 0.68); c.beginPath(); for (var hy = 0; hy < 4; hy++) { c.moveTo(x + s * 0.74, y + s * (0.32 + hy * 0.16)); c.lineTo(x + s * 0.9, y + s * (0.18 + hy * 0.16)); } c.stroke(); break;
+    case "t-check": c.lineWidth = Math.max(1.5, s * 0.07); c.strokeRect(x + s * 0.2, y + s * 0.2, s * 0.6, s * 0.6); if (param) { c.lineWidth = Math.max(2, s * 0.1); c.beginPath(); c.moveTo(x + s * 0.3, cy); c.lineTo(x + s * 0.45, y + s * 0.66); c.lineTo(x + s * 0.72, y + s * 0.34); c.stroke(); } break;
     case "t-move": c.save(); c.setLineDash([Math.max(2, s * 0.09), Math.max(1.5, s * 0.07)]); c.lineWidth = Math.max(1.3, s * 0.06); c.strokeRect(x + s * 0.14, y + s * 0.14, s * 0.46, s * 0.46); c.restore();
       c.fillRect(x + s * 0.4, y + s * 0.4, s * 0.46, s * 0.46); c.fillStyle = "#fff"; c.lineWidth = Math.max(1.4, s * 0.07); c.strokeStyle = "#fff";
       c.beginPath(); c.moveTo(x + s * 0.5, y + s * 0.5); c.lineTo(x + s * 0.76, y + s * 0.76); c.stroke(); c.beginPath(); c.moveTo(x + s * 0.78, y + s * 0.78); c.lineTo(x + s * 0.6, y + s * 0.76); c.lineTo(x + s * 0.76, y + s * 0.6); c.closePath(); c.fill(); c.fillStyle = "#000"; c.strokeStyle = "#000"; break;
@@ -604,6 +620,7 @@ function render() {
     var w0 = s2w(0, 0), w1 = s2w(CW, CH); ctx.fillStyle = "#000"; dotsIn(w0[0], w0[1], w1[0], w1[1], step, r);
   }
   P.rooms.forEach(gameView ? drawRoomGame : drawRoom);
+  if (!gameView) drawPaths();
   if (preview && !gameView) {
     var a, pw, ph;
     if (preview.type === "orect" || preview.type === "cell") { a = w2s(preview.wx, preview.wy); pw = preview.ww * z; ph = preview.wh * z; }
@@ -617,14 +634,14 @@ function render() {
 function drawRoomGame(room) {
   var z = view.z, o = w2s(room.x, room.y), W = room.w * z, H = room.h * z; room.__label = null;
   if (o[0] > CW || o[1] > CH || o[0] + W < 0 || o[1] + H < 0) return;
-  P.layers.forEach(function (l) { if (!l.visible) return; if (l.id === "func") drawLayer(room, "func", o, z); else drawObjs(room, l.id, o, z, true); });
+  P.layers.forEach(function (l) { if (!l.visible || l.id === "move") return; if (l.id === "func") drawLayer(room, "func", o, z); else drawObjs(room, l.id, o, z, true); });
 }
 function drawRoom(room) {
   var z = view.z, o = w2s(room.x, room.y), W = room.w * z, H = room.h * z;
   if (o[0] > CW || o[1] > CH || o[0] + W < 0 || o[1] + H < -30) { room.__label = null; return; }
   ctx.fillStyle = "#fff"; ctx.fillRect(o[0], o[1], W, H);
   drawRaster(room, o, z);
-  P.layers.forEach(function (l) { if (!l.visible) return; var a = l.id === mode ? 1 : (P.settings.showOther ? 0.3 : 0); if (a <= 0) return;
+  P.layers.forEach(function (l) { if (!l.visible || l.id === "move") return; var a = l.id === mode ? 1 : (P.settings.showOther ? 0.3 : 0); if (a <= 0) return;
     ctx.save(); ctx.globalAlpha = a; if (l.id === "func") drawLayer(room, "func", o, z); else drawObjs(room, l.id, o, z, false); ctx.restore(); });
   room.texts.forEach(function (t) {
     ctx.save(); ctx.font = "bold " + Math.max(10, Math.round(z * 0.55)) + "px 'Comic Sans MS','Chalkboard SE','Comic Neue',cursive,sans-serif"; ctx.textBaseline = "middle";
@@ -693,6 +710,125 @@ function drawLayer(room, layer, o, s) {
   ctx.stroke(); ctx.restore();
 }
 
+
+
+/* ================= Ebene 4: Bewegung (Wege planen) ================= */
+var pathKind = "sim", activeSim = null, DIRV = { u: [0, -1], d: [0, 1], l: [-1, 0], r: [1, 0] }, DIRA = { u: "↑", d: "↓", l: "←", r: "→" };
+var SOLID = { wall: 1, stone: 1, breakable: 1 };
+function worldCell(wx, wy) { var r = roomAtWorld(wx + 0.5, wy + 0.5); if (!r) return null; var v = r.func[(wx - r.x) + "," + (wy - r.y)]; return { room: r, v: v, b: v ? blockByUid(v.b) : null }; }
+function isSolidAt(wx, wy) { var c = worldCell(wx, wy); if (!c) return true; if (!c.b) return false; var ic = c.b.icon;
+  if (SOLID[ic]) return true; if (ic === "yoku") return !!P.settings.simYoku; return false; }
+function simulate(path) {
+  var pos = path.start.slice(), segs = [], stops = [pos.slice()], events = [], guard = 0;
+  path.dirs.forEach(function (d, di) {
+    var v = DIRV[d], from = pos.slice(), pts = [pos.slice()], moved = 0, seen = {};
+    while (guard++ < 5000) {
+      var nx = pos[0] + v[0], ny = pos[1] + v[1];
+      if (isSolidAt(nx, ny)) break;
+      pos = [nx, ny]; moved++; pts.push(pos.slice());
+      var c = worldCell(nx, ny), ic = c && c.b ? c.b.icon : "";
+      if (ic === "hazard" || ic === "flyer" || ic === "shooter" || ic === "teleporter") events.push({ t: "hit", at: pos.slice() });
+      if (ic === "crystal") events.push({ t: "crystal", at: pos.slice() });
+      if (ic === "door" && c.v.p) { var tgt = findDoor(c.v.p, nx, ny); if (tgt) { var key = tgt.join(",") + d; if (seen[key]) break; seen[key] = 1; events.push({ t: "door", at: pos.slice(), to: tgt.slice(), n: c.v.p }); segs.push({ d: d, pts: pts, i: di }); pos = tgt.slice(); pts = [pos.slice()]; continue; } }
+      if (ic === "redirect" && P.settings.simRedirect) { events.push({ t: "redir", at: pos.slice() }); break; }
+    }
+    segs.push({ d: d, pts: pts, i: di, blocked: moved === 0 }); stops.push(pos.slice());
+  });
+  return { segs: segs, stops: stops, events: events, end: pos };
+}
+function findDoor(n, ex, ey) { var hit = null; P.rooms.forEach(function (r) { for (var k in r.func) { var v = r.func[k]; if (hit || v.p !== n) continue; var b = blockByUid(v.b); if (!b || b.icon !== "door") continue; var a = k.split(","), wx = r.x + +a[0], wy = r.y + +a[1]; if (wx !== ex || wy !== ey) hit = [wx, wy]; } }); return hit; }
+function cellCenter(c) { return w2s(c[0] + 0.5, c[1] + 0.5); }
+function arrowHead(a, b, sz) { var ang = Math.atan2(b[1] - a[1], b[0] - a[0]); ctx.beginPath(); ctx.moveTo(b[0], b[1]); ctx.lineTo(b[0] - sz * Math.cos(ang - 0.45), b[1] - sz * Math.sin(ang - 0.45)); ctx.lineTo(b[0] - sz * Math.cos(ang + 0.45), b[1] - sz * Math.sin(ang + 0.45)); ctx.closePath(); ctx.fill(); }
+function drawPaths() {
+  var L = layerById("move"); if (!L || !L.visible || !P.paths || !P.paths.length) return; var z = view.z;
+  ctx.save(); ctx.globalAlpha = mode === "move" ? 1 : 0.55; ctx.strokeStyle = "#000"; ctx.fillStyle = "#000"; ctx.lineJoin = "round"; ctx.lineCap = "round";
+  P.paths.forEach(function (pa, idx) {
+    var sel = pa === activeSim, lw = Math.max(2, z * (pa.kind === "sim" ? 0.16 : 0.1)), ah = Math.max(7, z * 0.42);
+    if (pa.kind === "hand") {
+      if (pa.pts.length < 2) return; ctx.save(); ctx.lineWidth = lw; ctx.setLineDash([lw * 2.2, lw * 1.6]); ctx.beginPath();
+      pa.pts.forEach(function (c, i) { var q = cellCenter(c); if (i) ctx.lineTo(q[0], q[1]); else ctx.moveTo(q[0], q[1]); }); ctx.stroke(); ctx.restore();
+      var a = cellCenter(pa.pts[pa.pts.length - 2]), b = cellCenter(pa.pts[pa.pts.length - 1]); arrowHead(a, b, ah);
+      var s0 = cellCenter(pa.pts[0]); ctx.beginPath(); ctx.arc(s0[0], s0[1], lw * 1.3, 0, 7); ctx.fill(); return; }
+    var sim = simulate(pa); pa.__sim = sim;
+    ctx.lineWidth = lw * (sel ? 1.25 : 1);
+    sim.segs.forEach(function (sg) { if (sg.pts.length < 2) return; var a = cellCenter(sg.pts[0]), b = cellCenter(sg.pts[sg.pts.length - 1]);
+      ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); arrowHead(a, b, ah); });
+    sim.events.forEach(function (e) { var q = cellCenter(e.at), r = z * 0.28;
+      if (e.t === "hit") { ctx.save(); ctx.lineWidth = Math.max(2, z * 0.09); ctx.beginPath(); ctx.moveTo(q[0] - r, q[1] - r); ctx.lineTo(q[0] + r, q[1] + r); ctx.moveTo(q[0] + r, q[1] - r); ctx.lineTo(q[0] - r, q[1] + r); ctx.stroke(); ctx.restore(); }
+      else if (e.t === "crystal") { ctx.save(); ctx.font = "bold " + Math.round(z * 0.6) + "px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.lineWidth = 3; ctx.strokeStyle = "#fff"; ctx.strokeText("✦", q[0], q[1] - z * 0.55); ctx.fillStyle = "#000"; ctx.fillText("✦", q[0], q[1] - z * 0.55); ctx.restore(); }
+      else if (e.t === "door") { var t = cellCenter(e.to); ctx.save(); ctx.setLineDash([3, 4]); ctx.lineWidth = Math.max(1.5, z * 0.06); ctx.beginPath(); ctx.moveTo(q[0], q[1]); ctx.quadraticCurveTo((q[0] + t[0]) / 2, Math.min(q[1], t[1]) - z * 2, t[0], t[1]); ctx.stroke(); ctx.restore(); } });
+    sim.stops.forEach(function (c, i) { var q = cellCenter(c), r = Math.max(5, z * 0.3);
+      ctx.save(); ctx.fillStyle = "#fff"; ctx.lineWidth = Math.max(1.5, z * 0.07); ctx.beginPath(); ctx.arc(q[0], q[1], r, 0, 7); ctx.fill(); ctx.stroke();
+      ctx.fillStyle = "#000"; ctx.font = "bold " + Math.round(r * 1.15) + "px system-ui, sans-serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.fillText(i === 0 ? "S" : String(i), q[0], q[1] + 1); ctx.restore(); });
+    if (sel) { var e0 = cellCenter(sim.end); ctx.save(); ctx.setLineDash([5, 4]); ctx.lineWidth = 2; ctx.strokeRect(e0[0] - z * 0.6, e0[1] - z * 0.6, z * 1.2, z * 1.2); ctx.restore(); }
+  });
+  ctx.restore();
+}
+function buildMovePanel(list, L) {
+  $("bpGrpCap").textContent = "Ebene " + L.num + " · " + L.name + (L.visible ? "" : " (aus)");
+  var items = [["sim", "t-sim", "Rutsch-Simulation", "Start antippen, dann Richtungen"], ["hand", "t-path", "Weg zeichnen", "Frei skizzieren, rastet im 16er-Raster"],
+    ["simRedirect", "t-check", "Mit Richtungswechsel", "Hält an Richtungswechsel-Punkten"], ["simYoku", "t-check", "Erscheinende Blöcke da", "Sonst gleitet man durch"]];
+  items.forEach(function (it) {
+    var isTog = it[0] === "simRedirect" || it[0] === "simYoku", on = isTog ? !!P.settings[it[0]] : (pathKind === it[0] && tool === "brush");
+    var el = document.createElement("div"); el.className = "bitem" + (!isTog && on ? " sel" : "");
+    el.appendChild(iconCanvas(function (g, sz) { drawIcon(g, it[1], 2, 2, sz - 4, isTog ? on : null); }));
+    var t = document.createElement("div"); t.innerHTML = '<div class="bn"></div><div class="bid"></div>'; t.firstChild.textContent = it[2]; t.lastChild.textContent = it[3]; t.style.minWidth = "0"; el.appendChild(t);
+    el.title = it[2];
+    el.onclick = function () { if (isTog) { P.settings[it[0]] = !P.settings[it[0]]; toast(it[2] + ": " + (P.settings[it[0]] ? "an" : "aus")); }
+      else { pathKind = it[0]; tool = "brush"; buildTools(); } buildBlockPanel(); render(); autosave(); };
+    list.appendChild(el);
+  });
+  closeFloat();
+}
+function pathHit(p) { var best = null, bd = 1e9; (P.paths || []).forEach(function (pa) {
+    var pts = pa.kind === "hand" ? pa.pts : (pa.__sim || simulate(pa)).segs.reduce(function (a, sg) { return a.concat([sg.pts[0], sg.pts[sg.pts.length - 1]]); }, [pa.start]);
+    for (var i = 0; i < pts.length; i++) { var a = cellCenter(pts[i]), b = cellCenter(pts[Math.min(i + 1, pts.length - 1)]), d = segDist(p, a, b); if (d < bd) { bd = d; best = pa; } } });
+  return bd < Math.max(14, view.z * 0.6) ? best : null; }
+function segDist(p, a, b) { var dx = b[0] - a[0], dy = b[1] - a[1], l = dx * dx + dy * dy, t = l ? Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / l)) : 0; var x = a[0] + t * dx - p[0], y = a[1] + t * dy - p[1]; return Math.sqrt(x * x + y * y); }
+function pathCell(p) { var w = s2w(p[0], p[1]); return [Math.floor(w[0]), Math.floor(w[1])]; }
+function pathDown(p, useTool, byTouch) {
+  if (!P.paths) P.paths = [];
+  if (useTool === "erase") { pushUndo(); drag = { type: "perase", changed: false, byTouch: byTouch, undoPushed: true }; pathMove(p); return; }
+  if (useTool === "pick" || useTool === "move" || useTool === "select") { var h = pathHit(p); if (h && h.kind === "sim") { activeSim = h; showSimPad(); render(); } else if (useTool === "pick" || useTool === "move") toast("Auf Ebene 4: Rutsch-Weg antippen, um ihn weiterzuführen."); return; }
+  if (useTool !== "brush") { toast("Auf Ebene 4 gibt es nur Zeichnen, Radierer und Antippen zum Weiterführen."); return; }
+  var c = pathCell(p);
+  if (pathKind === "hand") { pushUndo(); var pa = { id: "w" + Date.now().toString(36), kind: "hand", pts: [c] }; P.paths.push(pa); drag = { type: "hpath", path: pa, byTouch: byTouch, undoPushed: true }; schedule(); return; }
+  var h2 = pathHit(p); if (h2 && h2.kind === "sim") { if (h2 !== activeSim) { activeSim = h2; showSimPad(); render(); } else toast("Richtung über das Pfeilfeld wählen – ✓ beendet den Weg."); return; }
+  if (isSolidAt(c[0], c[1])) { toast(worldCell(c[0], c[1]) ? "Startfeld ist blockiert." : "Start muss in einem Raum liegen."); return; }
+  pushUndo(); var sp = { id: "w" + Date.now().toString(36), kind: "sim", start: c, dirs: [] }; P.paths.push(sp); activeSim = sp; showSimPad(); render(); autosave();
+}
+function pathMove(p) {
+  if (drag.type === "perase") { var h = pathHit(p); if (h) { P.paths.splice(P.paths.indexOf(h), 1); if (h === activeSim) { activeSim = null; showSimPad(); } drag.changed = true; schedule(); } return; }
+  var pts = drag.path.pts, last = pts[pts.length - 1], c = pathCell(p); if (c[0] === last[0] && c[1] === last[1]) return;
+  var dx = c[0] - last[0], dy = c[1] - last[1], n = Math.abs(dx) >= Math.abs(dy) ? [c[0], last[1]] : [last[0], c[1]];
+  if (n[0] === last[0] && n[1] === last[1]) return;
+  if (pts.length >= 2) { var pr = pts[pts.length - 2]; if ((pr[0] === last[0] && last[0] === n[0]) || (pr[1] === last[1] && last[1] === n[1])) { pts[pts.length - 1] = n; schedule(); return; } }
+  pts.push(n); schedule();
+}
+function simPress(k) {
+  if (!activeSim) return;
+  if (k === "done") { if (!activeSim.dirs.length) { P.paths.splice(P.paths.indexOf(activeSim), 1); } activeSim = null; showSimPad(); render(); autosave(); return; }
+  pushUndo();
+  if (k === "back") { if (activeSim.dirs.length) activeSim.dirs.pop(); else dropUndo(); }
+  else { activeSim.dirs.push(k); var sim = simulate(activeSim), last = sim.segs[sim.segs.length - 1]; if (last && last.blocked) { activeSim.dirs.pop(); dropUndo(); toast("Richtung " + DIRA[k] + " ist blockiert."); } }
+  showSimPad(); render(); autosave();
+}
+function showSimPad() {
+  var el = $("simPad"); if (!el) return; var on = !!activeSim && page === "map" && !gameView && mode === "move"; el.classList.toggle("show", on); if (!on) return;
+  var sim = simulate(activeSim), hits = sim.events.filter(function (e) { return e.t === "hit"; }).length, cr = sim.events.filter(function (e) { return e.t === "crystal"; }).length;
+  $("spInfo").textContent = (activeSim.dirs.length ? activeSim.dirs.map(function (d) { return DIRA[d]; }).join(" ") : "Richtung wählen") + (hits ? " · ✕" + hits : "") + (cr ? " · ✦" + cr : "");
+}
+document.querySelectorAll("#simPad [data-sd]").forEach(function (b) { b.onclick = function (ev) { ev.stopPropagation(); simPress(b.getAttribute("data-sd")); }; });
+function pathsText(onlyRoom) {
+  var out = [];
+  (P.paths || []).forEach(function (pa, i) { if (pa.kind !== "sim") return; var sr = roomAtWorld(pa.start[0] + 0.5, pa.start[1] + 0.5); if (onlyRoom && sr !== onlyRoom) return;
+    var sim = simulate(pa), loc = function (c) { var r = roomAtWorld(c[0] + 0.5, c[1] + 0.5); return r ? "R" + r.nr + " " + (c[0] - r.x) + "," + (c[1] - r.y) : c.join(","); };
+    out.push("- Weg " + (i + 1) + ": Start " + loc(pa.start) + " → " + pa.dirs.map(function (d, k) { return DIRA[d] + " " + loc(sim.stops[k + 1]); }).join(" → ") +
+      (sim.events.length ? " (" + sim.events.map(function (e) { return { hit: "Treffer", crystal: "Kristall", door: "Tür " + e.n, redir: "Richtungswechsel" }[e.t] + " " + loc(e.at); }).join(", ") + ")" : "")); });
+  var hand = (P.paths || []).filter(function (pa) { return pa.kind === "hand" && (!onlyRoom || roomAtWorld(pa.pts[0][0] + 0.5, pa.pts[0][1] + 0.5) === onlyRoom); }).length;
+  if (hand) out.push("- " + hand + " gezeichnete Skizze(n)");
+  return out.length ? ["", "Bewegung (Ebene 4" + (P.settings.simRedirect ? ", mit Richtungswechsel" : "") + "):"].concat(out) : [];
+}
 
 /* ================= Objekte (Ebene 1 und 3) ================= */
 function roomPx(p) { var w = s2w(p[0], p[1]), room = roomAtWorld(w[0], w[1]); if (!room) return null; return { room: room, x: (w[0] - room.x) * 16, y: (w[1] - room.y) * 16 }; }
@@ -782,7 +918,7 @@ cv.addEventListener("pointerdown", function (ev) {
   if (ev.pointerType === "touch") {
     if (P.settings.palm && penDown > 0) { delete pointers[ev.pointerId]; return; }
     var ids = touchIds();
-    if (ids.length === 2) { cancelPending(); if (drag && drag.byTouch) { if (drag.undoPushed) { P.rooms = JSON.parse(undoStack.pop()); redoStack = redoKeep; } drag = null; preview = null; } startPinch(); return; }
+    if (ids.length === 2) { cancelPending(); if (drag && drag.byTouch) { if (drag.undoPushed) { restoreSnap(undoStack.pop()); redoStack = redoKeep; } drag = null; preview = null; } startPinch(); return; }
     if (ids.length > 2) return;
     var dragTools = { select: 1, rect: 1 };
     if (!gameView && dragTools[tool] || (P.settings.fingerPaint && (tool === "brush" || tool === "erase"))) { toolDown(p, tool, ev, true); return; }
@@ -872,6 +1008,7 @@ function toolDown(p, useTool, ev, byTouch) {
     render(); return;
   }
   if (useTool === "room") { var cx = Math.floor(w[0]), cy = Math.floor(w[1]); drag = { type: "room", byTouch: byTouch }; preview = { type: "room", x0: cx, y0: cy, x1: cx, y1: cy }; render(); return; }
+  if (mode === "move") { pathDown(p, useTool, byTouch); return; }
   if (isObjLayer(mode) && useTool !== "text") { objDown(p, useTool, byTouch); return; }
   var ci = cellInfo(p[0], p[1], mode);
   if (!ci) { if (useTool !== "pick") toast("Außerhalb eines Raums – zuerst einen Raum anlegen."); return; }
@@ -916,6 +1053,7 @@ function toolMove(p) {
   if (drag.type === "cmove") { var c2 = cellInfo(p[0], p[1], "func"); if (c2 && c2.room === drag.room) { var R = c2.room, cdx = Math.max(-drag.bx0, Math.min(R.w - 1 - drag.bx1, c2.x - drag.sx)), cdy = Math.max(-drag.by0, Math.min(R.h - 1 - drag.by1, c2.y - drag.sy));
     if (cdx !== drag.dx || cdy !== drag.dy) { drag.dx = cdx; drag.dy = cdy; preview.wx = R.x + drag.bx0 + cdx; preview.wy = R.y + drag.by0 + cdy; schedule(); } } }
   if (drag.type === "opaint" || drag.type === "oerase" || drag.type === "omove" || drag.type === "orect") objMove(p);
+  if (drag.type === "hpath" || drag.type === "perase") pathMove(p);
 }
 function endDrag() {
   if (!drag) return;
@@ -927,6 +1065,8 @@ function endDrag() {
   if (drag.type === "cmove") { if (drag.dx || drag.dy) { var F = drag.room.func, vals = drag.keys.map(function (k) { return [k, F[k]]; });
       vals.forEach(function (kv) { delete F[kv[0]]; }); vals.forEach(function (kv) { var a = kv[0].split(","); F[(+a[0] + drag.dx) + "," + (+a[1] + drag.dy)] = kv[1]; }); } else dropUndo(); preview = null; }
   if (drag.type === "orect") { objRectEnd(); preview = null; }
+  if (drag.type === "hpath") { if (drag.path.pts.length < 2) { P.paths.splice(P.paths.indexOf(drag.path), 1); dropUndo(); } }
+  if (drag.type === "perase" && !drag.changed) dropUndo();
   if (drag.type === "resize") { if (drag.room.w === drag.w0 && drag.room.h === drag.h0) dropUndo(); else clipRoom(drag.room); }
   if (drag.type === "room") {
     var x = Math.min(preview.x0, preview.x1), y = Math.min(preview.y0, preview.y1);
@@ -1037,6 +1177,7 @@ function buildBlockPanel() {
   pxIcon($("bpGrpIc"), function (g, sz) { drawIcon(g, "t-ring", 2, 2, sz - 4, bpGroup); });
   pxIcon($("bpHideIc"), function (g, sz) { drawIcon(g, "t-left", 2, 2, sz - 4); });
   var bl = groups[bpGroup] || [];
+  if (mode === "move") { buildMovePanel(list, L); return; }
   $("bpGrpCap").textContent = "Ebene " + L.num + " · " + L.name + (L.visible ? "" : " (aus)");
   if (!bl.length) { var e = document.createElement("div"); e.className = "bempty"; e.textContent = P.settings.blockNames ? "Keine Objekte auf dieser Ebene – im Objekteditor anlegen." : "–"; list.appendChild(e); }
   bl.forEach(function (b) {
@@ -1090,12 +1231,12 @@ function placeFloat() {
 $("bpList").addEventListener("scroll", placeFloat);
 $("bpHead").onclick = function () { P.settings.showBlocks = false; resize(); updateStatus(); autosave(); };
 $("bpFoot").onclick = function () {
-  var L = layerById(mode) || layerById("func"), n = layerByNum(L.num % 3 + 1); setMode(n.id); $("bpList").scrollTop = 0; toast("Ebene " + n.num + " · " + n.name);
+  var L = layerById(mode) || layerById("func"), n = layerByNum(L.num % 4 + 1); setMode(n.id); $("bpList").scrollTop = 0; toast("Ebene " + n.num + " · " + n.name);
 };
 $("bpTab").onclick = function () { P.settings.showBlocks = true; resize(); updateStatus(); autosave(); };
 $("gameExit").onclick = function () { setGame(false); };
-function setGame(on) { if (page !== "map") { setPage("map"); } gameView = on; preview = null; drag = null; resize(); updateStatus(); toast(on ? "Spielansicht – zum Beenden oben rechts tippen oder Taste P" : "Bearbeiten"); }
-function setMode(m, keepBlock) { if (m === "design") m = lastDecoLayer(); if (!layerById(m)) return; mode = m; selObj = null; selGroup = []; if (isObjLayer(m)) P.lastDeco = m; var b = blockByUid(curBlock); if (!keepBlock && b && layerOfBlock(b) !== m) curBlock = null; buildTools(); buildBlockPanel(); render(); autosave(); }
+function setGame(on) { if (page !== "map") { setPage("map"); } gameView = on; preview = null; drag = null; resize(); showSimPad(); updateStatus(); toast(on ? "Spielansicht – zum Beenden oben rechts tippen oder Taste P" : "Bearbeiten"); }
+function setMode(m, keepBlock) { if (m === "design") m = lastDecoLayer(); if (!layerById(m)) return; mode = m; selObj = null; selGroup = []; if (m !== "move" && activeSim) { activeSim = null; showSimPad(); } if (isObjLayer(m)) P.lastDeco = m; var b = blockByUid(curBlock); if (!keepBlock && b && layerOfBlock(b) !== m) curBlock = null; buildTools(); buildBlockPanel(); render(); autosave(); }
 
 /* ================= text tool ================= */
 function editText(ci) {
@@ -1127,16 +1268,16 @@ function buildLayerMenu() {
   });
   updateMenuKeys();
 }
-function layerCount(id) { var n = 0; P.rooms.forEach(function (r) { n += id === "func" ? Object.keys(r.func).length : (r.objs[id] || []).length; }); return n; }
+function layerCount(id) { if (id === "move") return (P.paths || []).length; var n = 0; P.rooms.forEach(function (r) { n += id === "func" ? Object.keys(r.func).length : (r.objs[id] || []).length; }); return n; }
 function openLayerSettings() {
   var S = P.settings;
-  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Drei feste Ebenen, oben = vorne. Die Nummer entspricht der Zahl unten in der Objektleiste. Was sich bewegt oder animiert, stellst du pro Objekt im Objekteditor ein.</p>';
+  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Vier feste Ebenen, oben = vorne. Ebene 4 „Bewegung“ ist nur zum Planen der Spielerwege und erscheint nie in der Spielansicht. Die Nummer entspricht der Zahl unten in der Objektleiste. Was sich bewegt oder animiert, stellst du pro Objekt im Objekteditor ein.</p>';
   P.layers.slice().reverse().forEach(function (l) {
     var objs = sortedBlocks().filter(function (b) { return blockLayerNum(b) === l.num; }).length;
     h += '<div class="lrow"><canvas class="lnum" data-num="' + l.num + '"></canvas><div class="lmain"><div class="lhead"><input data-name="' + l.id + '" value="' + esc(l.name) + '"></div>' +
-      '<div class="lopts"><span class="ltag">' + (l.id === "func" ? "Spiellogik · 16×16-Raster" : "Frei platziert · eigene Größen") + '</span>' +
+      '<div class="lopts"><span class="ltag">' + (l.id === "func" ? "Spiellogik · 16×16-Raster" : l.id === "move" ? "Planung · nicht im Spiel" : "Frei platziert · eigene Größen") + '</span>' +
       '<span class="sseg"><button data-vis="' + l.id + '" data-val="1" class="' + (l.visible ? "on" : "") + '">Sichtbar</button><button data-vis="' + l.id + '" data-val="0" class="' + (l.visible ? "" : "on") + '">Aus</button></span>' +
-      '<span class="sh">' + objs + " Objekttypen · " + layerCount(l.id) + " gesetzt</span></div></div></div>";
+      '<span class="sh">' + (l.id === "move" ? (P.paths || []).length + " Wege" : objs + " Objekttypen · " + layerCount(l.id) + " gesetzt") + "</span></div></div></div>";
   });
   h += '<div class="srow"><div><div class="sl">Bewegung & Animation</div><div class="sh">Nur in der Spielansicht: Objekte mit Parallax-Tempo bewegen sich beim Verschieben langsamer. Auf E-Ink standardmäßig aus (Bewegung erzeugt Schlieren).</div></div><div class="sseg"><button data-pan="1" class="' + (S.parallaxAnim ? "on" : "") + '">An</button><button data-pan="0" class="' + (S.parallaxAnim ? "" : "on") + '">Aus</button></div></div>';
   h += "</div>";
@@ -1157,7 +1298,7 @@ var KEYDEFS = [
   ["Raum", [["newRoom", "Neuer Raum", "N"], ["roomProps", "Eigenschaften", "Enter"], ["dupRoom", "Duplizieren", "Ctrl+D"], ["borderWall", "Rand mit Wand füllen", ""], ["clearRoom", "Ebene leeren", ""], ["delRoom", "Raum löschen", "Delete"]]],
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
     ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
-  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
+  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
   ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
 ];
 var KEYLABEL = {}; KEYDEFS.forEach(function (g) { g[1].forEach(function (k) { KEYLABEL[k[0]] = k[1]; }); });
@@ -1275,6 +1416,7 @@ function roomText(r) {
   ["bg", "fg"].forEach(function (lid) { var L = layerById(lid), l = (r.objs && r.objs[lid]) || [];
     if (l.length) { out.push("", "Ebene " + L.num + " " + L.name + " (Objekte, x,y in Pixeln, 16 px = 1 Zelle):"); l.slice().sort(function (a, c) { return a.y - c.y || a.x - c.x; }).forEach(function (o) { var b = blockByUid(o.b);
       out.push("- " + o.x + "," + o.y + " = " + (b ? b.id + " " + b.name + " (" + bw(b) + "×" + bh(b) + ")" : "?") + (o.p ? " [" + paramLabel(o.p) + "]" : "")); }); } });
+  out = out.concat(pathsText(r));
   if (r.texts.length) { out.push("", "Texte:"); r.texts.forEach(function (t) { out.push("- " + t.x + "," + t.y + ": " + t.text); }); }
   return out.join("\n");
 }
@@ -1297,7 +1439,7 @@ function stamp() { var d = new Date(); return d.getFullYear() + ("0" + (d.getMon
 function setPage(pg) {
   page = pg; var map = pg === "map";
   if (!map) gameView = false; $("cv").style.display = map ? "block" : "none"; $("blockEditor").style.display = pg === "blocks" ? "block" : "none"; $("pixEditor").style.display = pg === "pixels" ? "block" : "none";
-  resize(); if (map) { buildTools(); buildBlockPanel(); render(); } else if (pg === "blocks") renderBlockEditor(); else pxLayout();
+  activeSim = null; showSimPad(); resize(); if (map) { buildTools(); buildBlockPanel(); render(); } else if (pg === "blocks") renderBlockEditor(); else pxLayout();
   updateStatus();
 }
 $("b-backMap").onclick = function () { setPage("map"); };
@@ -1324,7 +1466,7 @@ var ACTIONS = {
   newRoom: function () { var x = 0, y = 0; if (P.rooms.length) { var last = P.rooms[P.rooms.length - 1]; x = last.x + last.w; y = last.y; }
     pushUndo(); var r = addRoomLayers(newRoom(nextNr(), x, y)); P.rooms.push(r); selRoom = r.rid; fitRoom(); toast("Raum " + r.nr + " angelegt."); },
   roomProps: openRoomProps,
-  layerSettings: function () { openLayerSettings(); }, layer1: function () { setMode("bg"); }, layer3: function () { setMode("fg"); },
+  layerSettings: function () { openLayerSettings(); }, layer1: function () { setMode("bg"); }, layer3: function () { setMode("fg"); }, layer4: function () { setMode("move"); },
   nextLayer: function () { $("bpFoot").onclick(); },
   toggleLayerVis: function () { var l = layerById(mode); if (!l) return; l.visible = !l.visible; render(); autosave(); toast("„" + l.name + "“ " + (l.visible ? "eingeblendet" : "ausgeblendet")); },
   settings: function () { openSettings(); }, keysHelp: function () { openSettings("keys"); },
@@ -1365,7 +1507,7 @@ var ACTIONS = {
     "<p><b>Unten:</b> Werkzeuge (Verschieben bewegt einzelne Objekte), Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Die Ebene wechselt automatisch mit dem gewählten Objekt.</p>" +
     "<p><b>Räume:</b> Menü Raum → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
     "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekteditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
-    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
+    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
   about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekteditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
 };
@@ -1384,6 +1526,8 @@ $("fileOpen").addEventListener("change", function () {
 document.addEventListener("keydown", function (ev) {
   if (keyCapture) { ev.preventDefault(); ev.stopPropagation(); if (ev.key === "Escape") { keyCapture = null; openSettings(); return; }
     var c = comboOf(ev); if (!c) return; var cid = keyCapture; keyCapture = null; setKey(cid, c); openSettings(); return; }
+  if (activeSim && !$("modalBg").classList.contains("show")) { var SK = { ArrowUp: "u", ArrowDown: "d", ArrowLeft: "l", ArrowRight: "r", w: "u", s: "d", a: "l", d: "r", W: "u", S: "d", A: "l", D: "r", Backspace: "back", Enter: "done", Escape: "done" };
+    if (SK[ev.key]) { ev.preventDefault(); simPress(SK[ev.key]); return; } }
   if (ev.key === "Escape") { closeMenus(); closeModal(); $("zoomPop").classList.remove("show"); if (gameView) setGame(false); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); return; }
   if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { if (ev.key === "Enter" && $("mOk") && $("modalBg").classList.contains("show") && document.activeElement.tagName === "INPUT") $("mOk").click(); return; }
   if ($("modalBg").classList.contains("show")) return;
