@@ -294,9 +294,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.4.11", APP_VERSION = "0.4.11", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.4.12", APP_VERSION = "0.4.12", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: true, floatSecs: "4", fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: true, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -367,6 +367,8 @@ function autosave() {
 }
 function migrateSettings(st) {
   if (!st) return; if (!st.penEraser) st.penEraser = st.eraserUndo === false ? "erase" : "undo";
+  if (!st.floatV2) { if (st.floatSecs === "4" || st.floatSecs == null) st.floatSecs = "2"; st.floatV2 = true; }
+  if (st.pickEmpty == null) st.pickEmpty = true; if (!st.lang) st.lang = "de";
   if (!st.penBarrel) st.penBarrel = st.penBtnErase === false ? "none" : "erase"; if (!st.keys) st.keys = {};
 }
 function migrateGroups(p) { if (p.grpV2) return; var bl = p.blocks || []; if (bl.length && !bl.some(function (b) { return +b.toolbar === 1; })) bl.forEach(function (b) { b.toolbar = Math.max(1, (+b.toolbar || 2) - 1); }); p.grpV2 = true; }
@@ -728,7 +730,7 @@ function toolDown(p, useTool, ev, byTouch) {
   var ci = cellInfo(p[0], p[1], mode);
   if (!ci) { if (useTool !== "pick") toast("Außerhalb eines Raums – zuerst einen Raum anlegen."); return; }
   selRoom = ci.room.rid;
-  if (useTool === "pick") { var v = ci.room[mode][ci.key]; if (v) pickValue(v); else render(); return; }
+  if (useTool === "pick") { var v = ci.room[mode][ci.key]; if (v) pickValue(v); else if (P.settings.pickEmpty) { tool = "erase"; buildTools(); buildBlockPanel(); render(); toast("Leer aufgenommen – Radierer aktiv."); } else render(); return; }
   if (useTool === "text") { editText(ci); return; }
   if (useTool === "rect") {
     if (!curValidBlock()) { toast("Erst links einen " + (mode === "func" ? "Funktions" : "Design") + "block wählen."); return; }
@@ -989,17 +991,19 @@ function openSettings(tab) {
   if (tab) setTab = tab; var S = P.settings; migrateSettings(S);
   var tog = function (key, label, hint) { return '<div class="srow"><div><div class="sl">' + label + '</div>' + (hint ? '<div class="sh">' + hint + '</div>' : "") + '</div><div class="sseg"><button data-tog="' + key + '" class="' + (S[key] ? "on" : "") + '">An</button><button data-tog="' + key + '" data-off="1" class="' + (S[key] ? "" : "on") + '">Aus</button></div></div>'; };
   var seg = function (key, label, opts, hint) { return '<div class="srow"><div><div class="sl">' + label + '</div>' + (hint ? '<div class="sh">' + hint + '</div>' : "") + '</div><div class="sseg">' + opts.map(function (o) { return '<button data-set="' + key + '" data-val="' + o[0] + '" class="' + (String(S[key]) === String(o[0]) ? "on" : "") + '">' + o[1] + "</button>"; }).join("") + "</div></div>"; };
-  var html = '<h3>Einstellungen</h3><div class="stabs">' + [["view", "Darstellung"], ["pen", "Stift & Touch"], ["keys", "Tastenkürzel"]].map(function (t) { return '<button data-tab="' + t[0] + '" class="' + (setTab === t[0] ? "on" : "") + '">' + t[1] + "</button>"; }).join("") + '</div><div class="body sbody">';
+  var html = '<h3>Einstellungen</h3><div class="stabs">' + [["view", "Darstellung"], ["pen", "Stift & Werkzeuge"], ["keys", "Tastenkürzel"]].map(function (t) { return '<button data-tab="' + t[0] + '" class="' + (setTab === t[0] ? "on" : "") + '">' + t[1] + "</button>"; }).join("") + '</div><div class="body sbody">';
   if (setTab === "view") {
-    html += seg("fontSize", "Schriftgröße", [["M", "Normal"], ["L", "Groß"], ["XL", "Sehr groß"]]) + tog("bold", "Fette Schrift") +
+    html += '<div class="srow"><div><div class="sl">Sprache</div><div class="sh">Weitere Sprachen folgen später.</div></div><div class="sseg"><button class="on">Deutsch</button><button disabled style="border-style:dashed">English (später)</button></div></div>' +
+      seg("fontSize", "Schriftgröße", [["M", "Normal"], ["L", "Groß"], ["XL", "Sehr groß"]]) + tog("bold", "Fette Schrift") +
       tog("labels", "Namen unter Werkzeugen") + tog("blockNames", "Namen in der Blockleiste") +
-      seg("floatSecs", "Variantenleiste ausblenden nach", [["2", "2 s"], ["4", "4 s"], ["8", "8 s"], ["15", "15 s"], ["0", "Nie"]], "Die Leiste neben dem Block schließt sich nach der Auswahl, beim Tippen auf die Karte oder nach dieser Zeit.") + tog("dots", "Punktraster") + tog("showOther", "Andere Ebene blass anzeigen") +
+      seg("floatSecs", "Variantenleiste ausblenden nach", [["1", "1 s"], ["2", "2 s"], ["4", "4 s"], ["8", "8 s"], ["15", "15 s"], ["0", "Nie"]], "Die Leiste neben dem Block schließt sich nach der Auswahl, beim Tippen auf die Karte oder nach dieser Zeit.") + tog("dots", "Punktraster") + tog("showOther", "Andere Ebene blass anzeigen") +
       tog("eink", "E-Ink-Modus", "Beim Zoomen und Verschieben erst beim Loslassen neu zeichnen.");
   } else if (setTab === "pen") {
     var acts = [["undo", "Rückgängig"], ["redo", "Wiederh."], ["erase", "Radieren"], ["hand", "Verschieben"], ["pick", "Pipette"], ["none", "Nichts"]];
     html += seg("penEraser", "Radiererende", acts, "Was passiert, wenn du mit dem Radiererende des Stifts tippst bzw. ziehst.") +
       seg("penBarrel", "Stifttaste", acts, "Gilt, solange die Taste am Stift gedrückt ist – sofern Stift und Browser sie melden.") +
       tog("palm", "Finger ignorieren, solange der Stift aufliegt") +
+      tog("pickEmpty", "Pipette nimmt auch Leer auf", "Tippt die Pipette auf eine leere Zelle, wird der Radierer aktiv.") +
       seg("fingerPaint", "Ein Finger ziehen", [["false", "Verschiebt"], ["true", "Malt"]], "Mit zwei Fingern wird immer verschoben und gezoomt.");
   } else {
     html += '<p class="sh" style="margin:6px 0 8px">Auf „Taste“ tippen, dann die neue Taste drücken (Esc bricht ab). Für eine Bluetooth-Tastatur am Boox.</p>';
@@ -1153,7 +1157,7 @@ var ACTIONS = {
   toggleDots: function () { P.settings.dots = !P.settings.dots; render(); autosave(); },
   toggleLabels: function () { P.settings.labels = !P.settings.labels; buildTools(); autosave(); },
   help: function () { modal("<h3>Kurzanleitung</h3><div class='body help'>" +
-    "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende antippen = Rückgängig, Stifttaste = Radieren. Beides ist umstellbar unter Datei → Einstellungen → Stift & Touch.</p>" +
+    "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende antippen = Rückgängig, Stifttaste = Radieren. Beides ist umstellbar unter Datei → Einstellungen → Stift & Werkzeuge.</p>" +
     "<p><b>Ein Finger:</b> Tippen wendet das Werkzeug auf eine Zelle an. Ziehen verschiebt die Ansicht (umstellbar unter Datei → Einstellungen).</p>" +
     "<p><b>Zwei Finger:</b> verschieben und zoomen (Pinch). Beim Loslassen rastet der Zoom auf die nächste Stufe ein.</p>" +
     "<p><b>Links:</b> Blöcke einer Leiste. Der Kreis unten mit der Zahl schaltet zur nächsten Leiste. Antippen = Pinsel mit diesem Block. Daneben öffnet sich eine senkrechte Leiste mit den Varianten (Tür-Nr., Richtung …); sie schließt sich nach der Auswahl oder nach einigen Sekunden (einstellbar). Erneutes Antippen schaltet die Variante weiter.</p>" +

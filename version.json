@@ -1,1 +1,1 @@
-{ "version": "0.4.11", "app": "0.4.11", "notes": "Variantenleiste senkrecht; schließt nach Auswahl, beim Tippen auf die Karte oder nach einstellbarer Zeit (Datei → Einstellungen)." }
+{ "version": "0.4.12", "app": "0.4.12", "notes": "Variantenleiste: 1 s wählbar, Standard 2 s. Pipette auf leerer Zelle aktiviert den Radierer (einstellbar). Sprache in den Einstellungen vorbereitet." }
