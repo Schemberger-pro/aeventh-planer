@@ -9,7 +9,7 @@
 <link rel="apple-touch-icon" href="icon-192.png">
 <meta name="theme-color" content="#ffffff">
 <style>
-  :root { --ink:#000; --paper:#fff; --line:#000; --soft:#e6e6e6; --r:10px; --fs:1.15; --fw:500; }
+  :root { --sbh:calc(20px*min(var(--fs),1.15) + 6px); --ink:#000; --paper:#fff; --line:#000; --soft:#e6e6e6; --r:10px; --fs:1.15; --fw:500; }
   * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
   html, body { margin:0; height:100%; background:var(--paper); color:var(--ink); overflow:hidden;
     font-family: system-ui, sans-serif; font-size:calc(15px*var(--fs)); font-weight:var(--fw); text-rendering:geometricPrecision; }
@@ -36,7 +36,19 @@
   .mitem.check::before { content:""; flex:0 0 auto; width:calc(11px*min(var(--fs),1.15)); height:calc(11px*min(var(--fs),1.15)); border:2px solid currentColor; border-radius:50%; margin-right:6px; box-sizing:border-box; }
   .mitem.check.on::before { background:currentColor; }
   .msep { border-top:1px solid var(--line); margin:4px 0; }
-  #status { margin-left:auto; display:flex; align-items:center; padding:0 12px; font-size:calc(12px*var(--fs)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  #notice { margin-left:auto; display:flex; align-items:stretch; min-width:0; }
+  #notice button { border:0; border-left:1.5px solid var(--line); background:var(--ink); color:var(--paper); font-weight:700; padding:0 14px; white-space:nowrap; font-size:calc(13px*min(var(--fs),1.15)); cursor:pointer; }
+  #notice button.soft { background:var(--paper); color:var(--ink); }
+  #statusBar { position:fixed; left:188px; right:0; bottom:0; height:var(--sbh); border-top:1.5px solid var(--line); background:var(--paper); z-index:14; display:flex; align-items:center; gap:10px; padding:0 10px; }
+  #status { flex:1; font-size:calc(12px*min(var(--fs),1.15)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+  #sbAudio { display:none; align-items:center; gap:6px; font-size:calc(12px*min(var(--fs),1.15)); font-weight:700; white-space:nowrap; cursor:pointer; }
+  #sbAudio.show { display:flex; } #sbAudio span.x { border:1.5px solid var(--line); border-radius:6px; padding:0 6px; }
+  .auPlayer { border:1.5px solid var(--line); border-radius:10px; padding:8px 10px; margin:0 0 12px; display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .auPlayer .obtn.on { background:var(--ink); color:var(--paper); }
+  .auTime { font-weight:700; font-variant-numeric:tabular-nums; margin-left:auto; }
+  .auBar { flex:1 1 100%; height:10px; border:1.5px solid var(--line); border-radius:6px; position:relative; cursor:pointer; overflow:hidden; }
+  .auBar i { position:absolute; left:0; top:0; bottom:0; background:var(--ink); }
+  .auMiss { flex:1 1 100%; }
   /* ---------- block panel (links) ---------- */
   #blockPanel { position:fixed; left:0; top:44px; bottom:0; width:188px; border-right:1.5px solid var(--line);
     background:var(--paper); z-index:15; display:flex; flex-direction:column; }
@@ -92,7 +104,7 @@
   #blockPanel.narrow .bitem > div { display:none; }
   #blockPanel.narrow .grp { text-align:center; margin:10px 2px 4px; }
   #blockPanel.narrow #bpParams .pl { font-size:calc(11px*var(--fs)); }
-  #simPad { position:fixed; right:14px; bottom:96px; z-index:18; display:none; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; padding:8px; }
+  #simPad { position:fixed; right:14px; bottom:calc(96px + var(--sbh)); z-index:18; display:none; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; padding:8px; }
   #simPad.show { display:block; }
   #simPad .sp-h { font-weight:700; font-size:calc(12px*min(var(--fs),1.15)); text-align:center; margin-bottom:6px; max-width:170px; }
   #simPad .sp-g { display:grid; grid-template-columns:repeat(3, 52px); grid-auto-rows:52px; gap:4px; }
@@ -140,7 +152,7 @@
   .oeIcoBtn { flex:0 0 38px; width:38px; height:38px; border:1.5px solid var(--line); border-radius:9px; background:var(--paper); padding:0; display:flex; align-items:center; justify-content:center; }
   .oeIcoBtn canvas { width:26px; height:26px; }
   .oeItems { flex:1; overflow-y:auto; min-height:0; }
-  .oePane .grp { margin:10px 8px 0; } .oePane.icons .grp { text-align:center; margin:10px 2px 0; }
+  .oePane .grp { margin:10px 8px 0; } .oePane .bitem .bid, .oePane .bitem .bn { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; } .oePane.icons .grp { text-align:center; margin:10px 2px 0; }
   .oePane.icons .bitem { justify-content:center; padding:7px 0 5px; }
   .oeTiles { display:grid; grid-template-columns:repeat(3, 1fr); }
   .oeTile { display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 3px 6px; cursor:pointer; user-select:none; min-width:0; }
@@ -306,8 +318,9 @@
     <div class="mitem" data-act="checkUpdate">Nach Update suchen</div>
     <div class="mitem" data-act="about">Über</div>
   </div></div>
-  <div id="status"></div>
+  <div id="notice"></div>
 </div>
+<div id="statusBar"><div id="status"></div><div id="sbAudio"></div></div>
 
 <div id="blockPanel">
   <div id="bpHead" class="bcell" title="Objektleiste ausblenden"><canvas id="bpHideIc"></canvas><div class="bct">Ausblenden</div></div>
@@ -356,7 +369,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 2026.41.2", APP_VERSION = "2026.41.2", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 2026.41.3", APP_VERSION = "2026.41.3", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { showAudio: true, showGuides: true, guideCenter: false, eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
@@ -473,8 +486,8 @@ var KEY = "aeventh_planer_v2", saveTimer = null;
 function autosave() {
   clearTimeout(saveTimer);
   saveTimer = setTimeout(function () {
-    try { localStorage.setItem(KEY, JSON.stringify({ P: P, view: view, mode: mode })); }
-    catch (e) { toast("Speichern im Browser fehlgeschlagen – bitte „Projekt speichern“ nutzen."); }
+    try { localStorage.setItem(KEY, JSON.stringify({ P: P, view: view, mode: mode })); if (typeof setNotice === "function") setNotice("save", ""); }
+    catch (e) { toast("Speichern im Browser fehlgeschlagen – bitte „Projekt speichern“ nutzen."); setNotice("save", "Nicht gespeichert!", function () { ask("Speichern fehlgeschlagen", ["Der Browser-Speicher ist voll oder gesperrt – Änderungen gehen beim Schließen verloren.", "Jetzt über Datei → Projekt speichern sichern."], "Projekt speichern", function () { ACTIONS.saveProject(); }); }); }
   }, 400);
 }
 function migrateSettings(st) {
@@ -514,7 +527,10 @@ function updateStatus() {
   var r = roomById(selRoom), b = blockByUid(curBlock);
   var tl = TOOLS.filter(function (t) { return t.id === tool; })[0];
   var what = (tool === "brush" || tool === "rect") ? (b ? b.name + (pvalsOf(b).length ? " " + paramLabel(curParam[b.uid] || pvalsOf(b)[0]) : "") : "kein Objekt") : "";
-  $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + ((layerById(mode) || {}).num || "") + " " + ((layerById(mode) || {}).name || "") + (P.settings.soloLayer || !P.settings.showOther ? " (allein)" : "") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
+  if (page === "blocks") $("status").textContent = "Objekteditor · " + P.blocks.length + " Objekte" + (blockByUid(dbSel) ? " · " + blockByUid(dbSel).name : "");
+  else if (page === "audio") $("status").textContent = "Audioeditor · " + (P.audio || []).length + " Einträge" + (audioByUid(auSel) ? " · " + audioByUid(auSel).name : "") + (auIndex ? " · " + auIndex.files.length + " Spieldatei(en) ausgeliefert" : "");
+  else if (page === "pixels") $("status").textContent = "Pixeleditor" + (blockByUid(px.uid) ? " · " + blockByUid(px.uid).name + " · " + px.w + "×" + px.h + " px" : "");
+  else $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + ((layerById(mode) || {}).num || "") + " " + ((layerById(mode) || {}).name || "") + (P.settings.soloLayer || !P.settings.showOther ? " (allein)" : "") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
   if ($("tbZoom")) $("tbZoom").textContent = Math.round(view.z / 24 * 100) + " %";
   var S = P.settings;
   var set = function (id, on) { var e = $(id); if (e) e.classList.toggle("on", !!on); };
@@ -665,6 +681,8 @@ function resize() {
   $("bpTab").classList.toggle("show", !P.settings.showBlocks && page === "map" && !gameView);
   $("gameExit").classList.toggle("show", gameView && page === "map");
   $("toolWrap").style.display = (page === "map" && !gameView) ? "flex" : "none";
+  var sbOn = !gameView; $("statusBar").style.display = sbOn ? "flex" : "none"; $("statusBar").style.left = (page === "map" ? bpw : 0) + "px";
+  $("main").style.bottom = sbOn ? "var(--sbh)" : "0px"; $("toolWrap").style.bottom = sbOn ? "calc(var(--sbh) + 12px)" : "12px";
   var m = $("main"); CW = m.clientWidth; CH = m.clientHeight;
   var dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr); cv.style.width = CW + "px"; cv.style.height = CH + "px";
@@ -1598,6 +1616,63 @@ function sndAddCtl(fn, fixedAudio) {
   pick.className = "oeIn"; w.appendChild(pick);
   w.appendChild(oeBtn("Zuordnen", function () { if (!pick.value) { toast(fixedAudio ? "Erst ein Objekt wählen." : "Erst einen Sound wählen."); return; } fn(ev.value.trim() || "Ereignis", pick.value); })); return w;
 }
+/* ---- Abspielen (Spieldateien werden mit der App ausgeliefert: audio/index.json) ---- */
+var auIndex = null, auCtx = null, auBufs = {}, auPlay = null, auPaused = null, auTimer = null;
+function loadAuIndex(cb) {
+  if (!/^https?:/.test(location.protocol)) { auIndex = { files: [], local: true }; if (cb) cb(); return; }
+  fetch("audio/index.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.ok ? r.json() : { files: [] }; })
+    .then(function (j) { auIndex = j && j.files ? j : { files: [] }; if (cb) cb(); }).catch(function () { auIndex = auIndex || { files: [] }; if (cb) cb(); });
+}
+function auUrl(a) { if (!a || !a.file || !auIndex) return null; var f = a.file.trim().replace(/^\.?\//, ""); for (var i = 0; i < auIndex.files.length; i++) if (auIndex.files[i].path === f) return auIndex.files[i].url; return null; }
+function parseSecs(t) { var m = String(t || "").match(/\d+([.,]\d+)?/); return m ? parseFloat(m[0].replace(",", ".")) : 0; }
+function fmtT(x) { x = Math.max(0, Math.floor(x || 0)); return Math.floor(x / 60) + ":" + ("0" + (x % 60)).slice(-2); }
+function getBuf(url) { if (auBufs[url]) return Promise.resolve(auBufs[url]);
+  return fetch(url).then(function (r) { if (!r.ok) throw new Error("Datei nicht gefunden"); return r.arrayBuffer(); })
+    .then(function (ab) { return new Promise(function (res, rej) { auCtx.decodeAudioData(ab, res, rej); }); }).then(function (b) { auBufs[url] = b; return b; }); }
+function auStart(a, withPre, from) {
+  auStop(true); auPaused = null; var url = auUrl(a); if (!url) { toast("Keine Spieldatei ausgeliefert."); auUI(); return; }
+  try { if (!auCtx) auCtx = new (window.AudioContext || window.webkitAudioContext)(); if (auCtx.state === "suspended") auCtx.resume(); } catch (e) { toast("Dieser Browser kann kein Audio abspielen."); return; }
+  var pre = withPre ? audioByUid(a.after) : null, preUrl = pre ? auUrl(pre) : null, token = {};
+  auPlay = { uid: a.uid, name: a.name, token: token, loading: true }; auUI();
+  Promise.all([getBuf(url), preUrl ? getBuf(preUrl) : null]).then(function (bs) {
+    if (!auPlay || auPlay.token !== token) return;
+    var t0 = auCtx.currentTime + 0.06, off = 0, srcs = [];
+    if (bs[1]) { var ps = auCtx.createBufferSource(); ps.buffer = bs[1]; ps.connect(auCtx.destination); ps.start(t0); srcs.push(ps); off = parseSecs(a.offset); if (!(off > 0)) off = bs[1].duration; }
+    var ms = auCtx.createBufferSource(); ms.buffer = bs[0]; ms.loop = a.loop === "loop"; ms.connect(auCtx.destination); from = Math.max(0, Math.min(bs[0].duration - 0.05, from || 0));
+    ms.start(t0 + off, from); srcs.push(ms);
+    ms.onended = function () { if (auPlay && auPlay.token === token) { auPlay = null; auUI(); } };
+    auPlay = { uid: a.uid, name: a.name, token: token, srcs: srcs, t0: t0 + off - from, dur: bs[0].duration, loop: ms.loop, pre: !!bs[1] }; auUI();
+  }).catch(function (e) { if (auPlay && auPlay.token === token) { auPlay = null; auUI(); } toast("Abspielen fehlgeschlagen: " + ((e && e.message) || "unbekannter Fehler")); });
+}
+function auStop(quiet) { if (auPlay && auPlay.srcs) auPlay.srcs.forEach(function (x) { try { x.onended = null; x.stop(); } catch (e) {} }); auPlay = null; if (!quiet) auUI(); }
+function auPos() { if (!auPlay || !auPlay.srcs) return 0; var t = auCtx.currentTime - auPlay.t0; if (t < 0) return 0; return auPlay.loop ? t % auPlay.dur : Math.min(t, auPlay.dur); }
+function auToggle(a) { if (auPlay && auPlay.uid === a.uid && auPlay.srcs) { auPaused = { uid: a.uid, pos: auPos() }; auStop(); return; }
+  auStart(a, false, auPaused && auPaused.uid === a.uid ? auPaused.pos : 0); }
+function auUI() {
+  var a = audioByUid(auSel), playing = auPlay && a && auPlay.uid === a.uid, btn = $("auPlayBtn");
+  if (btn) btn.textContent = playing ? (auPlay.loading ? "… lädt" : "❚❚ Pause") : (auPaused && a && auPaused.uid === a.uid ? "▶ Weiter" : "▶ Abspielen");
+  if (btn) btn.classList.toggle("on", !!playing);
+  var url = a ? auUrl(a) : null, dur = playing && auPlay.dur ? auPlay.dur : (url && auBufs[url] ? auBufs[url].duration : 0), pos = playing ? auPos() : (auPaused && a && auPaused.uid === a.uid ? auPaused.pos : 0);
+  if ($("auTime")) $("auTime").textContent = fmtT(pos) + " / " + (dur ? fmtT(dur) : "–:––") + (playing && auPlay.loop ? " · Loop" : "");
+  if ($("auFill")) $("auFill").style.width = (dur ? Math.min(100, pos / dur * 100) : 0) + "%";
+  var sb = $("sbAudio"); sb.classList.toggle("show", !!auPlay); sb.innerHTML = "";
+  if (auPlay) { var nm = el("span", "", "♪ " + auPlay.name + (auPlay.srcs ? " " + fmtT(auPos()) : " …")); nm.onclick = function () { auSel = auPlay.uid; setPage("audio"); }; sb.appendChild(nm);
+    var x = el("span", "x", "■"); x.title = "Stopp"; x.onclick = function (ev) { ev.stopPropagation(); auStop(); }; sb.appendChild(x); }
+  clearInterval(auTimer); if (auPlay) auTimer = setInterval(auUI, 1000);
+}
+function auPlayerStrip(insp, a) {
+  var box = el("div", "auPlayer"), url = auUrl(a);
+  if (!auIndex) { box.appendChild(el("div", "sh", "Spieldateien werden geprüft …")); insp.appendChild(box); return; }
+  if (!url) { box.appendChild(el("div", "auMiss sh", auIndex.local ? "Abspielen geht nur in der Web-App." : a.file ? "Keine Spieldatei ausgeliefert – Pfad prüfen. Mitgeliefert werden .ogg/.mp3 aus WIP/Audio/<Stück>/Game/ beim nächsten Hochladen." : "Noch keine Datei eingetragen (Eigenschaften → Datei).")); insp.appendChild(box); return; }
+  var pb = oeBtn("▶ Abspielen", function () { auToggle(a); }); pb.id = "auPlayBtn"; box.appendChild(pb);
+  box.appendChild(oeBtn("■ Stopp", function () { auPaused = null; auStop(); }));
+  var pre = audioByUid(a.after); if (pre && auUrl(pre)) box.appendChild(oeBtn("▶ Mit Vorlauf", function () { auStart(a, true, 0); }));
+  box.appendChild(el("span", "auTime", "")).id = "auTime";
+  var bar = el("div", "auBar"), fill = el("i"); fill.id = "auFill"; bar.appendChild(fill); bar.title = "Position wählen";
+  bar.onclick = function (ev) { var r = bar.getBoundingClientRect(), f = Math.max(0, Math.min(1, (ev.clientX - r.left) / r.width)), b = auBufs[url];
+    if (!b) { auStart(a, false, 0); return; } auStart(a, false, f * b.duration); };
+  box.appendChild(bar); insp.appendChild(box);
+}
 function renderAudioEditor() {
   var root = $("audioEditor"), oldL = root.querySelector(".oeItems"), oldI = root.querySelector(".oeInsp");
   var keepL = oldL ? oldL.scrollTop : 0, keepI = oldI && oldI.getAttribute("data-k") === (auSel + "|" + auTab) ? oldI.scrollTop : 0;
@@ -1631,6 +1706,7 @@ function renderAudioEditor() {
     popMenu(nw, AUDIO_KINDS.map(function (k) { return ["Neu: " + k[1], function () { addAudio(k[0]); }]; })); }); tb.appendChild(nw);
   if (a) { tb.appendChild(tbBtn("t-dup", "Kopie", "Eintrag duplizieren", function () { var c = JSON.parse(JSON.stringify(a)); c.uid = "a" + (P.nextAid++); c.name = a.name + " (Kopie)"; c.created = c.updated = Date.now(); P.audio.push(c); auSel = c.uid; auCommit(); toast("Kopie angelegt"); }));
     tb.appendChild(tbBtn("t-del", "Löschen", "Eintrag löschen", function () { delAudio(a); })); }
+  auUI(); updateStatus();
 }
 function addAudio(kind) {
   P.audio = P.audio || []; P.nextAid = P.nextAid || 1;
@@ -1643,13 +1719,15 @@ function delAudio(a) {
     var list = auFiltered(), k = list.indexOf(a), next = list[k + 1] || list[k - 1];
     u.dungeon.forEach(function (sl) { delete P.audioMap[sl]; }); u.rooms.forEach(function (x) { x[0].audio[x[1]] = ""; });
     P.blocks.forEach(function (b) { if (b.snd) b.snd = b.snd.filter(function (sd) { return sd.a !== a.uid; }); }); u.after.forEach(function (x) { delete x.after; });
-    P.audio.splice(P.audio.indexOf(a), 1); auSel = next ? next.uid : null; auCommit(); });
+    if (auPlay && auPlay.uid === a.uid) auStop(); P.audio.splice(P.audio.indexOf(a), 1); auSel = next ? next.uid : null; auCommit(); });
 }
 function renderAudioInspector(insp, a) {
   var u = audioUse(a), n = useCount(u), slot = a.kind === "music" ? "music" : a.kind === "amb" ? "amb" : null;
   var hd = el("div", "oeHead"); hd.appendChild(iconCanvas(function (g, sz) { drawIcon(g, "t-a-" + a.kind, 12, 12, sz - 24); }, 64));
   var hc = el("div", "oeHc"); hc.appendChild(oeIn("text", a.name, "Name", function (v) { a.name = v.trim() || a.name; touchAudio(a); auCommit(); }, "oeName"));
   hc.appendChild(el("div", "sh", audioMeta(a) + " · " + (n ? n + "× zugeordnet" : "nicht zugeordnet"))); hd.appendChild(hc); insp.appendChild(hd);
+  if (auIndex === null) loadAuIndex(function () { if (page === "audio") renderAudioEditor(); });
+  auPlayerStrip(insp, a);
   var tabs = el("div", "stabs oeTabs"); [["props", "Eigenschaften"], ["use", "Verwendung"], ["notes", "Notizen"]].forEach(function (t) {
     var x = el("button", auTab === t[0] ? "on" : "", t[1]); x.onclick = function () { auTab = t[0]; renderAudioEditor(); }; tabs.appendChild(x); }); insp.appendChild(tabs);
   var bd = el("div", "oeBody"); insp.appendChild(bd); var grp = function (t) { bd.appendChild(el("div", "kgrp", t)); };
@@ -1662,7 +1740,8 @@ function renderAudioInspector(insp, a) {
         if (P.audioMap[sl] === a.uid) delete P.audioMap[sl]; P.rooms.forEach(function (r) { if (r.audio && r.audio[sl] === a.uid) r.audio[sl] = ""; }); }); touchAudio(a); auCommit(); };
       if (u.dungeon.length || u.rooms.length) ask("Art ändern", ["„" + a.name + "“ wird " + kindName(v) + "?", "Zuordnungen als Musik/Ambience zu Dungeon und Räumen, die nicht mehr passen, werden entfernt."], "Ändern", go); else go(); }));
     oeRow(bd, "Status", "", oeSeg(DB_STATUS, a.status || "idee", function (v) { a.status = v; touchAudio(a); auCommit(); }));
-    wide("Datei", "Pfad im Projektordner", "file", "z. B. WIP/Audio/…/Game/Name_v1.ogg");
+    wide("Datei", "Pfad im Projektordner" + (auIndex && auIndex.files.length ? " – ausgelieferte Dateien zur Auswahl" : ""), "file", "z. B. WIP/Audio/…/Game/Name_v1.ogg");
+    if (auIndex && auIndex.files.length) { var fin = bd.lastChild.querySelector("input"), fdl = el("datalist"); fdl.id = "auFiles"; auIndex.files.forEach(function (f) { var op = el("option"); op.value = f.path; fdl.appendChild(op); }); fin.setAttribute("list", "auFiles"); bd.lastChild.appendChild(fdl); }
     grp(a.kind === "sfx" || a.kind === "voice" ? "Klang" : "Musikalisch");
     if (a.kind !== "sfx" && a.kind !== "voice") {
       oeRow(bd, "Tempo", "BPM", oeIn("number", a.bpm || "", "–", function (v) { a.bpm = parseFloat(v) || ""; touchAudio(a); auCommit(); }, "w-id"));
@@ -2255,13 +2334,16 @@ $("fileImg").addEventListener("change", function () {
 /* ================= updates (PWA) ================= */
 var swReg = null;
 function cmpVer(a, b) { var x = String(a).split("."), y = String(b).split("."); for (var i = 0; i < 3; i++) { var d = (+x[i] || 0) - (+y[i] || 0); if (d) return d; } return 0; }
+var notices = {};
+function setNotice(id, text, fn, soft) { if (text) notices[id] = { t: text, fn: fn, soft: soft }; else delete notices[id]; var n = $("notice"); n.innerHTML = "";
+  Object.keys(notices).forEach(function (k) { var o = notices[k], b = document.createElement("button"); b.textContent = o.t; if (o.soft) b.className = "soft"; b.onclick = function (ev) { ev.stopPropagation(); o.fn(); }; n.appendChild(b); }); }
 function checkUpdate(manual) {
   if (!/^https?:/.test(location.protocol)) { if (manual) toast("Update-Suche geht nur in der Web-App, nicht in der lokalen Datei."); return; }
   if (!navigator.onLine) { if (manual) toast("Keine Internetverbindung – Update-Suche später erneut versuchen."); return; }
   fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (v) {
     var nv = v.app || v.version; if (cmpVer(nv, APP_VERSION) > 0) {
       if (manual) modal("<h3>Update verfügbar</h3><div class='body help'><p>Installiert: " + APP_VERSION + "<br>Neu: <b>" + esc(nv) + "</b></p>" + (v.notes ? "<p>" + esc(v.notes) + "</p>" : "") + "<p>Deine Räume und Blöcke bleiben erhalten.</p></div>", function () { applyUpdate(); }, "Jetzt aktualisieren");
-      else toast("Update " + nv + " verfügbar – Hilfe → Nach Update suchen");
+      else setNotice("update", "Update " + nv + " verfügbar", function () { checkUpdate(true); });
     } else if (manual) toast("Du hast die neueste Version (" + APP_VERSION + ").");
   }).catch(function () { if (manual) toast("Update-Server nicht erreichbar."); });
 }
@@ -2281,6 +2363,8 @@ function applyUpdate() {
 if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
   navigator.serviceWorker.register("sw.js").then(function (r) { swReg = r; }).catch(function () {});
   setTimeout(function () { checkUpdate(false); }, 2500);
+  setInterval(function () { if (!document.hidden) checkUpdate(false); }, 30 * 60 * 1000);
+  document.addEventListener("visibilitychange", function () { if (!document.hidden) checkUpdate(false); });
 }
 
 /* ================= start ================= */

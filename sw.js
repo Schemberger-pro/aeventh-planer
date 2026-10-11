@@ -1,5 +1,5 @@
 /* Æventh Planer – Service Worker. VERSION bei jedem Release erhöhen. */
-var VERSION = "2026.41.2";
+var VERSION = "2026.41.3";
 var CACHE = "aeventh-planer-" + VERSION;
 var FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", function (e) {
@@ -15,6 +15,8 @@ self.addEventListener("fetch", function (e) {
   var url = new URL(e.request.url);
   if (e.request.method !== "GET" || url.origin !== location.origin) return;
   if (url.pathname.endsWith("version.json")) { e.respondWith(fetch(e.request, { cache: "no-store" })); return; }
+  if (url.pathname.endsWith("audio/index.json")) { e.respondWith(fetch(e.request, { cache: "no-store" }).then(function (res) { if (res && res.ok) { var c2 = res.clone(); caches.open(CACHE).then(function (c) { c.put(url.pathname, c2); }); } return res; })
+    .catch(function () { return caches.match(url.pathname); })); return; }
   e.respondWith(caches.match(e.request, { ignoreSearch: true }).then(function (hit) {
     return hit || fetch(e.request).then(function (res) {
       if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); }

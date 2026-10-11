@@ -1,1 +1,1 @@
-{ "version": "2026.41.2", "app": "2026.41.2", "notes": "Neu: Audioeditor (Editor → Audioeditor, Alt+4) – Musik, Stinger, Ambience, Soundeffekte und Stimmen planen und dem Dungeon, Räumen und Objekten zuordnen. Raum-Eigenschaften mit Musik/Ambience, Objekteditor mit Sounds, Raumbeschriftung zeigt ♪." }
+{ "version": "2026.41.3", "app": "2026.41.3", "notes": "Audioeditor spielt die Spieldateien ab (Abspielen/Pause/Stopp, Position, Mit Vorlauf). Statusleiste jetzt unten unter der Werkzeugleiste, oben rechts erscheinen wichtige Hinweise wie verfügbare Updates." }
