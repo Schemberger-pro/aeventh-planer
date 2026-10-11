@@ -1,1 +1,1 @@
-{ "version": "0.6.0", "app": "0.6.0", "notes": "3 feste Ebenen (1 Hintergrund, 2 Spielebene, 3 Vordergrund), gekoppelt an die Zahl in der Objektleiste. Objekteditor mit eigenen Größen, Bewegung (Parallax) und Animation. Neues Werkzeug Verschieben. Raster 1×1/8×8/16×16/Aus." }
+{ "version": "0.6.1", "app": "0.6.1", "notes": "Fehler behoben: Auf der Spielebene ließ sich nichts mehr platzieren." }

@@ -307,7 +307,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.6.0", APP_VERSION = "0.6.0", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.6.1", APP_VERSION = "0.6.1", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "8", labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
@@ -728,7 +728,7 @@ function roomAtWorld(wx, wy) { for (var i = P.rooms.length - 1; i >= 0; i--) { v
 function roomAtLabel(sx, sy) { for (var i = P.rooms.length - 1; i >= 0; i--) { var l = P.rooms[i].__label; if (l && sx >= l[0] && sy >= l[1] && sx <= l[0] + l[2] && sy <= l[1] + l[3]) return P.rooms[i]; } return null; }
 function cellInfo(sx, sy, layer) {
   var w = s2w(sx, sy), room = roomAtWorld(w[0], w[1]); if (!room) return null;
-  var f = 1; cx = Math.floor((w[0] - room.x) * f), cy = Math.floor((w[1] - room.y) * f);
+  var cx = Math.floor(w[0] - room.x), cy = Math.floor(w[1] - room.y);
   return { room: room, x: cx, y: cy, key: cx + "," + cy };
 }
 
