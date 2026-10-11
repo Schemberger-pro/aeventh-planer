@@ -254,6 +254,7 @@
     <div class="mitem check" data-act="tool_rect" id="mi-t-rect">Rechteck</div>
     <div class="mitem check" data-act="tool_pick" id="mi-t-pick">Pipette</div>
     <div class="mitem check" data-act="tool_text" id="mi-t-text">Text</div>
+    <div class="mitem check" data-act="tool_guide" id="mi-t-guide">Hilfslinie</div>
     <div class="msep"></div>
     <div class="mitem" data-act="nextParam">Variante des Objekts weiterschalten</div>
   </div></div>
@@ -264,6 +265,9 @@
     <div class="msep"></div>
     <div class="mitem" data-act="borderWall">Rand mit Wand füllen</div>
     <div class="mitem" data-act="clearRoom">Aktuelle Ebene leeren</div>
+    <div class="msep"></div>
+    <div class="mitem" data-act="centerGuides">Hilfslinien in die Mitte setzen</div>
+    <div class="mitem" data-act="clearGuides">Hilfslinien entfernen</div>
     <div class="msep"></div>
     <div class="mitem" data-act="delRoom">Raum löschen</div>
   </div></div>
@@ -276,6 +280,8 @@
     <div class="msep"></div>
     <div class="mitem check" data-act="toggleOther" id="mi-other">Andere Ebenen blass anzeigen</div>
     <div class="mitem check" data-act="toggleDots" id="mi-dots">Raster</div>
+    <div class="mitem check" data-act="toggleGuides" id="mi-guides">Hilfslinien</div>
+    <div class="mitem check" data-act="toggleCenter" id="mi-center">Raummitte anzeigen</div>
     <div class="msep"></div>
     <div class="mitem check" data-act="toggleGame" id="mi-game">Spielansicht (nur Inhalt)</div>
     <div class="mitem check" data-act="toggleBlocks" id="mi-blocks">Objektleiste</div>
@@ -343,9 +349,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.8.1", APP_VERSION = "0.8.1", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.9.0", APP_VERSION = "0.9.0", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { showGuides: true, guideCenter: false, eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -446,8 +452,10 @@ var TOOLS = [
   { id: "erase", name: "Radierer", icon: "t-erase" },
   { id: "rect", name: "Rechteck", icon: "t-rect" },
   { id: "pick", name: "Pipette", icon: "t-pick" },
-  { id: "text", name: "Text", icon: "t-text" }
+  { id: "text", name: "Text", icon: "t-text" },
+  { id: "guide", name: "Hilfslinie", icon: "t-guide" }
 ];
+var guideDir = "v", selGuide = null;
 function blockByUid(u) { for (var i = 0; i < P.blocks.length; i++) if (P.blocks[i].uid === u) return P.blocks[i]; return null; }
 function roomById(r) { for (var i = 0; i < P.rooms.length; i++) if (P.rooms[i].rid === r) return P.rooms[i]; return null; }
 function pvalsOf(b) { return b.pvals ? b.pvals.split(",").map(function (s) { return s.trim(); }).filter(function (s) { return s.length; }) : []; }
@@ -503,7 +511,8 @@ function updateStatus() {
   if ($("tbZoom")) $("tbZoom").textContent = Math.round(view.z / 24 * 100) + " %";
   var S = P.settings;
   var set = function (id, on) { var e = $(id); if (e) e.classList.toggle("on", !!on); };
-  ["select","hand","move","brush","erase","rect","pick","text"].forEach(function (t) { set("mi-t-" + t, page === "map" && tool === t); });
+  ["select","hand","move","brush","erase","rect","pick","text","guide"].forEach(function (t) { set("mi-t-" + t, page === "map" && tool === t); });
+  set("mi-guides", S.showGuides); set("mi-center", S.guideCenter);
   set("mi-other", S.showOther && !S.soloLayer);
   set("mi-eink", S.eink); set("mi-dots", +S.raster > 0); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-erundo", S.eraserUndo); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
   set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks"); set("mi-pixedit", page === "pixels");
@@ -590,6 +599,9 @@ function drawIcon(c, icon, x, y, s, param, name) {
       c.moveTo(x + s * 0.25, cy - dy2 * s * 0.12); c.lineTo(cx, cy + dy2 * s * 0.14); c.lineTo(x + s * 0.75, cy - dy2 * s * 0.12); c.stroke(); break;
     case "t-text": letter("T", 0.62); c.beginPath(); c.moveTo(x + s * 0.25, y + s * 0.88); c.lineTo(x + s * 0.75, y + s * 0.88); c.stroke(); break;
     case "t-room": c.lineWidth = Math.max(1.5, s * 0.08); c.strokeRect(x + p, y + p * 1.5, s - 2 * p, s - 3 * p); c.fillRect(x + p, y + p * 0.6, s * 0.36, p * 0.9); letter("+", 0.45, s * 0.05, s * 0.06); break;
+    case "t-guidev": case "t-guideh": case "t-guide": c.lineWidth = Math.max(1.2, s * 0.05); c.strokeRect(x + s * 0.12, y + s * 0.18, s * 0.76, s * 0.64);
+      c.save(); c.lineWidth = Math.max(1.6, s * 0.08); c.setLineDash([Math.max(2, s * 0.1), Math.max(1.5, s * 0.07)]); c.beginPath();
+      if (icon !== "t-guideh") { c.moveTo(cx, y + s * 0.06); c.lineTo(cx, y + s * 0.94); } else { c.moveTo(x + s * 0.02, cy); c.lineTo(x + s * 0.98, cy); } c.stroke(); c.restore(); break;
     case "t-list": c.lineWidth = Math.max(1.6, s * 0.08); c.beginPath(); for (var li = 0; li < 3; li++) { var ly = y + s * (0.27 + li * 0.23); c.moveTo(x + s * 0.34, ly); c.lineTo(x + s * 0.84, ly); } c.stroke(); for (li = 0; li < 3; li++) c.fillRect(x + s * 0.14, y + s * (0.21 + li * 0.23), s * 0.12, s * 0.12); break;
     case "t-grid": c.lineWidth = Math.max(1.4, s * 0.07); [[0.14, 0.14], [0.54, 0.14], [0.14, 0.54], [0.54, 0.54]].forEach(function (q) { c.strokeRect(x + s * q[0], y + s * q[1], s * 0.32, s * 0.32); }); break;
     case "t-new": c.lineWidth = Math.max(1.5, s * 0.07); c.strokeRect(x + s * 0.16, y + s * 0.16, s * 0.68, s * 0.68); c.lineWidth = Math.max(1.8, s * 0.09); c.beginPath(); c.moveTo(cx, y + s * 0.32); c.lineTo(cx, y + s * 0.68); c.moveTo(x + s * 0.32, cy); c.lineTo(x + s * 0.68, cy); c.stroke(); break;
@@ -688,6 +700,7 @@ function drawRoom(room) {
     var tx = o[0] + t.x * z + 2, ty = o[1] + (t.y + 0.5) * z, tw = ctx.measureText(t.text).width;
     ctx.fillStyle = "#fff"; ctx.fillRect(tx - 3, ty - z * 0.4, tw + 6, z * 0.8); ctx.fillStyle = "#000"; ctx.fillText(t.text, tx, ty); ctx.restore();
   });
+  drawGuides(room, o, z);
   var sel = room.rid === selRoom;
   ctx.save(); ctx.strokeStyle = "#000"; ctx.lineWidth = sel ? 4 : 2.5; ctx.strokeRect(o[0], o[1], W, H);
   if (sel) { ctx.setLineDash([8, 5]); ctx.lineWidth = 1.5; ctx.strokeRect(o[0] - 6, o[1] - 6, W + 12, H + 12); ctx.setLineDash([]);
@@ -960,7 +973,7 @@ cv.addEventListener("pointerdown", function (ev) {
     var ids = touchIds();
     if (ids.length === 2) { cancelPending(); if (drag && drag.byTouch) { if (drag.undoPushed) { restoreSnap(undoStack.pop()); redoStack = redoKeep; } drag = null; preview = null; } startPinch(); return; }
     if (ids.length > 2) return;
-    var dragTools = { select: 1, rect: 1 };
+    var dragTools = { select: 1, rect: 1, guide: 1 };
     if (!gameView && dragTools[tool] || (P.settings.fingerPaint && (tool === "brush" || tool === "erase"))) { toolDown(p, tool, ev, true); return; }
     pending = { id: ev.pointerId, sx: p[0], sy: p[1] };
     return;
@@ -1048,6 +1061,7 @@ function toolDown(p, useTool, ev, byTouch) {
     render(); return;
   }
   if (useTool === "room") { var cx = Math.floor(w[0]), cy = Math.floor(w[1]); drag = { type: "room", byTouch: byTouch }; preview = { type: "room", x0: cx, y0: cy, x1: cx, y1: cy }; render(); return; }
+  if (tool === "guide" && (useTool === "guide" || useTool === "erase")) { guideDown(p, w, useTool, byTouch, dbl); return; }
   if (mode === "move") { pathDown(p, useTool, byTouch); return; }
   if (isObjLayer(mode) && useTool !== "text") { objDown(p, useTool, byTouch); return; }
   var ci = cellInfo(p[0], p[1], mode);
@@ -1094,6 +1108,7 @@ function toolMove(p) {
     if (cdx !== drag.dx || cdy !== drag.dy) { drag.dx = cdx; drag.dy = cdy; preview.wx = R.x + drag.bx0 + cdx; preview.wy = R.y + drag.by0 + cdy; schedule(); } } }
   if (drag.type === "opaint" || drag.type === "oerase" || drag.type === "omove" || drag.type === "orect") objMove(p);
   if (drag.type === "hpath" || drag.type === "perase") pathMove(p);
+  if (drag.type === "guide") guideMove(p);
 }
 function endDrag() {
   if (!drag) return;
@@ -1107,6 +1122,7 @@ function endDrag() {
   if (drag.type === "orect") { objRectEnd(); preview = null; }
   if (drag.type === "hpath") { if (drag.path.pts.length < 2) { P.paths.splice(P.paths.indexOf(drag.path), 1); dropUndo(); } }
   if (drag.type === "perase" && !drag.changed) dropUndo();
+  if (drag.type === "guide") { if (drag.out) { drag.room.guides.splice(drag.room.guides.indexOf(drag.g), 1); selGuide = null; toast("Hilfslinie entfernt"); } else if (!drag.moved) dropUndo(); else autosave(); }
   if (drag.type === "resize") { if (drag.room.w === drag.w0 && drag.room.h === drag.h0) dropUndo(); else clipRoom(drag.room); }
   if (drag.type === "room") {
     var x = Math.min(preview.x0, preview.x1), y = Math.min(preview.y0, preview.y1);
@@ -1191,7 +1207,10 @@ function vsep() { var d = document.createElement("div"); d.className = "vsep"; r
 function buildTools() {
   var tb = $("toolbar"); tb.innerHTML = "";
   tb.classList.toggle("hidden", !P.settings.showTools); $("toolTab").classList.toggle("show", !P.settings.showTools);
-  TOOLS.forEach(function (t) { tb.appendChild(tbBtn(t.icon, t.name, t.name, function () { tool = t.id; buildTools(); buildBlockPanel(); render(); }, tool === t.id)); });
+  TOOLS.forEach(function (t) { var isG = t.id === "guide";
+    tb.appendChild(tbBtn(isG ? "t-guide" + guideDir : t.icon, t.name, isG ? "Hilfslinie (" + (guideDir === "v" ? "senkrecht" : "waagerecht") + ") – erneut antippen wechselt" : t.name, function () {
+      if (isG && tool === "guide") { guideDir = guideDir === "v" ? "h" : "v"; toast("Hilfslinie " + (guideDir === "v" ? "senkrecht" : "waagerecht")); }
+      tool = t.id; buildTools(); buildBlockPanel(); render(); }, tool === t.id)); });
   tb.appendChild(vsep());
   tb.appendChild(tbBtn("t-undo", "Zurück", "Rückgängig", function () { undo(); }));
   tb.appendChild(tbBtn("t-redo", "Vor", "Wiederherstellen", function () { redo(); }));
@@ -1333,11 +1352,11 @@ function openLayerSettings() {
 var KEYDEFS = [
   ["Datei", [["openProject", "Projekt öffnen", "Ctrl+O"], ["saveProject", "Projekt speichern", "Ctrl+S"], ["copyRoom", "Raum als Text kopieren", "Ctrl+Shift+C"], ["exportMd", "Alle Räume als .md", ""], ["settings", "Einstellungen", "Ctrl+,"]]],
   ["Bearbeiten", [["undo", "Rückgängig", "Ctrl+Z"], ["redo", "Wiederherstellen", "Ctrl+Shift+Z"]]],
-  ["Werkzeuge", [["tool_select", "Auswahl", "V"], ["tool_hand", "Hand", "H"], ["tool_move", "Verschieben", "M"], ["tool_brush", "Pinsel", "B"], ["tool_erase", "Radierer", "E"], ["tool_rect", "Rechteck", "R"], ["tool_pick", "Pipette", "I"], ["tool_text", "Text", "T"]]],
+  ["Werkzeuge", [["tool_select", "Auswahl", "V"], ["tool_hand", "Hand", "H"], ["tool_move", "Verschieben", "M"], ["tool_brush", "Pinsel", "B"], ["tool_erase", "Radierer", "E"], ["tool_rect", "Rechteck", "R"], ["tool_pick", "Pipette", "I"], ["tool_text", "Text", "T"], ["tool_guide", "Hilfslinie", "G"]]],
   ["Objekte", [["nextParam", "Variante weiterschalten", "Q"]]],
-  ["Raum", [["newRoom", "Neuer Raum", "N"], ["roomProps", "Eigenschaften", "Enter"], ["dupRoom", "Duplizieren", "Ctrl+D"], ["borderWall", "Rand mit Wand füllen", ""], ["clearRoom", "Ebene leeren", ""], ["delRoom", "Raum löschen", "Delete"]]],
+  ["Raum", [["newRoom", "Neuer Raum", "N"], ["roomProps", "Eigenschaften", "Enter"], ["dupRoom", "Duplizieren", "Ctrl+D"], ["borderWall", "Rand mit Wand füllen", ""], ["centerGuides", "Hilfslinien in die Mitte", ""], ["clearGuides", "Hilfslinien entfernen", ""], ["clearRoom", "Ebene leeren", ""], ["delRoom", "Raum löschen", "Delete"]]],
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
-    ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
+    ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGuides", "Hilfslinien an/aus", "Shift+G"], ["toggleCenter", "Raummitte an/aus", ""], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
   ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["toggleSolo", "Nur aktive Ebene anzeigen", "Shift+O"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
   ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
 ];
@@ -1445,6 +1464,70 @@ function openRoomProps() {
     });
 }
 
+/* ================= Hilfslinien ================= */
+function guideMid(r, o) { return (o === "v" ? r.w : r.h) * 8; }
+function fmtCells(px) { var c = px / 16; return (Math.round(c * 100) / 100).toString().replace(".", ","); }
+function guideRaw(r, o, w) { return o === "v" ? (w[0] - r.x) * 16 : (w[1] - r.y) * 16; }
+function guideSnap(r, o, raw) { var max = (o === "v" ? r.w : r.h) * 16, mid = guideMid(r, o), sp = snapPx(), tol = Math.max(sp / 2, 6 * 16 / view.z);
+  if (Math.abs(raw - mid) <= tol) return mid; return Math.max(0, Math.min(max, Math.round(raw / sp) * sp)); }
+function guideAt(sx, sy) {
+  if (!P.settings.showGuides && tool !== "guide") return null;
+  var rooms = P.rooms.slice().sort(function (a, b) { return (a.rid === selRoom) - (b.rid === selRoom); }), best = null, bd = 14;
+  for (var i = rooms.length - 1; i >= 0; i--) { var r = rooms[i], o = w2s(r.x, r.y), W = r.w * view.z, H = r.h * view.z;
+    if (sx < o[0] - 14 || sy < o[1] - 14 || sx > o[0] + W + 14 || sy > o[1] + H + 14) continue;
+    (r.guides || []).forEach(function (g) { var d = g.o === "v" ? Math.abs(sx - (o[0] + g.p / 16 * view.z)) : Math.abs(sy - (o[1] + g.p / 16 * view.z)); if (d < bd) { bd = d; best = { room: r, g: g }; } });
+    if (best) return best; }
+  return null;
+}
+function guideDown(p, w, useTool, byTouch, dbl) {
+  var h = guideAt(p[0], p[1]);
+  if (useTool === "erase") { if (h) { pushUndo(); h.room.guides.splice(h.room.guides.indexOf(h.g), 1); selGuide = null; render(); autosave(); toast("Hilfslinie gelöscht"); } return; }
+  if (!P.settings.showGuides) { P.settings.showGuides = true; toast("Hilfslinien eingeblendet"); }
+  if (h) { selRoom = h.room.rid; selGuide = h.g; if (dbl) { render(); openGuideProps(h.room, h.g); return; }
+    pushUndo(); drag = { type: "guide", room: h.room, g: h.g, moved: false, byTouch: byTouch, undoPushed: true }; render(); return; }
+  var room = roomAtWorld(w[0], w[1]);
+  if (!room) { selGuide = null; drag = { type: "pan", sx: p[0], sy: p[1], px: view.px, py: view.py, byTouch: byTouch }; render(); return; }
+  selRoom = room.rid; pushUndo(); room.guides = room.guides || [];
+  var g = { o: guideDir, p: guideSnap(room, guideDir, guideRaw(room, guideDir, w)) }; room.guides.push(g); selGuide = g;
+  drag = { type: "guide", room: room, g: g, moved: true, byTouch: byTouch, undoPushed: true }; render();
+}
+function guideMove(p) {
+  var R = drag.room, g = drag.g, w = s2w(p[0], p[1]), raw = guideRaw(R, g.o, w), max = (g.o === "v" ? R.w : R.h) * 16, out = raw < -24 || raw > max + 24;
+  var np = guideSnap(R, g.o, raw); if (np !== g.p || out !== !!drag.out) { g.p = np; drag.out = out; drag.moved = true; schedule(); }
+}
+function drawGuides(room, o, z) {
+  var S = P.settings, W = room.w * z, H = room.h * z;
+  ctx.save(); ctx.strokeStyle = "#000"; ctx.lineCap = "butt";
+  var line = function (or, px) { ctx.beginPath(); if (or === "v") { var x = Math.round(o[0] + px / 16 * z) + 0.5; ctx.moveTo(x, o[1]); ctx.lineTo(x, o[1] + H); } else { var y = Math.round(o[1] + px / 16 * z) + 0.5; ctx.moveTo(o[0], y); ctx.lineTo(o[0] + W, y); } ctx.stroke(); };
+  if (S.guideCenter) { ctx.lineWidth = 1; ctx.setLineDash([2, 4]); line("v", guideMid(room, "v")); line("h", guideMid(room, "h")); }
+  if ((S.showGuides || tool === "guide") && room.guides && room.guides.length) {
+    room.guides.forEach(function (g) { if (g.p < 0 || g.p > (g.o === "v" ? room.w : room.h) * 16) return; var on = g === selGuide && tool === "guide", gone = drag && drag.type === "guide" && drag.g === g && drag.out;
+      ctx.globalAlpha = gone ? 0.35 : 1; ctx.lineWidth = on ? 2.5 : 1.5; ctx.setLineDash(on ? [10, 4] : [7, 5]); line(g.o, g.p); });
+    ctx.globalAlpha = 1;
+    var sg = room.guides.indexOf(selGuide) >= 0 && tool === "guide" ? selGuide : null;
+    if (sg) { var mid = sg.p === guideMid(room, sg.o), txt = (sg.o === "v" ? "↔ " : "↕ ") + fmtCells(sg.p) + (mid ? " · Mitte" : "");
+      ctx.setLineDash([]); ctx.font = "bold " + Math.round(12 * fs()) + "px system-ui, sans-serif"; ctx.textBaseline = "middle"; var tw = ctx.measureText(txt).width + 12, th = Math.round(20 * fs());
+      var bx = sg.o === "v" ? o[0] + sg.p / 16 * z - tw / 2 : o[0] + 6, by = sg.o === "v" ? o[1] + 6 : o[1] + sg.p / 16 * z - th / 2;
+      bx = Math.max(o[0] + 2, Math.min(o[0] + W - tw - 2, bx)); by = Math.max(o[1] + 2, Math.min(o[1] + H - th - 2, by));
+      ctx.fillStyle = "#000"; ctx.fillRect(bx, by, tw, th); ctx.fillStyle = "#fff"; ctx.fillText(txt, bx + 6, by + th / 2); }
+  }
+  ctx.restore();
+}
+function openGuideProps(r, g) {
+  var max = (g.o === "v" ? r.w : r.h), o = g.o;
+  modal('<h3>Hilfslinie</h3><div class="body sbody">' +
+    '<div class="srow"><div><div class="sl">Ausrichtung</div></div><div class="sseg" id="g-o"><button data-o="v" class="' + (o === "v" ? "on" : "") + '">Senkrecht</button><button data-o="h" class="' + (o === "h" ? "on" : "") + '">Waagerecht</button></div></div>' +
+    '<div class="srow"><div><div class="sl">Position (Zellen)</div><div class="sh" id="g-hint"></div></div><div style="display:flex;gap:6px;align-items:center"><input id="g-p" type="number" step="0.5" min="0" style="width:110px" value="' + fmtCells(g.p).replace(",", ".") + '"><div class="sseg"><button id="g-mid">Mitte</button></div></div></div>' +
+    '<div class="srow"><div><div class="sl">Löschen</div><div class="sh">Auch: Linie aus dem Raum ziehen oder mit dem Radiererende antippen.</div></div><div class="sseg"><button id="g-del">Hilfslinie löschen</button></div></div></div>', function () {
+      var c = parseFloat(String($("g-p").value).replace(",", ".")); if (isNaN(c)) return false; var mx = (o === "v" ? r.w : r.h);
+      pushUndo(); g.o = o; g.p = Math.max(0, Math.min(mx * 16, Math.round(c * 16))); selGuide = g; render(); autosave(); });
+  var hint = function () { max = (o === "v" ? r.w : r.h); $("g-hint").textContent = "0 = " + (o === "v" ? "linker" : "oberer") + " Rand · " + max + " = " + (o === "v" ? "rechter" : "unterer") + " Rand · Mitte " + fmtCells(max * 8) + " · 1 Zelle = 16 px"; };
+  hint();
+  document.querySelectorAll("#g-o button").forEach(function (x) { x.onclick = function () { o = x.getAttribute("data-o"); document.querySelectorAll("#g-o button").forEach(function (y) { y.classList.toggle("on", y === x); }); hint(); }; });
+  $("g-mid").onclick = function () { $("g-p").value = String(max / 2); };
+  $("g-del").onclick = function () { pushUndo(); r.guides.splice(r.guides.indexOf(g), 1); selGuide = null; closeModal(); render(); autosave(); toast("Hilfslinie gelöscht"); };
+}
+
 /* ================= export ================= */
 function cellCode(v) { var b = blockByUid(v.b); if (!b) return "??"; var c = ((b.code || "??") + "  ").slice(0, 2);
   if (v.p) c = c.charAt(0) + String(v.p).charAt(0); return c; }
@@ -1456,6 +1539,7 @@ function roomText(r) {
   ["bg", "fg"].forEach(function (lid) { var L = layerById(lid), l = (r.objs && r.objs[lid]) || [];
     if (l.length) { out.push("", "Ebene " + L.num + " " + L.name + " (Objekte, x,y in Pixeln, 16 px = 1 Zelle):"); l.slice().sort(function (a, c) { return a.y - c.y || a.x - c.x; }).forEach(function (o) { var b = blockByUid(o.b);
       out.push("- " + o.x + "," + o.y + " = " + (b ? b.id + " " + b.name + " (" + bw(b) + "×" + bh(b) + ")" : "?") + (o.p ? " [" + paramLabel(o.p) + "]" : "")); }); } });
+  if (r.guides && r.guides.length) out.push("", "Hilfslinien (Zellen ab Raumecke): " + r.guides.map(function (g) { return (g.o === "v" ? "senkrecht " : "waagerecht ") + fmtCells(g.p); }).join(", "));
   out = out.concat(pathsText(r));
   if (r.texts.length) { out.push("", "Texte:"); r.texts.forEach(function (t) { out.push("- " + t.x + "," + t.y + ": " + t.text); }); }
   return out.join("\n");
@@ -1515,7 +1599,12 @@ var ACTIONS = {
   nextGroup: function () { if (page === "map") $("bpFoot").onclick(); },
   nextParam: function () { var b = blockByUid(curBlock); if (b && cycleParam(b)) { buildBlockPanel(); updateStatus(); } },
   tool_select: function () { setTool("select"); }, tool_hand: function () { setTool("hand"); }, tool_move: function () { setTool("move"); }, tool_brush: function () { setTool("brush"); }, tool_erase: function () { setTool("erase"); },
-  tool_rect: function () { setTool("rect"); }, tool_pick: function () { setTool("pick"); }, tool_text: function () { setTool("text"); },
+  tool_rect: function () { setTool("rect"); }, tool_pick: function () { setTool("pick"); }, tool_text: function () { setTool("text"); }, tool_guide: function () { if (page === "map" && tool === "guide") { guideDir = guideDir === "v" ? "h" : "v"; toast("Hilfslinie " + (guideDir === "v" ? "senkrecht" : "waagerecht")); } setTool("guide"); },
+  toggleGuides: function () { P.settings.showGuides = !P.settings.showGuides; render(); autosave(); toast(P.settings.showGuides ? "Hilfslinien an" : "Hilfslinien aus"); },
+  toggleCenter: function () { P.settings.guideCenter = !P.settings.guideCenter; render(); autosave(); toast(P.settings.guideCenter ? "Raummitte an" : "Raummitte aus"); },
+  centerGuides: function () { var r = needRoom(); if (!r) return; pushUndo(); r.guides = (r.guides || []).filter(function (g) { return g.p !== guideMid(r, g.o); });
+    r.guides.push({ o: "v", p: guideMid(r, "v") }, { o: "h", p: guideMid(r, "h") }); P.settings.showGuides = true; render(); autosave(); toast("Mittellinien gesetzt (" + fmtCells(guideMid(r, "v")) + " / " + fmtCells(guideMid(r, "h")) + ")"); },
+  clearGuides: function () { var r = needRoom(); if (!r) return; if (!r.guides || !r.guides.length) { toast("Keine Hilfslinien in diesem Raum."); return; } pushUndo(); r.guides = []; selGuide = null; render(); autosave(); toast("Hilfslinien entfernt"); },
   dupRoom: function () { var r = needRoom(); if (!r) return; pushUndo(); var c = JSON.parse(JSON.stringify(r)); c.rid = newRoom("").rid; c.nr = nextNr(); c.x = r.x + r.w + 2; delete c.__label; P.rooms.push(c); selRoom = c.rid; render(); autosave(); },
   borderWall: function () { var r = needRoom(); if (!r) return;
     var wall = P.blocks.filter(function (b) { return b.icon === "wall" && b.kind === "func"; })[0]; if (!wall) { toast("Kein Block mit Symbol „Wand“ vorhanden."); return; }
@@ -1548,7 +1637,7 @@ var ACTIONS = {
     "<p><b>Unten:</b> Werkzeuge (Verschieben bewegt einzelne Objekte), Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Die Ebene wechselt automatisch mit dem gewählten Objekt.</p>" +
     "<p><b>Räume:</b> Menü Raum → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
     "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekteditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
-    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
+    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Hilfslinien:</b> Werkzeug „Hilfslinie“ (G) – Antippen im Raum setzt eine Linie, Ziehen verschiebt sie (rastet im Raster und an der Raummitte ein), erneutes Antippen des Werkzeugs wechselt senkrecht/waagerecht. Doppeltipp auf eine Linie öffnet die exakte Eingabe; Löschen durch Herausziehen aus dem Raum oder mit dem Radiererende. Raum → „Hilfslinien in die Mitte setzen“; Ansicht → „Raummitte anzeigen“ zeigt die Mitte jedes Raums ohne eigene Linien. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
   about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekteditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
 };

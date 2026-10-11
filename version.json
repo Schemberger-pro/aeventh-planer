@@ -1,1 +1,1 @@
-{ "version": "0.8.1", "app": "0.8.1", "notes": "Objekteditor neu: Objektleiste links (Kacheln/Liste, Suche, Ebenenfilter), Inspektor rechts mit Reitern Eigenschaften / Bilder / Verwendung / Notizen, Werkzeugleiste unten. Bilder je Variante auch hochladbar; Duplizieren." }
+{ "version": "0.9.0", "app": "0.9.0", "notes": "Hilfslinien: neues Werkzeug (G) zum Setzen, Verschieben und Löschen senkrechter/waagerechter Linien pro Raum, rastet an der Raummitte ein; exakte Eingabe per Doppeltipp; Ansicht → Raummitte anzeigen; Raum → Hilfslinien in die Mitte setzen / entfernen." }
