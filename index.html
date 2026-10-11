@@ -52,6 +52,7 @@
   .grp { font-size:calc(12px*var(--fs)); font-weight:700; margin:10px 4px 4px; padding-bottom:3px; border-bottom:1px solid var(--line); }
   .bitem .bn { font-size:calc(13px*var(--fs)); line-height:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
   .bitem .bid { font-size:calc(11px*var(--fs)); }
+  .bempty { padding:12px 10px; font-size:calc(12px*var(--fs)); }
   .bitem.sel { background:var(--ink); color:var(--paper); } .bitem.sel canvas { filter:invert(1); }
   .bitem.off { opacity:1; } .bitem.off .bn { font-style:italic; } .bitem.off canvas { outline:1.5px dotted #000; }
   #bpParams { border-top:1px solid var(--line); padding:8px; display:none; }
@@ -127,6 +128,7 @@
   table.blk input[type=text], table.blk input[type=number], table.blk select { border:1.5px solid var(--line); border-radius:7px; padding:5px 6px; background:var(--paper); }
   table.blk input.bad { border-width:3px; }
   input[type=checkbox] { accent-color:#000; width:20px; height:20px; }
+  .w-sz { width:62px; } .szbox { white-space:nowrap; } .w-pre { width:44px; margin-left:4px; }
   .w-id { width:54px; } .w-name { width:118px; } .w-code { width:44px; text-align:center; font-family:ui-monospace,Menlo,monospace; } .w-plabel { width:96px; } .w-pvals { width:96px; }
   table.blk select { max-width:104px; }
   table.blk td:nth-child(5) select { max-width:52px; }
@@ -164,6 +166,7 @@
   .kkey.cap { background:var(--ink); color:var(--paper); }
   .kclr { width:36px; min-height:36px; border:1.5px solid var(--line); border-radius:8px; background:var(--paper); font-weight:700; }
   .lrow { display:flex; gap:10px; padding:10px 0; border-bottom:1px solid var(--line); align-items:flex-start; }
+  .lnum { width:32px; height:32px; flex:0 0 32px; margin-top:4px; }
   .lmove { display:flex; flex-direction:column; gap:4px; }
   .lmove button { width:38px; height:34px; border:1.5px solid var(--line); border-radius:8px; background:var(--paper); font-weight:700; }
   .lmove button:disabled { border-style:dashed; color:#000; opacity:1; }
@@ -198,14 +201,14 @@
     <div class="msep"></div>
     <div class="mitem check" data-act="tool_select" id="mi-t-select">Auswahl</div>
     <div class="mitem check" data-act="tool_hand" id="mi-t-hand">Hand</div>
+    <div class="mitem check" data-act="tool_move" id="mi-t-move">Verschieben</div>
     <div class="mitem check" data-act="tool_brush" id="mi-t-brush">Pinsel</div>
     <div class="mitem check" data-act="tool_erase" id="mi-t-erase">Radierer</div>
     <div class="mitem check" data-act="tool_rect" id="mi-t-rect">Rechteck</div>
     <div class="mitem check" data-act="tool_pick" id="mi-t-pick">Pipette</div>
     <div class="mitem check" data-act="tool_text" id="mi-t-text">Text</div>
     <div class="msep"></div>
-    <div class="mitem" data-act="nextGroup">Nächste Blockleiste</div>
-    <div class="mitem" data-act="nextParam">Parameter des Blocks weiterschalten</div>
+    <div class="mitem" data-act="nextParam">Variante des Objekts weiterschalten</div>
   </div></div>
   <div class="menu" data-menu="room"><div class="mlabel">Raum</div><div class="mdrop">
     <div class="mitem" data-act="newRoom">Neuer Raum (32×18)</div>
@@ -225,16 +228,16 @@
     <div class="mitem" data-act="fitAll">Alle Räume anzeigen</div>
     <div class="msep"></div>
     <div class="mitem check" data-act="toggleOther" id="mi-other">Andere Ebenen blass anzeigen</div>
-    <div class="mitem check" data-act="toggleDots" id="mi-dots">Punktraster</div>
+    <div class="mitem check" data-act="toggleDots" id="mi-dots">Raster</div>
     <div class="msep"></div>
     <div class="mitem check" data-act="toggleGame" id="mi-game">Spielansicht (nur Inhalt)</div>
-    <div class="mitem check" data-act="toggleBlocks" id="mi-blocks">Blockleiste</div>
+    <div class="mitem check" data-act="toggleBlocks" id="mi-blocks">Objektleiste</div>
     <div class="mitem check" data-act="toggleTools" id="mi-tools">Werkzeugleiste</div>
   </div></div>
   <div class="menu" data-menu="layers"><div class="mlabel">Ebenen</div><div class="mdrop" id="layerDrop"></div></div>
   <div class="menu" data-menu="editor"><div class="mlabel">Editor</div><div class="mdrop">
     <div class="mitem check" data-act="pageMap" id="mi-map">Mapeditor</div>
-    <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Blockeditor</div>
+    <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Objekteditor</div>
     <div class="mitem check" data-act="pagePixels" id="mi-pixedit">Pixeleditor</div>
   </div></div>
   <div class="menu" data-menu="help"><div class="mlabel">Hilfe</div><div class="mdrop">
@@ -248,23 +251,24 @@
 </div>
 
 <div id="blockPanel">
-  <div id="bpHead" class="bcell" title="Blockleiste ausblenden"><canvas id="bpHideIc"></canvas><div class="bct">Ausblenden</div></div>
+  <div id="bpHead" class="bcell" title="Objektleiste ausblenden"><canvas id="bpHideIc"></canvas><div class="bct">Ausblenden</div></div>
   <div id="bpList"></div>
-  <div id="bpFoot" class="bcell" title="Nächste Blockleiste"><canvas id="bpGrpIc"></canvas><div class="bct" id="bpGrpCap">Leiste</div></div>
+  <div id="bpFoot" class="bcell" title="Nächste Objektleiste"><canvas id="bpGrpIc"></canvas><div class="bct" id="bpGrpCap">Leiste</div></div>
 </div>
 
 <div id="main">
   <canvas id="cv"></canvas>
   <div id="blockEditor">
-    <h2>Blockeditor</h2>
-    <p class="hint">Die Funktion hängt an der ID, nicht am Bild – Bild und Symbol lassen sich jederzeit ändern. „Gruppe“ bestimmt, unter welcher Überschrift der Block links in der Blockleiste steht. Das Kürzel (2 Zeichen) wird im Text-Export benutzt; bei Parametern ersetzt der gewählte Wert das 2. Zeichen.</p>
+    <h2>Objekteditor</h2>
+    <p class="hint">Die Funktion hängt an der ID, nicht am Bild. „Ebene“ legt fest, wo das Objekt liegt: 1 Hintergrund, 2 Spielebene (Funktion, fest 16×16 im Raster), 3 Vordergrund. Objekte auf 1 und 3 haben eine frei wählbare Größe in Pixeln (16 px = 1 Zelle, Bildschirm = 512×288) und können sich bewegen (Parallax-Tempo). Das Kürzel (2 Zeichen) wird im Text-Export benutzt.</p>
     <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-      <button class="bigbtn" id="b-addFunc">+ Funktionsblock</button>
-      <button class="bigbtn" id="b-addDesign">+ Designblock</button>
+      <button class="bigbtn" id="b-addBg">+ Hintergrund</button>
+      <button class="bigbtn" id="b-addFunc">+ Spielebene</button>
+      <button class="bigbtn" id="b-addDesign">+ Vordergrund</button>
       <button class="bigbtn dark" id="b-backMap">Zurück zum Mapeditor</button>
     </div>
     <table class="blk"><thead><tr>
-      <th>Bild</th><th>ID</th><th>Name</th><th>Art</th><th>Gruppe</th><th>Kürzel</th><th>Symbol</th><th>Parameter</th><th>Bild</th><th></th>
+      <th>Bild</th><th>ID</th><th>Name</th><th>Ebene</th><th>Größe (px)</th><th>Bewegung</th><th>Animation</th><th>Kürzel</th><th>Symbol</th><th>Parameter</th><th>Bild</th><th></th>
     </tr></thead><tbody id="blkBody"></tbody></table>
   </div>
   <div id="pixEditor">
@@ -289,7 +293,7 @@
   </div>
 </div>
 
-<button id="bpTab" title="Blockleiste anzeigen"><svg viewBox="0 0 30 30" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"><path d="M15 3 26 9v12l-11 6-11-6V9z"/><path d="M4 9l11 6 11-6M15 15v12"/></svg></button>
+<button id="bpTab" title="Objektleiste anzeigen"><svg viewBox="0 0 30 30" fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round"><path d="M15 3 26 9v12l-11 6-11-6V9z"/><path d="M4 9l11 6 11-6M15 15v12"/></svg></button>
 <button id="gameExit">✕ Spielansicht beenden</button>
 <div id="toolWrap"><div id="toolbar"></div><div id="toolTab" title="Werkzeugleiste anzeigen"></div></div>
 
@@ -303,9 +307,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.5.0", APP_VERSION = "0.5.0", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.6.0", APP_VERSION = "0.6.0", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "8", labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -328,33 +332,56 @@ function defaultBlocks() {
     [103, "Rune", "design", 2, "u ", "rune"]
   ];
   return B.map(function (b, i) {
-    return { uid: "b" + (i + 1), id: b[0], name: b[1], kind: b[2], toolbar: b[3], code: b[4], icon: b[5],
-      plabel: b[6] || "", pvals: b[7] || "", image: null };
+    var o = { uid: "b" + (i + 1), id: b[0], name: b[1], kind: b[2], toolbar: b[3], code: b[4], icon: b[5],
+      plabel: b[6] || "", pvals: b[7] || "", image: null, layer: b[2] === "func" ? 2 : 3, par: 1, anim: "off" }; if (o.layer !== 2) { o.w = 8; o.h = 8; } return o;
   });
 }
-var LAYER_TYPES = { parallax: "Parallax", static: "Statischer Hintergrund", func: "Funktion", deco: "Dekoration" };
-function defaultLayers() { return [
-  { id: "par", name: "Parallax", type: "parallax", grid: 8, visible: true, factor: 0.5 },
-  { id: "bg", name: "Hintergrund", type: "static", grid: 8, visible: true },
-  { id: "func", name: "Funktion", type: "func", grid: 16, visible: true },
-  { id: "design", name: "Dekoration", type: "deco", grid: 8, visible: true } ]; }
+var LAYERS = [{ id: "bg", num: 1, name: "Hintergrund" }, { id: "func", num: 2, name: "Spielebene" }, { id: "fg", num: 3, name: "Vordergrund" }];
+var LAYER_TYPES = { bg: "Hintergrund", func: "Spielebene", fg: "Vordergrund" };
 function layerById(id) { return (P.layers || []).filter(function (l) { return l.id === id; })[0]; }
-function gridF(id) { var l = layerById(id); return l && l.grid === 8 ? 2 : 1; }
-function layerKind(id) { var l = layerById(id); return l && l.type === "func" ? "func" : "design"; }
-function ensureLayers(p) {
-  p = p || P; if (!p.layers || !p.layers.length) p.layers = defaultLayers();
-  if (!p.layers.some(function (l) { return l.type === "func"; })) p.layers.splice(Math.min(2, p.layers.length), 0, { id: "func", name: "Funktion", type: "func", grid: 16, visible: true });
-  (p.rooms || []).forEach(function (r) { p.layers.forEach(function (l) { if (!r[l.id]) r[l.id] = {}; }); });
+function layerByNum(n) { return (P.layers || []).filter(function (l) { return l.num === +n; })[0]; }
+function isObjLayer(id) { return id === "bg" || id === "fg"; }
+function gridF(id) { return 1; }
+function layerKind(id) { return id === "func" ? "func" : "design"; }
+function blockLayerNum(b) { return b.layer || (b.kind === "func" ? 2 : 3); }
+function layerOfBlock(b) { return ["bg", "func", "fg"][blockLayerNum(b) - 1] || "fg"; }
+function bw(b) { return blockLayerNum(b) === 2 ? 16 : Math.max(1, +b.w || 8); }
+function bh(b) { return blockLayerNum(b) === 2 ? 16 : Math.max(1, +b.h || 8); }
+function migrateBlocks(p) {
+  (p.blocks || []).forEach(function (b) { if (!b.layer) b.layer = b.kind === "func" ? 2 : 3; b.kind = b.layer === 2 ? "func" : "design"; b.toolbar = b.layer;
+    if (b.layer !== 2) { if (!b.w) b.w = 8; if (!b.h) b.h = 8; } if (b.par == null) b.par = 1; if (b.anim == null) b.anim = "off"; });
 }
-function lastDecoLayer() { var l = layerById(P.lastDeco); if (l && l.type !== "func") return l.id; var d = P.layers.filter(function (x) { return x.type === "deco"; })[0] || P.layers.filter(function (x) { return x.type !== "func"; }).slice(-1)[0]; return d ? d.id : "func"; }
+function ensureLayers(p) {
+  p = p || P; var old = p.layers || [];
+  if (!p.layersV3) {
+    var defs = old.length ? old : [{ id: "design", type: "deco", grid: 8 }];
+    (p.rooms || []).forEach(function (r) {
+      r.objs = r.objs || { bg: [], fg: [] };
+      defs.forEach(function (l) { if (l.type === "func" || l.id === "func") return; var m = r[l.id]; if (!m) return;
+        var target = l.type === "deco" ? "fg" : "bg", f = (l.grid || 8) === 8 ? 8 : 16;
+        Object.keys(m).forEach(function (k) { var a = k.split(","), v = m[k], o = { b: v.b, x: +a[0] * f, y: +a[1] * f }; if (v.p) o.p = v.p; r.objs[target].push(o); });
+        delete r[l.id]; });
+      if (r.design && !defs.some(function (l) { return l.id === "design"; })) { Object.keys(r.design).forEach(function (k) { var a = k.split(","), v = r.design[k]; r.objs.fg.push({ b: v.b, x: +a[0] * 8, y: +a[1] * 8, p: v.p }); }); }
+      delete r.design; delete r.par; delete r.bg;
+    });
+    var vis = {}; old.forEach(function (l) { vis[l.type === "deco" ? "fg" : l.type === "func" ? "func" : "bg"] = l.visible !== false; });
+    p.layers = LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: vis[L.id] !== false }; });
+    if (p.settings && p.settings.raster == null) p.settings.raster = p.settings.dots === false ? "0" : "8";
+    p.layersV3 = true;
+  }
+  if (!p.layers || p.layers.length !== 3) p.layers = LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: true }; });
+  (p.rooms || []).forEach(function (r) { if (!r.func) r.func = {}; r.objs = r.objs || {}; if (!r.objs.bg) r.objs.bg = []; if (!r.objs.fg) r.objs.fg = []; });
+  migrateBlocks(p);
+}
+function lastDecoLayer() { return isObjLayer(P.lastDeco) ? P.lastDeco : "fg"; }
 function layerFor(kind) { return kind === "func" ? "func" : lastDecoLayer(); }
 function newRoom(nr, x, y, w, h) {
   return { rid: "r" + Date.now().toString(36) + Math.floor(Math.random() * 1e4), nr: nr, name: "", x: x, y: y, w: w || 32, h: h || 18,
-    dark: "", notes: "", func: {}, design: {}, texts: [] };
+    dark: "", notes: "", func: {}, objs: { bg: [], fg: [] }, texts: [] };
 }
-function addRoomLayers(r) { (typeof P !== "undefined" && P && P.layers ? P.layers : []).forEach(function (l) { if (!r[l.id]) r[l.id] = {}; }); return r; }
+function addRoomLayers(r) { if (!r.objs) r.objs = { bg: [], fg: [] }; if (!r.func) r.func = {}; return r; }
 function defaultProject() {
-  return { format: FORMAT, dungeon: "", blocks: defaultBlocks(), nextUid: 17, layers: defaultLayers(), rooms: [newRoom("001", 0, 0)],
+  return { format: FORMAT, dungeon: "", blocks: defaultBlocks(), nextUid: 17, layersV3: true, layers: LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: true }; }), rooms: [newRoom("001", 0, 0)],
     settings: { eink: true, dots: true, labels: true, showOther: true } };
 }
 
@@ -371,6 +398,7 @@ var undoStack = [], redoStack = [], imgCache = {}, imgT = null, gameView = false
 var TOOLS = [
   { id: "select", name: "Auswahl", icon: "t-select" },
   { id: "hand", name: "Hand", icon: "t-hand" },
+  { id: "move", name: "Verschieben", icon: "t-move" },
   { id: "brush", name: "Pinsel", icon: "t-brush" },
   { id: "erase", name: "Radierer", icon: "t-erase" },
   { id: "rect", name: "Rechteck", icon: "t-rect" },
@@ -405,7 +433,7 @@ function loadSaved() {
   try {
     var s = localStorage.getItem(KEY); if (!s) return false;
     var o = JSON.parse(s); if (!o || !o.P || !o.P.rooms) return false;
-    P = o.P; if (o.view) view = o.view; if (o.mode) mode = o.mode; ensureLayers(P); if (!layerById(mode)) mode = "func";
+    P = o.P; if (o.view) view = o.view; if (o.mode) mode = o.mode; ensureLayers(P); if (!layerById(mode)) mode = mode === "design" ? "fg" : "func";
     P.settings = Object.assign({}, SETTINGS_DEFAULT, P.settings || {}); migrateSettings(P.settings); stripShy(P);
     return true;
   } catch (e) { return false; }
@@ -423,14 +451,14 @@ function paramLabel(v) { return PLABEL[v] || v; }
 function updateStatus() {
   var r = roomById(selRoom), b = blockByUid(curBlock);
   var tl = TOOLS.filter(function (t) { return t.id === tool; })[0];
-  var what = (tool === "brush" || tool === "rect") ? (b ? b.name + (pvalsOf(b).length ? " " + paramLabel(curParam[b.uid] || pvalsOf(b)[0]) : "") : "kein Block") : "";
-  $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + ((layerById(mode) || {}).name || "") + " " + (gridF(mode) === 2 ? "8×8" : "16×16") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
+  var what = (tool === "brush" || tool === "rect") ? (b ? b.name + (pvalsOf(b).length ? " " + paramLabel(curParam[b.uid] || pvalsOf(b)[0]) : "") : "kein Objekt") : "";
+  $("status").textContent = Math.round(view.z / 24 * 100) + " % · " + ((layerById(mode) || {}).num || "") + " " + ((layerById(mode) || {}).name || "") + " · " + (tl ? tl.name : "") + (what ? ": " + what : "") + (r ? " · Raum " + r.nr : "");
   if ($("tbZoom")) $("tbZoom").textContent = Math.round(view.z / 24 * 100) + " %";
   var S = P.settings;
   var set = function (id, on) { var e = $(id); if (e) e.classList.toggle("on", !!on); };
-  ["select","hand","brush","erase","rect","pick","text"].forEach(function (t) { set("mi-t-" + t, page === "map" && tool === t); });
+  ["select","hand","move","brush","erase","rect","pick","text"].forEach(function (t) { set("mi-t-" + t, page === "map" && tool === t); });
   set("mi-other", S.showOther);
-  set("mi-eink", S.eink); set("mi-dots", S.dots); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-erundo", S.eraserUndo); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
+  set("mi-eink", S.eink); set("mi-dots", +S.raster > 0); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-erundo", S.eraserUndo); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
   set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks"); set("mi-pixedit", page === "pixels");
   set("mi-fontM", S.fontSize === "M"); set("mi-fontL", S.fontSize === "L"); set("mi-fontXL", S.fontSize === "XL"); set("mi-bold", S.bold);
   applyFont();
@@ -488,6 +516,9 @@ function drawIcon(c, icon, x, y, s, param, name) {
       pts.forEach(function (q) { c.beginPath(); c.arc(x + q[0] * s, y + q[1] * s, Math.max(0.8, s * 0.05), 0, 7); c.fill(); }); break;
     case "rune": c.lineWidth = Math.max(1, s * 0.06); c.beginPath(); c.moveTo(cx, y + p); c.lineTo(cx, y + s - p); c.moveTo(cx, y + s * 0.35); c.lineTo(x + s * 0.72, y + p); c.moveTo(cx, y + s * 0.55); c.lineTo(x + s * 0.3, y + s * 0.38); c.stroke(); break;
     case "t-select": c.beginPath(); c.moveTo(x + s * 0.28, y + s * 0.15); c.lineTo(x + s * 0.28, y + s * 0.8); c.lineTo(x + s * 0.45, y + s * 0.64); c.lineTo(x + s * 0.58, y + s * 0.88); c.lineTo(x + s * 0.68, y + s * 0.83); c.lineTo(x + s * 0.56, y + s * 0.6); c.lineTo(x + s * 0.78, y + s * 0.6); c.closePath(); c.stroke(); break;
+    case "t-move": c.save(); c.setLineDash([Math.max(2, s * 0.09), Math.max(1.5, s * 0.07)]); c.lineWidth = Math.max(1.3, s * 0.06); c.strokeRect(x + s * 0.14, y + s * 0.14, s * 0.46, s * 0.46); c.restore();
+      c.fillRect(x + s * 0.4, y + s * 0.4, s * 0.46, s * 0.46); c.fillStyle = "#fff"; c.lineWidth = Math.max(1.4, s * 0.07); c.strokeStyle = "#fff";
+      c.beginPath(); c.moveTo(x + s * 0.5, y + s * 0.5); c.lineTo(x + s * 0.76, y + s * 0.76); c.stroke(); c.beginPath(); c.moveTo(x + s * 0.78, y + s * 0.78); c.lineTo(x + s * 0.6, y + s * 0.76); c.lineTo(x + s * 0.76, y + s * 0.6); c.closePath(); c.fill(); c.fillStyle = "#000"; c.strokeStyle = "#000"; break;
     case "t-hand": arrowLine(cx, cy, cx, y + p * 0.6); arrowLine(cx, cy, cx, y + s - p * 0.6); arrowLine(cx, cy, x + p * 0.6, cy); arrowLine(cx, cy, x + s - p * 0.6, cy); break;
     case "t-brush": c.beginPath(); c.moveTo(x + s * 0.8, y + s * 0.15); c.lineTo(x + s * 0.45, y + s * 0.55); c.stroke(); c.beginPath(); c.moveTo(x + s * 0.45, y + s * 0.5); c.quadraticCurveTo(x + s * 0.2, y + s * 0.55, x + s * 0.18, y + s * 0.85); c.quadraticCurveTo(x + s * 0.5, y + s * 0.85, x + s * 0.52, y + s * 0.58); c.closePath(); c.fill(); break;
     case "t-erase": c.save(); c.translate(cx, cy); c.rotate(-0.7); c.strokeRect(-s * 0.32, -s * 0.16, s * 0.64, s * 0.32); c.fillRect(-s * 0.32, -s * 0.16, s * 0.24, s * 0.32); c.restore(); c.beginPath(); c.moveTo(x + s * 0.2, y + s * 0.88); c.lineTo(x + s * 0.85, y + s * 0.88); c.stroke(); break;
@@ -516,7 +547,15 @@ function getImg(key, src) {
   return im.complete && im.naturalWidth ? im : null;
 }
 function dropImgs(b) { for (var k in imgCache) if (k === b.uid || k.indexOf(b.uid + "|") === 0) delete imgCache[k]; }
+function drawBlockWH(c, b, x, y, w, h, param, outline) {
+  var pv = pvalsOf(b), vp = param || pv[0], src = (vp && b.imgV && b.imgV[vp]) ? [b.uid + "|" + vp, b.imgV[vp]] : (b.image ? [b.uid, b.image] : null);
+  var im = src ? getImg(src[0], src[1]) : null;
+  if (im) { c.imageSmoothingEnabled = false; c.drawImage(im, x, y, w, h); return; }
+  var s = Math.min(w, h); if (outline !== false && (w !== h || s > 64)) { c.save(); c.setLineDash([4, 3]); c.strokeStyle = "#000"; c.lineWidth = 1; c.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1); c.restore(); }
+  var is = Math.min(s, 48); drawIcon(c, b.icon, x + (w - is) / 2, y + (h - is) / 2, is, param, b.name);
+}
 function drawBlock(c, b, x, y, s, param) {
+  var w = bw(b), h = bh(b); if (w !== h) { var k = s / Math.max(w, h), ww = w * k, hh = h * k; drawBlockWH(c, b, x + (s - ww) / 2, y + (s - hh) / 2, ww, hh, param, false); return; }
   var pv = pvalsOf(b), vp = param || pv[0];
   if (vp && b.imgV && b.imgV[vp]) { var iv = getImg(b.uid + "|" + vp, b.imgV[vp]); if (iv) { c.imageSmoothingEnabled = false; c.drawImage(iv, x, y, s, s); return; } }
   if (b.image) {
@@ -553,43 +592,33 @@ function render() {
   if (page !== "map") { updateStatus(); return; }
   var z = view.z;
   ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, CW, CH);
-  if (P.settings.dots && !gameView) {
+  if (rasterPx() && !gameView) {
     var step = z >= 10 ? 1 : (z >= 5 ? 4 : 8), r = z >= 10 ? Math.max(1, Math.min(1.8, z * 0.055)) : 1;
     var w0 = s2w(0, 0), w1 = s2w(CW, CH); ctx.fillStyle = "#000"; dotsIn(w0[0], w0[1], w1[0], w1[1], step, r);
   }
   P.rooms.forEach(gameView ? drawRoomGame : drawRoom);
   if (preview && !gameView) {
-    var f = preview.unit === "half" ? 0.5 : 1;
-    var a = w2s(Math.min(preview.x0, preview.x1) * f, Math.min(preview.y0, preview.y1) * f);
-    var bw = (Math.abs(preview.x1 - preview.x0) + 1) * z * f, bh = (Math.abs(preview.y1 - preview.y0) + 1) * z * f;
-    if (preview.type === "room") { bw = Math.max(bw, 32 * z); bh = Math.max(bh, 18 * z); }
-    ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = "#000"; ctx.strokeRect(a[0], a[1], bw, bh); ctx.restore();
+    var a, pw, ph;
+    if (preview.type === "orect" || preview.type === "cell") { a = w2s(preview.wx, preview.wy); pw = preview.ww * z; ph = preview.wh * z; }
+    else { a = w2s(Math.min(preview.x0, preview.x1), Math.min(preview.y0, preview.y1));
+      pw = (Math.abs(preview.x1 - preview.x0) + 1) * z; ph = (Math.abs(preview.y1 - preview.y0) + 1) * z;
+      if (preview.type === "room") { pw = Math.max(pw, 32 * z); ph = Math.max(ph, 18 * z); } }
+    ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = "#000"; ctx.strokeRect(a[0], a[1], pw, ph); ctx.restore();
   }
   updateStatus();
 }
 function drawRoomGame(room) {
   var z = view.z, o = w2s(room.x, room.y), W = room.w * z, H = room.h * z; room.__label = null;
   if (o[0] > CW || o[1] > CH || o[0] + W < 0 || o[1] + H < 0) return;
-  var cw = s2w(CW / 2, CH / 2);
-  P.layers.forEach(function (l) { if (!l.visible || !room[l.id]) return;
-    if (l.type === "parallax" && P.settings.parallaxAnim) { var k = 1 - (+l.factor || 0.5);
-      var oo = [o[0] + (cw[0] - (room.x + room.w / 2)) * k * z, o[1] + (cw[1] - (room.y + room.h / 2)) * k * z];
-      ctx.save(); ctx.beginPath(); ctx.rect(o[0], o[1], W, H); ctx.clip(); drawLayer(room, l.id, oo, z / gridF(l.id)); ctx.restore(); return; }
-    drawLayer(room, l.id, o, z / gridF(l.id)); });
+  P.layers.forEach(function (l) { if (!l.visible) return; if (l.id === "func") drawLayer(room, "func", o, z); else drawObjs(room, l.id, o, z, true); });
 }
 function drawRoom(room) {
   var z = view.z, o = w2s(room.x, room.y), W = room.w * z, H = room.h * z;
   if (o[0] > CW || o[1] > CH || o[0] + W < 0 || o[1] + H < -30) { room.__label = null; return; }
   ctx.fillStyle = "#fff"; ctx.fillRect(o[0], o[1], W, H);
-  if (P.settings.dots) {
-    ctx.fillStyle = "#000";
-    var step = z >= 10 ? 1 : (z >= 5 ? 4 : 8), r = z >= 10 ? Math.max(1, Math.min(1.8, z * 0.055)) : 1;
-    dotsIn(room.x, room.y, room.x + room.w, room.y + room.h, step, r);
-    if (gridF(mode) === 2 && z >= 12) { var r2 = Math.max(0.7, r * 0.6);
-      for (var yy = 0; yy < room.h * 2; yy++) for (var xx = 0; xx < room.w * 2; xx++) { if (xx % 2 === 0 && yy % 2 === 0) continue; var sp = w2s(room.x + xx / 2, room.y + yy / 2); ctx.fillRect(sp[0] - r2 / 2, sp[1] - r2 / 2, r2, r2); } }
-  }
-  P.layers.forEach(function (l) { if (!l.visible) return; var a = l.id === mode ? 1 : (P.settings.showOther ? 0.3 : 0); if (a <= 0 || !room[l.id]) return;
-    ctx.save(); ctx.globalAlpha = a; drawLayer(room, l.id, o, z / gridF(l.id)); ctx.restore(); });
+  drawRaster(room, o, z);
+  P.layers.forEach(function (l) { if (!l.visible) return; var a = l.id === mode ? 1 : (P.settings.showOther ? 0.3 : 0); if (a <= 0) return;
+    ctx.save(); ctx.globalAlpha = a; if (l.id === "func") drawLayer(room, "func", o, z); else drawObjs(room, l.id, o, z, false); ctx.restore(); });
   room.texts.forEach(function (t) {
     ctx.save(); ctx.font = "bold " + Math.max(10, Math.round(z * 0.55)) + "px 'Comic Sans MS','Chalkboard SE','Comic Neue',cursive,sans-serif"; ctx.textBaseline = "middle";
     var tx = o[0] + t.x * z + 2, ty = o[1] + (t.y + 0.5) * z, tw = ctx.measureText(t.text).width;
@@ -605,6 +634,30 @@ function drawRoom(room) {
   ctx.fillStyle = "#fff"; ctx.textBaseline = "middle"; ctx.fillText(label, o[0] + 7, o[1] - lh / 2);
   room.__label = [o[0], o[1] - lh, lw, lh]; ctx.restore();
 }
+function rasterPx() { var r = +P.settings.raster; return r > 0 ? r : 0; }
+function snapPx() { return rasterPx() || 1; }
+function drawRaster(room, o, z) {
+  var rp = rasterPx(); if (!rp || gameView) return; var spp = z / 16, sp = rp;
+  while (sp * spp < 7) sp *= 2;
+  var W = room.w * 16, H = room.h * 16, x0 = Math.max(0, Math.floor((-o[0]) / spp / sp) * sp), y0 = Math.max(0, Math.floor((-o[1]) / spp / sp) * sp);
+  var x1 = Math.min(W, (CW - o[0]) / spp), y1 = Math.min(H, (CH - o[1]) / spp), d = Math.max(1, Math.min(1.8, sp * spp * 0.08)), big = Math.max(d, Math.min(2.4, z * 0.07));
+  ctx.fillStyle = "#000";
+  for (var y = y0; y <= y1; y += sp) for (var x = x0; x <= x1; x += sp) { var r = (x % 16 === 0 && y % 16 === 0) ? big : d; ctx.fillRect(o[0] + x * spp - r / 2, o[1] + y * spp - r / 2, r, r); }
+}
+function drawObjs(room, layer, o, z, game) {
+  var list = (room.objs && room.objs[layer]) || []; if (!list.length) return; var spp = z / 16, W = room.w * z, H = room.h * z;
+  var cw = s2w(CW / 2, CH / 2), anim = game && P.settings.parallaxAnim;
+  ctx.save(); ctx.beginPath(); ctx.rect(o[0], o[1], W, H); ctx.clip();
+  list.forEach(function (ob) { var b = blockByUid(ob.b); if (!b) return; var dx = 0, dy = 0;
+    if (anim && (+b.par || 1) < 1) { var k = 1 - (+b.par); dx = (cw[0] - (room.x + room.w / 2)) * k * z; dy = (cw[1] - (room.y + room.h / 2)) * k * z; }
+    var x = o[0] + ob.x * spp + dx, y = o[1] + ob.y * spp + dy, w = bw(b) * spp, h = bh(b) * spp;
+    if (x > CW || y > CH || x + w < 0 || y + h < 0) return;
+    drawBlockWH(ctx, b, x, y, w, h, ob.p, !game);
+    if (!game && ob === selObj) { ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = "#000"; ctx.strokeRect(x - 3, y - 3, w + 6, h + 6); ctx.restore(); }
+  });
+  ctx.restore();
+}
+var selObj = null;
 function drawLayer(room, layer, o, s) {
   var cells = room[layer] || {}, walls = [];
   var isWall = function (k) { var v = cells[k]; if (!v) return false; var b = blockByUid(v.b); return b && b.icon === "wall" && !b.image; };
@@ -633,12 +686,49 @@ function drawLayer(room, layer, o, s) {
   ctx.stroke(); ctx.restore();
 }
 
+
+/* ================= Objekte (Ebene 1 und 3) ================= */
+function roomPx(p) { var w = s2w(p[0], p[1]), room = roomAtWorld(w[0], w[1]); if (!room) return null; return { room: room, x: (w[0] - room.x) * 16, y: (w[1] - room.y) * 16 }; }
+function snapV(v) { var s = snapPx(); return Math.round(v / s) * s; }
+function topObj(room, layer, x, y) { var l = room.objs[layer] || []; for (var i = l.length - 1; i >= 0; i--) { var o = l[i], b = blockByUid(o.b); if (!b) continue; if (x >= o.x && y >= o.y && x < o.x + bw(b) && y < o.y + bh(b)) return o; } return null; }
+function objDown(p, useTool, byTouch) {
+  var rp = roomPx(p); if (!rp) { if (useTool !== "pick") toast("Außerhalb eines Raums – zuerst einen Raum anlegen."); return; }
+  selRoom = rp.room.rid; var list = rp.room.objs[mode];
+  if (useTool === "pick") { var h = topObj(rp.room, mode, rp.x, rp.y); if (h) pickValue({ b: h.b, p: h.p }); else if (P.settings.pickEmpty) { tool = "erase"; buildTools(); buildBlockPanel(); render(); toast("Leer aufgenommen – Radierer aktiv."); } else render(); return; }
+  if (useTool === "move") { var m = topObj(rp.room, mode, rp.x, rp.y); selObj = m; if (!m) { render(); return; }
+    pushUndo(); drag = { type: "omove", room: rp.room, obj: m, ox: m.x, oy: m.y, sx: rp.x, sy: rp.y, moved: false, byTouch: byTouch, undoPushed: true }; render(); return; }
+  if (useTool === "erase") { pushUndo(); drag = { type: "oerase", room: rp.room, changed: false, byTouch: byTouch, undoPushed: true }; objMove(p); return; }
+  var b = curValidBlock(); if (!b) { toast("Erst links ein Objekt dieser Ebene wählen."); return; }
+  if (useTool === "rect") { pushUndo(); drag = { type: "orect", room: rp.room, x0: rp.x, y0: rp.y, x1: rp.x, y1: rp.y, byTouch: byTouch, undoPushed: true }; objMove(p); return; }
+  if (useTool === "brush") { pushUndo(); drag = { type: "opaint", room: rp.room, changed: false, last: null, byTouch: byTouch, undoPushed: true }; objMove(p); }
+}
+function objValue(b, x, y) { var o = { b: b.uid, x: x, y: y }, pv = pvalsOf(b); if (pv.length) o.p = curParam[b.uid] || pv[0]; return o; }
+function objMove(p) {
+  var rp = roomPx(p); if (!rp || rp.room !== drag.room) return; var r = drag.room, list = r.objs[mode];
+  if (drag.type === "omove") { var nx = snapV(drag.ox + rp.x - drag.sx), ny = snapV(drag.oy + rp.y - drag.sy);
+    if (nx !== drag.obj.x || ny !== drag.obj.y) { drag.obj.x = nx; drag.obj.y = ny; drag.moved = true; schedule(); } return; }
+  if (drag.type === "oerase") { var h = topObj(r, mode, rp.x, rp.y); if (h) { list.splice(list.indexOf(h), 1); if (selObj === h) selObj = null; drag.changed = true; schedule(); } return; }
+  var b = curValidBlock(); if (!b) return; var w = bw(b), hh = bh(b);
+  if (drag.type === "opaint") { var x = snapV(rp.x - w / 2), y = snapV(rp.y - hh / 2), L = drag.last;
+    if (L && Math.abs(x - L[0]) < w && Math.abs(y - L[1]) < hh) return;
+    if (list.some(function (o) { return o.b === b.uid && o.x === x && o.y === y; })) return;
+    list.push(objValue(b, x, y)); drag.last = [x, y]; drag.changed = true; schedule(); return; }
+  if (drag.type === "orect") { drag.x1 = rp.x; drag.y1 = rp.y; var g = objRectGeom(b);
+    preview = { type: "orect", wx: r.x + g.x0 / 16, wy: r.y + g.y0 / 16, ww: g.nx * w / 16, wh: g.ny * hh / 16 }; schedule(); }
+}
+function objRectGeom(b) { var w = bw(b), h = bh(b), x0 = snapV(Math.min(drag.x0, drag.x1) - w / 2), y0 = snapV(Math.min(drag.y0, drag.y1) - h / 2);
+  var nx = Math.max(1, Math.round((Math.max(drag.x0, drag.x1) - Math.min(drag.x0, drag.x1)) / w) + 1), ny = Math.max(1, Math.round((Math.max(drag.y0, drag.y1) - Math.min(drag.y0, drag.y1)) / h) + 1);
+  return { x0: x0, y0: y0, nx: nx, ny: ny }; }
+function objRectEnd() { var b = curValidBlock(); if (!b) return; var g = objRectGeom(b), list = drag.room.objs[mode];
+  for (var j = 0; j < g.ny; j++) for (var i = 0; i < g.nx; i++) { var x = g.x0 + i * bw(b), y = g.y0 + j * bh(b);
+    if (!list.some(function (o) { return o.b === b.uid && o.x === x && o.y === y; })) list.push(objValue(b, x, y)); } }
+
 /* ================= hit tests ================= */
 function roomAtWorld(wx, wy) { for (var i = P.rooms.length - 1; i >= 0; i--) { var r = P.rooms[i]; if (wx >= r.x && wy >= r.y && wx < r.x + r.w && wy < r.y + r.h) return r; } return null; }
 function roomAtLabel(sx, sy) { for (var i = P.rooms.length - 1; i >= 0; i--) { var l = P.rooms[i].__label; if (l && sx >= l[0] && sy >= l[1] && sx <= l[0] + l[2] && sy <= l[1] + l[3]) return P.rooms[i]; } return null; }
 function cellInfo(sx, sy, layer) {
   var w = s2w(sx, sy), room = roomAtWorld(w[0], w[1]); if (!room) return null;
-  if (!room[layer]) room[layer] = {}; var f = gridF(layer), cx = Math.floor((w[0] - room.x) * f), cy = Math.floor((w[1] - room.y) * f);
+  var f = 1; cx = Math.floor((w[0] - room.x) * f), cy = Math.floor((w[1] - room.y) * f);
   return { room: room, x: cx, y: cy, key: cx + "," + cy };
 }
 
@@ -707,7 +797,7 @@ cv.addEventListener("pointercancel", upHandler);
 function cancelPending() { pending = null; }
 
 function pickValue(v) {
-  curBlock = v.b; if (v.p) curParam[v.b] = v.p; tool = "brush"; var pb = blockByUid(v.b); if (pb) bpGroup = +pb.toolbar || 1;
+  curBlock = v.b; if (v.p) curParam[v.b] = v.p; tool = "brush"; var pb = blockByUid(v.b); if (pb && layerOfBlock(pb) !== mode) setMode(layerOfBlock(pb), true);
   var b = blockByUid(v.b); buildTools(); buildBlockPanel(); render(); toast("Aufgenommen: " + (b ? b.name : "?"));
 }
 
@@ -758,20 +848,24 @@ function toolDown(p, useTool, ev, byTouch) {
     render(); return;
   }
   if (useTool === "room") { var cx = Math.floor(w[0]), cy = Math.floor(w[1]); drag = { type: "room", byTouch: byTouch }; preview = { type: "room", x0: cx, y0: cy, x1: cx, y1: cy }; render(); return; }
+  if (isObjLayer(mode) && useTool !== "text") { objDown(p, useTool, byTouch); return; }
   var ci = cellInfo(p[0], p[1], mode);
   if (!ci) { if (useTool !== "pick") toast("Außerhalb eines Raums – zuerst einen Raum anlegen."); return; }
+  if (useTool === "move") { selRoom = ci.room.rid; var cv0 = ci.room.func[ci.key]; if (!cv0) { render(); return; }
+    pushUndo(); drag = { type: "cmove", room: ci.room, from: ci.key, v: cv0, to: ci.key, byTouch: byTouch, undoPushed: true };
+    preview = { type: "cell", wx: ci.room.x + ci.x, wy: ci.room.y + ci.y, ww: 1, wh: 1 }; render(); return; }
   selRoom = ci.room.rid;
   if (useTool === "pick") { var v = ci.room[mode][ci.key]; if (v) pickValue(v); else if (P.settings.pickEmpty) { tool = "erase"; buildTools(); buildBlockPanel(); render(); toast("Leer aufgenommen – Radierer aktiv."); } else render(); return; }
   if (useTool === "text") { editText(ci); return; }
   if (useTool === "rect") {
-    if (!curValidBlock()) { toast("Erst links einen " + (layerKind(mode) === "func" ? "Funktions" : "Design") + "block wählen."); return; }
+    if (!curValidBlock()) { toast("Erst links ein Objekt dieser Ebene wählen."); return; }
     var f = gridF(mode); pushUndo();
     drag = { type: "rect", room: ci.room, byTouch: byTouch, undoPushed: true };
-    preview = { type: "rect", unit: f === 2 ? "half" : "cell", x0: ci.x + ci.room.x * f, y0: ci.y + ci.room.y * f, lx0: ci.x, ly0: ci.y };
+    preview = { type: "rect", x0: ci.x + ci.room.x * f, y0: ci.y + ci.room.y * f, lx0: ci.x, ly0: ci.y };
     preview.x1 = preview.x0; preview.y1 = preview.y0; preview.lx1 = ci.x; preview.ly1 = ci.y; render(); return;
   }
   if (useTool === "brush" || useTool === "erase") {
-    if (useTool === "brush" && !curValidBlock()) { toast("Erst links einen " + (layerKind(mode) === "func" ? "Funktions" : "Design") + "block wählen."); return; }
+    if (useTool === "brush" && !curValidBlock()) { toast("Erst links ein Objekt dieser Ebene wählen."); return; }
     pushUndo(); drag = { type: "paint", room: ci.room, tool: useTool, byTouch: byTouch, undoPushed: true, changed: false };
     if (paintAt(ci, useTool)) drag.changed = true; schedule();
   }
@@ -793,12 +887,18 @@ function toolMove(p) {
     var lx = Math.max(0, Math.min(r.w * f - 1, Math.floor((w2[0] - r.x) * f))), ly = Math.max(0, Math.min(r.h * f - 1, Math.floor((w2[1] - r.y) * f)));
     preview.lx1 = lx; preview.ly1 = ly; preview.x1 = lx + r.x * f; preview.y1 = ly + r.y * f; schedule(); return; }
   if (drag.type === "paint") { var ci = cellInfo(p[0], p[1], mode); if (ci && ci.room === drag.room && paintAt(ci, drag.tool)) { drag.changed = true; schedule(); } }
+  if (drag.type === "cmove") { var c2 = cellInfo(p[0], p[1], "func"); if (c2 && c2.room === drag.room && c2.x >= 0 && c2.y >= 0 && c2.x < c2.room.w && c2.y < c2.room.h) { drag.to = c2.key; preview.wx = c2.room.x + c2.x; preview.wy = c2.room.y + c2.y; schedule(); } }
+  if (drag.type === "opaint" || drag.type === "oerase" || drag.type === "omove" || drag.type === "orect") objMove(p);
 }
 function endDrag() {
   if (!drag) return;
   if (drag.type === "pan") { if (P.settings.eink) { view.px = drag.px + (drag.dx || 0); view.py = drag.py + (drag.dy || 0); cv.style.transform = ""; } }
   if (drag.type === "move" && !drag.moved) undoStack.pop();
   if (drag.type === "paint" && !drag.changed) undoStack.pop();
+  if ((drag.type === "opaint" || drag.type === "oerase") && !drag.changed) undoStack.pop();
+  if (drag.type === "omove" && !drag.moved) undoStack.pop();
+  if (drag.type === "cmove") { if (drag.to !== drag.from) { delete drag.room.func[drag.from]; drag.room.func[drag.to] = drag.v; } else undoStack.pop(); preview = null; }
+  if (drag.type === "orect") { objRectEnd(); preview = null; }
   if (drag.type === "resize") clipRoom(drag.room);
   if (drag.type === "room") {
     var x = Math.min(preview.x0, preview.x1), y = Math.min(preview.y0, preview.y1);
@@ -818,7 +918,7 @@ cv.addEventListener("wheel", function (ev) {
   view.px -= ev.deltaX; view.py -= ev.deltaY; schedule(); autosave();
 }, { passive: false });
 
-function curValidBlock() { var b = blockByUid(curBlock); return b && b.kind === layerKind(mode) ? b : null; }
+function curValidBlock() { var b = blockByUid(curBlock); return b && layerOfBlock(b) === mode ? b : null; }
 function cellValue() { var b = curValidBlock(); var v = { b: b.uid }, pv = pvalsOf(b); if (pv.length) v.p = curParam[b.uid] || pv[0]; return v; }
 function paintAt(ci, useTool) {
   var cells = ci.room[mode], f = gridF(mode);
@@ -829,8 +929,8 @@ function paintAt(ci, useTool) {
   cells[ci.key] = v; return true;
 }
 function clipRoom(r) {
-  P.layers.forEach(function (lo) { var layer = lo.id, f = gridF(layer); if (!r[layer]) return;
-    Object.keys(r[layer]).forEach(function (k) { var a = k.split(","); if (+a[0] >= r.w * f || +a[1] >= r.h * f) delete r[layer][k]; }); });
+  Object.keys(r.func).forEach(function (k) { var a = k.split(","); if (+a[0] >= r.w || +a[1] >= r.h) delete r.func[k]; });
+  ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.x < r.w * 16 && o.y < r.h * 16; }); });
   r.texts = r.texts.filter(function (t) { return t.x < r.w && t.y < r.h; });
 }
 function nextNr() { var m = 0; P.rooms.forEach(function (r) { var n = parseInt(r.nr, 10); if (!isNaN(n) && n > m) m = n; }); return ("00" + (m + 1)).slice(-3); }
@@ -902,28 +1002,27 @@ function buildTools() {
 
 /* ================= block panel (links) ================= */
 var bpGroup = null;
-function blockGroups() { var g = {}; sortedBlocks().forEach(function (b) { var k = +b.toolbar || 1; (g[k] = g[k] || []).push(b); }); return g; }
+function blockGroups() { var g = { 1: [], 2: [], 3: [] }; sortedBlocks().forEach(function (b) { g[blockLayerNum(b)].push(b); }); return g; }
 function buildBlockPanel() {
   var list = $("bpList"); list.innerHTML = "";
-  var groups = blockGroups(), keys = Object.keys(groups).map(Number).sort(function (a, b) { return a - b; });
-  if (bpGroup == null || keys.indexOf(bpGroup) < 0) { var cb = blockByUid(curBlock); bpGroup = cb && keys.indexOf(+cb.toolbar) >= 0 ? +cb.toolbar : keys[0]; }
-  pxIcon($("bpGrpIc"), function (g, sz) { drawIcon(g, "t-ring", 2, 2, sz - 4, bpGroup == null ? "–" : bpGroup); });
+  var groups = blockGroups(), L = layerById(mode) || layerById("func"); bpGroup = L.num;
+  pxIcon($("bpGrpIc"), function (g, sz) { drawIcon(g, "t-ring", 2, 2, sz - 4, bpGroup); });
   pxIcon($("bpHideIc"), function (g, sz) { drawIcon(g, "t-left", 2, 2, sz - 4); });
-  var bl = groups[bpGroup] || [], hasF = bl.some(function (b) { return b.kind === "func"; }), hasD = bl.some(function (b) { return b.kind === "design"; });
-  $("bpGrpCap").textContent = "Leiste " + bpGroup + " · " + (hasF && hasD ? "gemischt" : hasD ? "8×8" : "16×16");
-  $("bpFoot").style.display = keys.length ? "" : "none";
+  var bl = groups[bpGroup] || [];
+  $("bpGrpCap").textContent = "Ebene " + L.num + " · " + L.name + (L.visible ? "" : " (aus)");
+  if (!bl.length) { var e = document.createElement("div"); e.className = "bempty"; e.textContent = P.settings.blockNames ? "Keine Objekte auf dieser Ebene – im Objekteditor anlegen." : "–"; list.appendChild(e); }
   bl.forEach(function (b) {
       var pv = pvalsOf(b), par = curParam[b.uid] || pv[0];
       var it = document.createElement("div");
-      it.className = "bitem" + (b.kind === "design" ? " design" : "") + (curBlock === b.uid && (tool === "brush" || tool === "rect") ? " sel" : "") + (b.kind !== layerKind(mode) ? " off" : "");
+      it.className = "bitem" + (curBlock === b.uid && (tool === "brush" || tool === "rect") ? " sel" : "");
       it.appendChild(iconCanvas(function (gx, s) { drawBlock(gx, b, 2, 2, s - 4, par, false); }));
       var t = document.createElement("div"); t.innerHTML = '<div class="bn"></div><div class="bid"></div>';
-      t.firstChild.textContent = b.name; t.lastChild.textContent = "ID " + b.id + (b.kind === "design" ? " · Design" : ""); t.style.minWidth = "0"; it.appendChild(t);
+      t.firstChild.textContent = b.name; t.lastChild.textContent = "ID " + b.id + (blockLayerNum(b) === 2 ? "" : " · " + bw(b) + "×" + bh(b)); t.style.minWidth = "0"; it.appendChild(t);
       it.onclick = function () {
         var wasSel = curBlock === b.uid && (tool === "brush" || tool === "rect");
         if (wasSel) cycleParam(b);
         curBlock = b.uid; if (tool !== "rect") tool = "brush";
-        if (b.kind !== layerKind(mode)) { mode = layerFor(b.kind); toast("Ebene: " + layerById(mode).name); }
+        if (layerOfBlock(b) !== mode) { setMode(layerOfBlock(b), true); }
         buildTools(); buildBlockPanel(); render(); autosave();
         if (pv.length) openFloat(); else closeFloat();
       };
@@ -963,17 +1062,16 @@ function placeFloat() {
 $("bpList").addEventListener("scroll", placeFloat);
 $("bpHead").onclick = function () { P.settings.showBlocks = false; resize(); updateStatus(); autosave(); };
 $("bpFoot").onclick = function () {
-  var keys = Object.keys(blockGroups()).map(Number).sort(function (a, b) { return a - b; }); if (!keys.length) return;
-  bpGroup = keys[(keys.indexOf(bpGroup) + 1) % keys.length]; buildBlockPanel(); $("bpList").scrollTop = 0;
+  var L = layerById(mode) || layerById("func"), n = layerByNum(L.num % 3 + 1); setMode(n.id); $("bpList").scrollTop = 0; toast("Ebene " + n.num + " · " + n.name);
 };
 $("bpTab").onclick = function () { P.settings.showBlocks = true; resize(); updateStatus(); autosave(); };
 $("gameExit").onclick = function () { setGame(false); };
 function setGame(on) { if (page !== "map") { setPage("map"); } gameView = on; preview = null; drag = null; resize(); updateStatus(); toast(on ? "Spielansicht – zum Beenden oben rechts tippen oder Taste P" : "Bearbeiten"); }
-function setMode(m) { if (m === "design") m = lastDecoLayer(); if (!layerById(m)) return; mode = m; if (layerById(m).type !== "func") P.lastDeco = m; var b = blockByUid(curBlock); if (b && b.kind !== layerKind(m)) curBlock = null; buildTools(); buildBlockPanel(); render(); autosave(); }
+function setMode(m, keepBlock) { if (m === "design") m = lastDecoLayer(); if (!layerById(m)) return; mode = m; selObj = null; if (isObjLayer(m)) P.lastDeco = m; var b = blockByUid(curBlock); if (!keepBlock && b && layerOfBlock(b) !== m) curBlock = null; buildTools(); buildBlockPanel(); render(); autosave(); }
 
 /* ================= text tool ================= */
 function editText(ci) {
-  var room = ci.room, tx = Math.floor(ci.x / gridF(mode)), ty = Math.floor(ci.y / gridF(mode));
+  var room = ci.room, tx = ci.x, ty = ci.y;
   var ex = room.texts.filter(function (t) { return t.y === ty && tx >= t.x && tx <= t.x + Math.max(1, Math.ceil(t.text.length * 0.5)); })[0];
   modal("<h3>" + (ex ? "Text ändern" : "Text") + "</h3><div class='body'><label>Text " + (ex ? "(leer = löschen)" : "") + "</label><input id='f-text' value='" + esc(ex ? ex.text : "") + "'></div>", function () {
     var val = $("f-text").value.trim(); pushUndo();
@@ -986,13 +1084,12 @@ function editText(ci) {
 
 
 /* ================= Ebenen ================= */
-function layerIcon(t) { return { parallax: "≋", static: "▦", func: "◆", deco: "✿" }[t] || "•"; }
 function buildLayerMenu() {
   var d = $("layerDrop"); d.innerHTML = "";
   P.layers.slice().reverse().forEach(function (l) {
     var it = document.createElement("div"); it.className = "mitem check" + (l.id === mode ? " on" : "");
-    it.innerHTML = '<span>' + esc(l.name) + ' <small>· ' + LAYER_TYPES[l.type] + ", " + (l.grid === 8 ? "8×8" : "16×16") + (l.visible ? "" : " · ausgeblendet") + "</small></span>";
-    it.onclick = function (ev) { ev.stopPropagation(); closeMenus(); if (!l.visible) { l.visible = true; } setMode(l.id); toast("Ebene: " + l.name); };
+    it.innerHTML = "<span>" + l.num + " · " + esc(l.name) + (l.visible ? "" : " <small>(ausgeblendet)</small>") + "</span>";
+    it.onclick = function (ev) { ev.stopPropagation(); closeMenus(); l.visible = true; setMode(l.id); toast("Ebene " + l.num + " · " + l.name); };
     d.appendChild(it);
   });
   var sep = document.createElement("div"); sep.className = "msep"; d.appendChild(sep);
@@ -1002,47 +1099,24 @@ function buildLayerMenu() {
   });
   updateMenuKeys();
 }
-function layerUsed(id) { return P.rooms.some(function (r) { return r[id] && Object.keys(r[id]).length; }); }
+function layerCount(id) { var n = 0; P.rooms.forEach(function (r) { n += id === "func" ? Object.keys(r.func).length : (r.objs[id] || []).length; }); return n; }
 function openLayerSettings() {
-  var S = P.settings, rows = P.layers.slice().reverse();
-  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Oben = vorne. Funktion ist die Spiellogik (16×16, genau eine). Die anderen Ebenen nehmen Designblöcke auf.</p>';
-  rows.forEach(function (l, i) {
-    var idx = P.layers.indexOf(l), top = idx === P.layers.length - 1, bottom = idx === 0;
-    h += '<div class="lrow"><div class="lmove"><button data-up="' + l.id + '"' + (top ? " disabled" : "") + '>▲</button><button data-down="' + l.id + '"' + (bottom ? " disabled" : "") + '>▼</button></div>' +
-      '<div class="lmain"><div class="lhead"><input data-name="' + l.id + '" value="' + esc(l.name) + '"><button class="kclr" data-del="' + l.id + '" title="Ebene löschen"' + (l.type === "func" ? " disabled" : "") + '>×</button></div>' +
-      '<div class="lopts">' +
-      (l.type === "func" ? '<span class="ltag">Funktion · 16×16</span>' :
-        '<span class="sseg">' + ["parallax", "static", "deco"].map(function (t) { return '<button data-type="' + l.id + '" data-val="' + t + '" class="' + (l.type === t ? "on" : "") + '">' + LAYER_TYPES[t].replace("Statischer ", "") + "</button>"; }).join("") + "</span>" +
-        '<span class="sseg">' + [8, 16].map(function (g) { return '<button data-grid="' + l.id + '" data-val="' + g + '" class="' + (l.grid === g ? "on" : "") + '">' + g + "×" + g + "</button>"; }).join("") + "</span>") +
+  var S = P.settings;
+  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Drei feste Ebenen, oben = vorne. Die Nummer entspricht der Zahl unten in der Objektleiste. Was sich bewegt oder animiert, stellst du pro Objekt im Objekteditor ein.</p>';
+  P.layers.slice().reverse().forEach(function (l) {
+    var objs = sortedBlocks().filter(function (b) { return blockLayerNum(b) === l.num; }).length;
+    h += '<div class="lrow"><canvas class="lnum" data-num="' + l.num + '"></canvas><div class="lmain"><div class="lhead"><input data-name="' + l.id + '" value="' + esc(l.name) + '"></div>' +
+      '<div class="lopts"><span class="ltag">' + (l.id === "func" ? "Spiellogik · 16×16-Raster" : "Frei platziert · eigene Größen") + '</span>' +
       '<span class="sseg"><button data-vis="' + l.id + '" data-val="1" class="' + (l.visible ? "on" : "") + '">Sichtbar</button><button data-vis="' + l.id + '" data-val="0" class="' + (l.visible ? "" : "on") + '">Aus</button></span>' +
-      (l.type === "parallax" ? '<span class="sseg">' + [0.25, 0.5, 0.75].map(function (f) { return '<button data-fac="' + l.id + '" data-val="' + f + '" class="' + ((+l.factor || 0.5) === f ? "on" : "") + '">' + (f * 100) + " %</button>"; }).join("") + "</span>" : "") +
-      "</div></div></div>";
+      '<span class="sh">' + objs + " Objekttypen · " + layerCount(l.id) + " gesetzt</span></div></div></div>";
   });
-  h += '<div class="srow"><div><div class="sl">Ebene hinzufügen</div></div><div class="sseg"><button data-add="parallax">+ Parallax</button><button data-add="static">+ Hintergrund</button><button data-add="deco">+ Dekoration</button></div></div>';
-  h += '<div class="srow"><div><div class="sl">Parallax-Animation</div><div class="sh">Nur in der Spielansicht: Parallax-Ebenen bewegen sich beim Verschieben langsamer. Auf E-Ink standardmäßig aus (Bewegung erzeugt Schlieren).</div></div><div class="sseg"><button data-pan="1" class="' + (S.parallaxAnim ? "on" : "") + '">An</button><button data-pan="0" class="' + (S.parallaxAnim ? "" : "on") + '">Aus</button></div></div>';
+  h += '<div class="srow"><div><div class="sl">Bewegung & Animation</div><div class="sh">Nur in der Spielansicht: Objekte mit Parallax-Tempo bewegen sich beim Verschieben langsamer. Auf E-Ink standardmäßig aus (Bewegung erzeugt Schlieren).</div></div><div class="sseg"><button data-pan="1" class="' + (S.parallaxAnim ? "on" : "") + '">An</button><button data-pan="0" class="' + (S.parallaxAnim ? "" : "on") + '">Aus</button></div></div>';
   h += "</div>";
-  var old = $("modal").querySelector(".sbody"), sc = old && $("modalBg").classList.contains("show") ? old.scrollTop : 0;
-  modal(h); $("modal").classList.add("wide"); var sb = $("modal").querySelector(".sbody"); if (sb) sb.scrollTop = sc;
-  var M = $("modal"), redo = function () { ensureLayers(); autosave(); buildBlockPanel(); render(); updateStatus(); openLayerSettings(); };
-  var move = function (id, d) { var i = P.layers.findIndex(function (l) { return l.id === id; }), j = i + d; if (j < 0 || j >= P.layers.length) return; var t = P.layers[i]; P.layers[i] = P.layers[j]; P.layers[j] = t; redo(); };
-  M.querySelectorAll("[data-up]").forEach(function (b) { b.onclick = function () { move(b.getAttribute("data-up"), 1); }; });
-  M.querySelectorAll("[data-down]").forEach(function (b) { b.onclick = function () { move(b.getAttribute("data-down"), -1); }; });
-  M.querySelectorAll("[data-name]").forEach(function (b) { b.onchange = function () { var l = layerById(b.getAttribute("data-name")); l.name = b.value.trim() || l.name; autosave(); updateStatus(); }; });
-  M.querySelectorAll("[data-type]").forEach(function (b) { b.onclick = function () { var l = layerById(b.getAttribute("data-type")); l.type = b.getAttribute("data-val"); if (l.type === "parallax" && !l.factor) l.factor = 0.5; redo(); }; });
-  M.querySelectorAll("[data-grid]").forEach(function (b) { b.onclick = function () { var l = layerById(b.getAttribute("data-grid")), g = +b.getAttribute("data-val"); if (l.grid === g) return;
-    if (layerUsed(l.id)) { if (!confirm("Ebene „" + l.name + "“ enthält Blöcke. Auf " + g + "×" + g + " umrechnen?")) return;
-      P.rooms.forEach(function (r) { var m = r[l.id] || {}, n = {}; for (var k in m) { var a = k.split(","), x = +a[0], y = +a[1];
-        if (g === 16) n[Math.floor(x / 2) + "," + Math.floor(y / 2)] = m[k]; else { var v = m[k]; [[0,0],[1,0],[0,1],[1,1]].forEach(function (q) { n[(x * 2 + q[0]) + "," + (y * 2 + q[1])] = JSON.parse(JSON.stringify(v)); }); } } r[l.id] = n; }); }
-    l.grid = g; redo(); }; });
+  modal(h); $("modal").classList.add("wide");
+  var M = $("modal"), redo = function () { autosave(); buildBlockPanel(); render(); updateStatus(); openLayerSettings(); };
+  M.querySelectorAll("canvas.lnum").forEach(function (c) { pxIcon(c, function (g, sz) { drawIcon(g, "t-ring", 2, 2, sz - 4, c.getAttribute("data-num")); }); });
+  M.querySelectorAll("[data-name]").forEach(function (b) { b.onchange = function () { var l = layerById(b.getAttribute("data-name")); l.name = b.value.trim() || l.name; autosave(); buildBlockPanel(); updateStatus(); }; });
   M.querySelectorAll("[data-vis]").forEach(function (b) { b.onclick = function () { layerById(b.getAttribute("data-vis")).visible = b.getAttribute("data-val") === "1"; redo(); }; });
-  M.querySelectorAll("[data-fac]").forEach(function (b) { b.onclick = function () { layerById(b.getAttribute("data-fac")).factor = +b.getAttribute("data-val"); redo(); }; });
-  M.querySelectorAll("[data-del]").forEach(function (b) { b.onclick = function () { var l = layerById(b.getAttribute("data-del")); if (!l || l.type === "func") return;
-    if (!confirm("Ebene „" + l.name + "“ löschen?" + (layerUsed(l.id) ? " Ihre Blöcke in allen Räumen gehen verloren." : ""))) return;
-    P.layers.splice(P.layers.indexOf(l), 1); P.rooms.forEach(function (r) { delete r[l.id]; }); if (mode === l.id) mode = "func"; if (P.lastDeco === l.id) P.lastDeco = null; redo(); }; });
-  M.querySelectorAll("[data-add]").forEach(function (b) { b.onclick = function () { var t = b.getAttribute("data-add"), id = "L" + Date.now().toString(36);
-    var n = P.layers.filter(function (l) { return l.type === t; }).length + 1, l = { id: id, name: LAYER_TYPES[t].replace("Statischer ", "") + (n > 1 ? " " + n : ""), type: t, grid: 8, visible: true };
-    if (t === "parallax") { l.factor = 0.5; P.layers.unshift(l); } else if (t === "static") { var fi = P.layers.findIndex(function (x) { return x.type === "func"; }); P.layers.splice(Math.max(0, fi), 0, l); } else P.layers.push(l);
-    redo(); toast("Ebene „" + l.name + "“ angelegt."); }; });
   M.querySelectorAll("[data-pan]").forEach(function (b) { b.onclick = function () { S.parallaxAnim = b.getAttribute("data-pan") === "1"; redo(); }; });
 }
 
@@ -1050,13 +1124,13 @@ function openLayerSettings() {
 var KEYDEFS = [
   ["Datei", [["openProject", "Projekt öffnen", "Ctrl+O"], ["saveProject", "Projekt speichern", "Ctrl+S"], ["copyRoom", "Raum als Text kopieren", "Ctrl+Shift+C"], ["exportMd", "Alle Räume als .md", ""], ["settings", "Einstellungen", "Ctrl+,"]]],
   ["Bearbeiten", [["undo", "Rückgängig", "Ctrl+Z"], ["redo", "Wiederherstellen", "Ctrl+Shift+Z"]]],
-  ["Werkzeuge", [["tool_select", "Auswahl", "V"], ["tool_hand", "Hand", "H"], ["tool_brush", "Pinsel", "B"], ["tool_erase", "Radierer", "E"], ["tool_rect", "Rechteck", "R"], ["tool_pick", "Pipette", "I"], ["tool_text", "Text", "T"]]],
-  ["Blöcke", [["nextGroup", "Nächste Blockleiste", "G"], ["nextParam", "Parameter weiterschalten", "Q"]]],
+  ["Werkzeuge", [["tool_select", "Auswahl", "V"], ["tool_hand", "Hand", "H"], ["tool_move", "Verschieben", "M"], ["tool_brush", "Pinsel", "B"], ["tool_erase", "Radierer", "E"], ["tool_rect", "Rechteck", "R"], ["tool_pick", "Pipette", "I"], ["tool_text", "Text", "T"]]],
+  ["Objekte", [["nextParam", "Variante weiterschalten", "Q"]]],
   ["Raum", [["newRoom", "Neuer Raum", "N"], ["roomProps", "Eigenschaften", "Enter"], ["dupRoom", "Duplizieren", "Ctrl+D"], ["borderWall", "Rand mit Wand füllen", ""], ["clearRoom", "Ebene leeren", ""], ["delRoom", "Raum löschen", "Delete"]]],
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
-    ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Punktraster", "."], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Blockleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
-  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["modeFunc", "Funktionsebene", "F"], ["modeDesign", "Letzte Designebene", "D"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
-  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Blockeditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
+    ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
+  ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
+  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
 ];
 var KEYLABEL = {}; KEYDEFS.forEach(function (g) { g[1].forEach(function (k) { KEYLABEL[k[0]] = k[1]; }); });
 function keyOf(id) { var o = P.settings.keys || {}; if (id in o) return o[id]; for (var i = 0; i < KEYDEFS.length; i++) for (var j = 0; j < KEYDEFS[i][1].length; j++) if (KEYDEFS[i][1][j][0] === id) return KEYDEFS[i][1][j][2]; return ""; }
@@ -1089,8 +1163,8 @@ function openSettings(tab) {
   if (setTab === "view") {
     html += '<div class="srow"><div><div class="sl">Sprache</div><div class="sh">Weitere Sprachen folgen später.</div></div><div class="sseg"><button class="on">Deutsch</button><button disabled style="border-style:dashed">English (später)</button></div></div>' +
       seg("fontSize", "Schriftgröße", [["M", "Normal"], ["L", "Groß"], ["XL", "Sehr groß"]]) + tog("bold", "Fette Schrift") +
-      tog("labels", "Namen unter Werkzeugen") + tog("blockNames", "Namen in der Blockleiste") +
-      seg("floatSecs", "Variantenleiste ausblenden nach", [["1", "1 s"], ["2", "2 s"], ["4", "4 s"], ["8", "8 s"], ["15", "15 s"], ["0", "Nie"]], "Die Leiste neben dem Block schließt sich nach der Auswahl, beim Tippen auf die Karte oder nach dieser Zeit.") + tog("dots", "Punktraster") + tog("showOther", "Andere Ebene blass anzeigen") +
+      tog("labels", "Namen unter Werkzeugen") + tog("blockNames", "Namen in der Objektleiste") +
+      seg("floatSecs", "Variantenleiste ausblenden nach", [["1", "1 s"], ["2", "2 s"], ["4", "4 s"], ["8", "8 s"], ["15", "15 s"], ["0", "Nie"]], "Die Leiste neben dem Block schließt sich nach der Auswahl, beim Tippen auf die Karte oder nach dieser Zeit.") + seg("raster", "Raster (Punkte & Einrasten)", [["1", "1×1"], ["8", "8×8"], ["16", "16×16"], ["0", "Aus"]], "Objekte auf Hinter- und Vordergrund rasten darauf ein (Aus = pixelgenau). Die Spielebene nutzt immer 16×16. Beim Herauszoomen werden die Punkte automatisch ausgedünnt.") + tog("showOther", "Andere Ebene blass anzeigen") +
       tog("eink", "E-Ink-Modus", "Beim Zoomen und Verschieben erst beim Loslassen neu zeichnen.");
   } else if (setTab === "pen") {
     var acts = [["undo", "Rückgängig"], ["redo", "Wiederh."], ["erase", "Radieren"], ["hand", "Verschieben"], ["pick", "Pipette"], ["none", "Nichts"]];
@@ -1123,7 +1197,7 @@ function applySetting(key, val) {
   if (key === "fontSize") { setFont(val); return; }
   if (key === "bold" || key === "blockNames") { resize(); buildBlockPanel(); buildTools(); }
   if (key === "labels") buildTools();
-  if (key === "dots" || key === "showOther") render();
+  if (key === "dots" || key === "showOther" || key === "raster") render();
   if (key === "penEraser") S.eraserUndo = val === "undo";
   if (key === "penBarrel") S.penBtnErase = val === "erase";
   updateStatus(); autosave();
@@ -1169,15 +1243,16 @@ function roomText(r) {
     "- Dunkelheit: " + (r.dark || "–"), "- Notizen: " + (r.notes || "").replace(/\n/g, " / "), "", "Funktionsebene (16×16):", "```raum"];
   for (var y = 0; y < r.h; y++) { var line = ""; for (var x = 0; x < r.w; x++) { var v = r.func[x + "," + y]; line += v ? cellCode(v) : ". "; } out.push(line); }
   out.push("```");
-  P.layers.forEach(function (lo) { if (lo.type === "func") return; var m = r[lo.id] || {}, dk = Object.keys(m);
-  if (dk.length) { out.push("", "Ebene " + lo.name + " (" + LAYER_TYPES[lo.type] + ", " + (lo.grid === 8 ? "8×8" : "16×16") + ", x,y = ID Name):"); dk.sort(); dk.forEach(function (k) { var b = blockByUid(m[k].b); out.push("- " + k + " = " + (b ? b.id + " " + b.name : "?")); }); } });
+  ["bg", "fg"].forEach(function (lid) { var L = layerById(lid), l = (r.objs && r.objs[lid]) || [];
+    if (l.length) { out.push("", "Ebene " + L.num + " " + L.name + " (Objekte, x,y in Pixeln, 16 px = 1 Zelle):"); l.slice().sort(function (a, c) { return a.y - c.y || a.x - c.x; }).forEach(function (o) { var b = blockByUid(o.b);
+      out.push("- " + o.x + "," + o.y + " = " + (b ? b.id + " " + b.name + " (" + bw(b) + "×" + bh(b) + ")" : "?") + (o.p ? " [" + paramLabel(o.p) + "]" : "")); }); } });
   if (r.texts.length) { out.push("", "Texte:"); r.texts.forEach(function (t) { out.push("- " + t.x + "," + t.y + ": " + t.text); }); }
   return out.join("\n");
 }
 function legendText() {
   var l = ["## Legende", "", "2 Zeichen pro Zelle, `. ` = leer. Koordinaten ab 0 oben links (x rechts, y unten). Bei Parametern ersetzt der Wert das 2. Zeichen.", "",
-    "| ID | Kürzel | Name | Art | Parameter |", "|---|---|---|---|---|"];
-  sortedBlocks().forEach(function (b) { l.push("| " + b.id + " | `" + b.code + "` | " + b.name + " | " + (b.kind === "func" ? "Funktion" : "Design") + " | " + (b.pvals ? (b.plabel || "Wert") + ": " + b.pvals : "") + " |"); });
+    "| ID | Kürzel | Name | Ebene | Parameter |", "|---|---|---|---|---|"];
+  sortedBlocks().forEach(function (b) { l.push("| " + b.id + " | `" + b.code + "` | " + b.name + " | " + blockLayerNum(b) + " " + LAYER_TYPES[layerOfBlock(b)] + (blockLayerNum(b) === 2 ? "" : " " + bw(b) + "×" + bh(b)) + " | " + (b.pvals ? (b.plabel || "Wert") + ": " + b.pvals : "") + " |"); });
   return l.join("\n");
 }
 function projectMd() { return ["# " + (P.dungeon || "Dungeon") + " – Räume", "", "- Format: " + FORMAT, "- Räume: " + P.rooms.length, "", legendText(), ""].concat(P.rooms.map(roomText)).join("\n\n"); }
@@ -1220,14 +1295,14 @@ var ACTIONS = {
   newRoom: function () { var x = 0, y = 0; if (P.rooms.length) { var last = P.rooms[P.rooms.length - 1]; x = last.x + last.w; y = last.y; }
     pushUndo(); var r = addRoomLayers(newRoom(nextNr(), x, y)); P.rooms.push(r); selRoom = r.rid; fitRoom(); toast("Raum " + r.nr + " angelegt."); },
   roomProps: openRoomProps,
-  layerSettings: function () { openLayerSettings(); },
-  nextLayer: function () { var vis = P.layers.filter(function (l) { return l.visible; }); if (!vis.length) return; var i = vis.findIndex(function (l) { return l.id === mode; }); var n = vis[(i + 1) % vis.length]; setMode(n.id); toast("Ebene: " + n.name); },
+  layerSettings: function () { openLayerSettings(); }, layer1: function () { setMode("bg"); }, layer3: function () { setMode("fg"); },
+  nextLayer: function () { $("bpFoot").onclick(); },
   toggleLayerVis: function () { var l = layerById(mode); if (!l) return; l.visible = !l.visible; render(); autosave(); toast("„" + l.name + "“ " + (l.visible ? "eingeblendet" : "ausgeblendet")); },
   settings: function () { openSettings(); }, keysHelp: function () { openSettings("keys"); },
   zoom100: function () { zoomTo(24); },
   nextGroup: function () { if (page === "map") $("bpFoot").onclick(); },
   nextParam: function () { var b = blockByUid(curBlock); if (b && cycleParam(b)) { buildBlockPanel(); updateStatus(); } },
-  tool_select: function () { setTool("select"); }, tool_hand: function () { setTool("hand"); }, tool_brush: function () { setTool("brush"); }, tool_erase: function () { setTool("erase"); },
+  tool_select: function () { setTool("select"); }, tool_hand: function () { setTool("hand"); }, tool_move: function () { setTool("move"); }, tool_brush: function () { setTool("brush"); }, tool_erase: function () { setTool("erase"); },
   tool_rect: function () { setTool("rect"); }, tool_pick: function () { setTool("pick"); }, tool_text: function () { setTool("text"); },
   dupRoom: function () { var r = needRoom(); if (!r) return; pushUndo(); var c = JSON.parse(JSON.stringify(r)); c.rid = newRoom("").rid; c.nr = nextNr(); c.x = r.x + r.w + 2; delete c.__label; P.rooms.push(c); selRoom = c.rid; render(); autosave(); },
   borderWall: function () { var r = needRoom(); if (!r) return;
@@ -1251,19 +1326,19 @@ var ACTIONS = {
   togglePenBtn: function () { P.settings.penBtnErase = !P.settings.penBtnErase; updateStatus(); autosave(); },
   togglePalm: function () { P.settings.palm = !P.settings.palm; updateStatus(); autosave(); },
   toggleFingerPaint: function () { P.settings.fingerPaint = !P.settings.fingerPaint; updateStatus(); autosave(); },
-  toggleDots: function () { P.settings.dots = !P.settings.dots; render(); autosave(); },
+  toggleDots: function () { var S = P.settings; if (+S.raster) { S.lastRaster = S.raster; S.raster = "0"; } else S.raster = S.lastRaster || "8"; render(); updateStatus(); autosave(); toast("Raster: " + (+S.raster ? S.raster + "×" + S.raster : "Aus")); },
   toggleLabels: function () { P.settings.labels = !P.settings.labels; buildTools(); autosave(); },
   help: function () { modal("<h3>Kurzanleitung</h3><div class='body help'>" +
     "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende antippen = Rückgängig, Stifttaste = Radieren. Beides ist umstellbar unter Datei → Einstellungen → Stift & Werkzeuge.</p>" +
     "<p><b>Ein Finger:</b> Tippen wendet das Werkzeug auf eine Zelle an. Ziehen verschiebt die Ansicht (umstellbar unter Datei → Einstellungen).</p>" +
     "<p><b>Zwei Finger:</b> verschieben und zoomen (Pinch). Beim Loslassen rastet der Zoom auf die nächste Stufe ein.</p>" +
-    "<p><b>Links:</b> Blöcke einer Leiste. Der Kreis unten mit der Zahl schaltet zur nächsten Leiste. Antippen = Pinsel mit diesem Block. Daneben öffnet sich eine senkrechte Leiste mit den Varianten (Tür-Nr., Richtung …); sie schließt sich nach der Auswahl oder nach einigen Sekunden (einstellbar). Erneutes Antippen schaltet die Variante weiter.</p>" +
-    "<p><b>Unten:</b> Werkzeuge, Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Funktions- bzw. Designmodus wechselt automatisch mit dem gewählten Block (oder Ansicht-Menü).</p>" +
+    "<p><b>Links:</b> Objekte der aktiven Ebene. Der Kreis unten mit der Zahl schaltet zur nächsten Ebene. Antippen = Pinsel mit diesem Objekt. Daneben öffnet sich eine senkrechte Leiste mit den Varianten (Tür-Nr., Richtung …); sie schließt sich nach der Auswahl oder nach einigen Sekunden (einstellbar). Erneutes Antippen schaltet die Variante weiter.</p>" +
+    "<p><b>Unten:</b> Werkzeuge (Verschieben bewegt einzelne Objekte), Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Die Ebene wechselt automatisch mit dem gewählten Objekt.</p>" +
     "<p><b>Räume:</b> Menü Raum → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
-    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Blockeditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Blocks (Funktion 16×16, Design 8×8, schwarz/weiß); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
-    "<p><b>Ebenen</b> (Menü): Parallax, statischer Hintergrund, Funktion und Dekoration – umschalten, ein-/ausblenden, unter „Ebenen verwalten“ hinzufügen, umsortieren, Typ und Raster ändern. Funktionsblöcke gehören auf die Funktionsebene, Designblöcke auf alle anderen. Parallax-Animation ist auf E-Ink standardmäßig aus.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
+    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekteditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
+    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
-  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Blockeditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
+  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekteditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
 };
 updateMenuKeys();
 document.querySelectorAll(".mitem").forEach(function (it) { it.addEventListener("click", function (ev) { ev.stopPropagation(); closeMenus(); var a = ACTIONS[it.getAttribute("data-act")]; if (a) a(); }); });
@@ -1289,24 +1364,25 @@ document.addEventListener("keydown", function (ev) {
 
 
 /* ================= pixel editor ================= */
-var px = { uid: null, v: "", n: 16, d: null, tool: "pen", undo: [], redo: [], cell: 20, drawing: null, penAt: 0 };
-function pxSize(b) { return b.kind === "design" ? 8 : 16; }
-function pxFromLook(b, n, v, symbolOnly) {
-  // Symbol (oder hochgeladenes Bild) rastern: hochauflösend zeichnen, dann je Pixel Schwellwert
-  var S = n * 8, c = document.createElement("canvas"); c.width = S; c.height = S; var g = c.getContext("2d");
-  g.fillStyle = "#fff"; g.fillRect(0, 0, S, S);
+var px = { uid: null, v: "", w: 16, h: 16, d: null, tool: "pen", undo: [], redo: [], cell: 20, drawing: null, penAt: 0, big: false };
+var PX_MAX = 128;
+function pxSize(b) { return [bw(b), bh(b)]; }
+function pxFromLook(b, W, H, v, symbolOnly) {
+  var k = Math.max(1, Math.min(8, Math.floor(1024 / Math.max(W, H)))), SW = W * k, SH = H * k, c = document.createElement("canvas"); c.width = SW; c.height = SH; var g = c.getContext("2d");
+  g.fillStyle = "#fff"; g.fillRect(0, 0, SW, SH);
   var im = (!symbolOnly && !v && b.image && !b.pix) ? getImg(b.uid, b.image) : null;
-  if (im) { g.imageSmoothingEnabled = true; g.drawImage(im, 0, 0, S, S); } else drawIcon(g, b.icon, 0, 0, S, v || pvalsOf(b)[0], b.name);
-  var im = g.getImageData(0, 0, S, S).data, out = [];
-  for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) {
-    var sum = 0; for (var yy = 0; yy < 8; yy++) for (var xx = 0; xx < 8; xx++) { var i = ((y * 8 + yy) * S + x * 8 + xx) * 4; sum += im[i] + im[i + 1] + im[i + 2]; }
-    out.push(sum / (64 * 3) < 195 ? 1 : 0);
+  if (im) { g.imageSmoothingEnabled = true; g.drawImage(im, 0, 0, SW, SH); } else { var s = Math.min(SW, SH); drawIcon(g, b.icon, (SW - s) / 2, (SH - s) / 2, s, v || pvalsOf(b)[0], b.name); }
+  var id = g.getImageData(0, 0, SW, SH).data, out = [];
+  for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) {
+    var sum = 0; for (var yy = 0; yy < k; yy++) for (var xx = 0; xx < k; xx++) { var i = ((y * k + yy) * SW + x * k + xx) * 4; sum += id[i] + id[i + 1] + id[i + 2]; }
+    out.push(sum / (k * k * 3) < 195 ? 1 : 0);
   }
   return out;
 }
-function pxResample(pix, n) {
-  var src = pix.d, m = pix.n, out = [];
-  for (var y = 0; y < n; y++) for (var x = 0; x < n; x++) out.push(+src.charAt(Math.floor(y * m / n) * m + Math.floor(x * m / n)) || 0);
+function pxDims(pix) { return [pix.w || pix.n, pix.h || pix.n]; }
+function pxResample(pix, W, H) {
+  var src = pix.d, d = pxDims(pix), mw = d[0], mh = d[1], out = [];
+  for (var y = 0; y < H; y++) for (var x = 0; x < W; x++) out.push(+src.charAt(Math.floor(y * mh / H) * mw + Math.floor(x * mw / W)) || 0);
   return out;
 }
 function pxGetSrc(b, v) { return v ? (b.pixV && b.pixV[v]) : b.pix; }
@@ -1316,11 +1392,12 @@ function openPix(uid, v) {
   if (v == null) v = (uid === px.uid && page === "pixels") ? px.v : (pv.length ? (curParam[b.uid] || pv[0]) : "");
   if (v && pv.indexOf(v) < 0) v = pv.length ? pv[0] : "";
   if (!pv.length) v = "";
-  px.uid = b.uid; px.v = v; px.n = pxSize(b); px.undo = []; px.redo = [];
+  var sz = pxSize(b); px.uid = b.uid; px.v = v; px.w = sz[0]; px.h = sz[1]; px.undo = []; px.redo = []; px.big = Math.max(px.w, px.h) > PX_MAX;
   var src = pxGetSrc(b, v), own = !!src;
   if (!src && v && b.pix) src = b.pix; // Version ohne eigenes Bild: Grundbild als Vorlage
-  if (src) px.d = src.n === px.n ? src.d.split("").map(Number) : pxResample(src, px.n);
-  else px.d = pxFromLook(b, px.n, v);
+  if (px.big) px.d = [];
+  else if (src) { var sd = pxDims(src); px.d = sd[0] === px.w && sd[1] === px.h ? src.d.split("").map(Number) : pxResample(src, px.w, px.h); }
+  else px.d = pxFromLook(b, px.w, px.h, v);
   var vs = $("pxVar"); vs.innerHTML = ""; vs.style.display = pv.length ? "" : "none";
   if (pv.length) {
     [""].concat(pv).forEach(function (val) { var op = document.createElement("option"); op.value = val;
@@ -1328,54 +1405,51 @@ function openPix(uid, v) {
       op.textContent = (val ? (b.plabel || "Wert") + ": " + paramLabel(val) : "Grundbild (alle)") + (has ? " ✓" : ""); if (val === v) op.selected = true; vs.appendChild(op); });
   }
   var sl = $("pxSel"); sl.innerHTML = "";
-  sortedBlocks().forEach(function (o) { var op = document.createElement("option"); op.value = o.uid; op.textContent = "ID " + o.id + " · " + o.name + " (" + pxSize(o) + "×" + pxSize(o) + ")"; if (o.uid === b.uid) op.selected = true; sl.appendChild(op); });
-  $("pxInfo").textContent = own ? "" : (v && b.pix ? "Version ohne eigenes Bild – Vorlage ist das Grundbild" : "Vorlage aus Symbol") + " – wird beim ersten Strich gespeichert";
+  sortedBlocks().forEach(function (o) { var op = document.createElement("option"); op.value = o.uid; op.textContent = "ID " + o.id + " · " + o.name + " (" + bw(o) + "×" + bh(o) + ")"; if (o.uid === b.uid) op.selected = true; sl.appendChild(op); });
+  $("pxInfo").textContent = px.big ? "Zu groß zum Zeichnen (" + px.w + "×" + px.h + " px, max. " + PX_MAX + "). Bild im Objekteditor hochladen – z. B. eine Skizze vom Boox." : own ? "" : (v && b.pix ? "Version ohne eigenes Bild – Vorlage ist das Grundbild" : "Vorlage aus Symbol") + " – wird beim ersten Strich gespeichert";
   if (page !== "pixels") setPage("pixels"); else pxLayout();
 }
 function pxLayout() {
   var m = $("main"), top = $("pxCv").getBoundingClientRect().top - m.getBoundingClientRect().top + $("pixEditor").scrollTop;
   var W = m.clientWidth - 36, H = m.clientHeight - top - 24;
   var avail = W - 250 >= 300 ? Math.min(W - 250, H) : Math.min(W, H - 380);
-  px.cell = Math.max(8, Math.floor(Math.max(160, avail) / px.n));
-  var cv2 = $("pxCv"), dpr = window.devicePixelRatio || 1, S = px.cell * px.n;
-  cv2.width = S * dpr; cv2.height = S * dpr; cv2.style.width = S + "px"; cv2.style.height = S + "px";
+  var mx = Math.max(px.w, px.h); px.cell = Math.max(3, Math.floor(Math.max(160, avail) / mx));
+  var cv2 = $("pxCv"), dpr = window.devicePixelRatio || 1, SW = px.cell * px.w, SH = px.cell * px.h;
+  cv2.style.display = px.big ? "none" : ""; cv2.width = SW * dpr; cv2.height = SH * dpr; cv2.style.width = SW + "px"; cv2.style.height = SH + "px";
   document.querySelectorAll(".pxTools button").forEach(function (e) { e.classList.toggle("on", e.getAttribute("data-pt") === px.tool); });
   pxRender();
 }
 function pxRender() {
-  var cv2 = $("pxCv"), g = cv2.getContext("2d"), dpr = window.devicePixelRatio || 1, n = px.n, c = px.cell, S = n * c;
-  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.fillStyle = "#000";
-  for (var i = 0; i < n * n; i++) if (px.d[i]) g.fillRect((i % n) * c, Math.floor(i / n) * c, c, c);
-  // Raster: dünn, alle 4 Pixel kräftiger; auf schwarzen Pixeln weiß
-  for (var k = 1; k < n; k++) {
-    var w = k % 4 === 0 ? 2 : 1;
-    for (var j = 0; j < n; j++) {
-      var a = px.d[j * n + k - 1] && px.d[j * n + k], b2 = px.d[(k - 1) * n + j] && px.d[k * n + j];
-      g.fillStyle = a ? "#fff" : "#000"; g.fillRect(k * c - w / 2, j * c, w, c);
-      g.fillStyle = b2 ? "#fff" : "#000"; g.fillRect(j * c, k * c - w / 2, c, w);
-    }
+  if (px.big) { pxPreview(); return; }
+  var cv2 = $("pxCv"), g = cv2.getContext("2d"), dpr = window.devicePixelRatio || 1, W = px.w, H = px.h, c = px.cell;
+  g.setTransform(dpr, 0, 0, dpr, 0, 0); g.fillStyle = "#fff"; g.fillRect(0, 0, W * c, H * c); g.fillStyle = "#000";
+  for (var i = 0; i < W * H; i++) if (px.d[i]) g.fillRect((i % W) * c, Math.floor(i / W) * c, c, c);
+  if (c >= 5) { // Raster: dünn, alle 4 Pixel kräftiger; auf schwarzen Pixeln weiß
+    for (var k = 1; k < W; k++) { var w = k % 4 === 0 ? 2 : 1; for (var j = 0; j < H; j++) { var a = px.d[j * W + k - 1] && px.d[j * W + k]; g.fillStyle = a ? "#fff" : "#000"; g.fillRect(k * c - w / 2, j * c, w, c); } }
+    for (var k2 = 1; k2 < H; k2++) { var w2 = k2 % 4 === 0 ? 2 : 1; for (var j2 = 0; j2 < W; j2++) { var b2 = px.d[(k2 - 1) * W + j2] && px.d[k2 * W + j2]; g.fillStyle = b2 ? "#fff" : "#000"; g.fillRect(j2 * c, k2 * c - w2 / 2, c, w2); } }
   }
   pxPreview();
 }
 function pxPreview() {
-  var n = px.n, s1 = n <= 8 ? 8 : 4, c1 = $("pxP1"), c3 = $("pxP3");
-  c1.width = n; c1.height = n; c1.style.width = n * s1 + "px"; c1.style.height = n * s1 + "px";
-  c3.width = n * 3; c3.height = n * 3; c3.style.width = n * 3 * (s1 / 2) + "px"; c3.style.height = n * 3 * (s1 / 2) + "px";
-  var g1 = c1.getContext("2d"), id = g1.createImageData(n, n);
-  for (var i = 0; i < n * n; i++) { var v = px.d[i] ? 0 : 255; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
+  var W = px.w, H = px.h, m = Math.max(W, H), s1 = Math.max(1, Math.floor(64 / m)), c1 = $("pxP1"), c3 = $("pxP3");
+  if (px.big) { var b = blockByUid(px.uid); c1.width = 1; c1.height = 1; c3.width = 1; c3.height = 1; return; }
+  c1.width = W; c1.height = H; c1.style.width = W * s1 + "px"; c1.style.height = H * s1 + "px";
+  var s3 = Math.max(1, Math.floor(s1 / 2)); c3.width = W * 3; c3.height = H * 3; c3.style.width = W * 3 * s3 + "px"; c3.style.height = H * 3 * s3 + "px";
+  var g1 = c1.getContext("2d"), id = g1.createImageData(W, H);
+  for (var i = 0; i < W * H; i++) { var v = px.d[i] ? 0 : 255; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
   g1.putImageData(id, 0, 0);
-  var g3 = c3.getContext("2d"); for (var ty = 0; ty < 3; ty++) for (var tx = 0; tx < 3; tx++) g3.putImageData(id, tx * n, ty * n);
+  var g3 = c3.getContext("2d"); for (var ty = 0; ty < 3; ty++) for (var tx = 0; tx < 3; tx++) g3.putImageData(id, tx * W, ty * H);
 }
 function pxSave() {
   var b = blockByUid(px.uid); if (!b) return;
-  var data = { n: px.n, d: px.d.join("") }, url = $("pxP1").toDataURL("image/png");
+  if (px.big) return; var data = { w: px.w, h: px.h, d: px.d.join("") }, url = $("pxP1").toDataURL("image/png");
   if (px.v) { b.pixV = b.pixV || {}; b.imgV = b.imgV || {}; b.pixV[px.v] = data; b.imgV[px.v] = url; }
   else { b.pix = data; b.image = url; }
   dropImgs(b); $("pxInfo").textContent = ""; pxMarkVar(b); autosave();
 }
 function pxPush() { px.undo.push(px.d.join("")); if (px.undo.length > 80) px.undo.shift(); px.redo = []; }
 function pxAct(a) {
-  var n = px.n, d = px.d, o = [], x, y;
+  var W = px.w, H = px.h, d = px.d, o = [], x, y; if (px.big && a !== "remove") return;
   if (a === "undo") { if (!px.undo.length) return; px.redo.push(d.join("")); px.d = px.undo.pop().split("").map(Number); }
   else if (a === "redo") { if (!px.redo.length) return; px.undo.push(d.join("")); px.d = px.redo.pop().split("").map(Number); }
   else if (a === "remove") { var b = blockByUid(px.uid); if (!b) return;
@@ -1383,13 +1457,14 @@ function pxAct(a) {
     else { if (!confirm("Grundbild von „" + b.name + "“ entfernen? Der Block nutzt dann wieder sein Symbol.")) return; b.image = null; delete b.pix; }
     dropImgs(b); autosave(); openPix(b.uid, px.v); toast("Bild entfernt."); return; }
   else {
+    if (a === "rot" && W !== H) { toast("Drehen geht nur bei quadratischen Objekten."); return; }
     pxPush();
-    if (a === "flipH") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[y * n + n - 1 - x]); }
-    else if (a === "flipV") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[(n - 1 - y) * n + x]); }
-    else if (a === "rot") { for (y = 0; y < n; y++) for (x = 0; x < n; x++) o.push(d[(n - 1 - x) * n + y]); }
+    if (a === "flipH") { for (y = 0; y < H; y++) for (x = 0; x < W; x++) o.push(d[y * W + W - 1 - x]); }
+    else if (a === "flipV") { for (y = 0; y < H; y++) for (x = 0; x < W; x++) o.push(d[(H - 1 - y) * W + x]); }
+    else if (a === "rot") { for (y = 0; y < H; y++) for (x = 0; x < W; x++) o.push(d[(W - 1 - x) * W + y]); }
     else if (a === "inv") o = d.map(function (v) { return v ? 0 : 1; });
     else if (a === "clear") o = d.map(function () { return 0; });
-    else if (a === "grab") { var bb = blockByUid(px.uid); o = pxFromLook(bb, n, px.v, true); }
+    else if (a === "grab") { var bb = blockByUid(px.uid); o = pxFromLook(bb, W, H, px.v, true); }
     px.d = o;
   }
   pxSave(); pxRender();
@@ -1397,15 +1472,15 @@ function pxAct(a) {
 function pxMarkVar(b) { var vs = $("pxVar"); for (var i = 0; i < vs.options.length; i++) { var op = vs.options[i], val = op.value, has = val ? !!(b.pixV && b.pixV[val]) : !!b.pix;
   op.textContent = (val ? (b.plabel || "Wert") + ": " + paramLabel(val) : "Grundbild (alle)") + (has ? " ✓" : ""); } }
 function pxCell(ev) { var r = $("pxCv").getBoundingClientRect(); return [Math.floor((ev.clientX - r.left) / px.cell), Math.floor((ev.clientY - r.top) / px.cell)]; }
-function pxSet(x, y, v) { if (x < 0 || y < 0 || x >= px.n || y >= px.n) return; px.d[y * px.n + x] = v; }
+function pxSet(x, y, v) { if (x < 0 || y < 0 || x >= px.w || y >= px.h) return; px.d[y * px.w + x] = v; }
 function pxLine(x0, y0, x1, y1, v) {
   var dx = Math.abs(x1 - x0), dy = -Math.abs(y1 - y0), sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1, e = dx + dy;
-  for (var i = 0; i < 200; i++) { pxSet(x0, y0, v); if (x0 === x1 && y0 === y1) break; var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
+  for (var i = 0; i < 600; i++) { pxSet(x0, y0, v); if (x0 === x1 && y0 === y1) break; var e2 = 2 * e; if (e2 >= dy) { e += dy; x0 += sx; } if (e2 <= dx) { e += dx; y0 += sy; } }
 }
 function pxFill(x, y, v) {
-  var n = px.n; if (x < 0 || y < 0 || x >= n || y >= n) return; var from = px.d[y * n + x]; if (from === v) return;
-  var st = [[x, y]]; while (st.length) { var p = st.pop(), i = p[1] * n + p[0];
-    if (p[0] < 0 || p[1] < 0 || p[0] >= n || p[1] >= n || px.d[i] !== from) continue; px.d[i] = v;
+  var W = px.w, H = px.h; if (x < 0 || y < 0 || x >= W || y >= H) return; var from = px.d[y * W + x]; if (from === v) return;
+  var st = [[x, y]]; while (st.length) { var p = st.pop(), i = p[1] * W + p[0];
+    if (p[0] < 0 || p[1] < 0 || p[0] >= W || p[1] >= H || px.d[i] !== from) continue; px.d[i] = v;
     st.push([p[0] + 1, p[1]], [p[0] - 1, p[1]], [p[0], p[1] + 1], [p[0], p[1] - 1]); }
 }
 (function () {
@@ -1413,12 +1488,12 @@ function pxFill(x, y, v) {
   cv2.addEventListener("pointerdown", function (ev) {
     if (ev.pointerType === "pen") px.penAt = Date.now();
     else if (ev.pointerType === "touch" && P.settings.palm && Date.now() - px.penAt < 600) return;
-    if (px.drawing) return; ev.preventDefault();
+    if (px.drawing || px.big) return; ev.preventDefault();
     var pa = penAction(ev);
     if (pa && (runPenOnce(pa, function () { pxAct("undo"); }, function () { pxAct("redo"); }, function () { return px.undo.length > 0; }, function () { return px.redo.length > 0; }) || pa === "hand" || pa === "pick")) { ev.preventDefault(); return; }
     var eraseBtn = pa === "erase";
     var c = pxCell(ev); pxPush();
-    if (px.tool === "fill") { pxFill(c[0], c[1], eraseBtn ? 0 : (px.d[c[1] * px.n + c[0]] ? 0 : 1)); pxSave(); pxRender(); return; }
+    if (px.tool === "fill") { pxFill(c[0], c[1], eraseBtn ? 0 : (px.d[c[1] * px.w + c[0]] ? 0 : 1)); pxSave(); pxRender(); return; }
     var v = (px.tool === "erase" || eraseBtn) ? 0 : 1;
     px.drawing = { id: ev.pointerId, v: v, last: c }; try { cv2.setPointerCapture(ev.pointerId); } catch (e) {}
     pxSet(c[0], c[1], v); pxRender();
@@ -1441,7 +1516,7 @@ function pxFill(x, y, v) {
 /* ================= block editor ================= */
 var ICONS = [["wall","Wand"],["start","Start"],["checkpoint","Checkpoint"],["crystal","Kristall"],["redirect","Richtungswechsel"],["door","Tür"],["stone","Stein"],["breakable","Zerstörbar"],["yoku","Yoku"],["hazard","Gefahr"],["flyer","Flieger"],["shooter","Schütze"],["teleporter","Teleporter"],["crack","Riss"],["moss","Moos"],["rune","Rune"],["letter","Buchstabe"]];
 var imgTarget = null;
-function usage(uid) { var n = 0; P.rooms.forEach(function (r) { P.layers.forEach(function (lo) { var l = lo.id; for (var k in r[l] || {}) if (r[l][k].b === uid) n++; }); }); return n; }
+function usage(uid) { var n = 0; P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === uid) n++; ["bg", "fg"].forEach(function (l) { (r.objs[l] || []).forEach(function (o) { if (o.b === uid) n++; }); }); }); return n; }
 function renderBlockEditor() {
   var body = $("blkBody"); body.innerHTML = "";
   var ids = {}; P.blocks.forEach(function (b) { ids[b.id] = (ids[b.id] || 0) + 1; });
@@ -1452,9 +1527,18 @@ function renderBlockEditor() {
     idI.onchange = function () { var v = parseInt(idI.value, 10); if (isNaN(v) || v < 1) { idI.value = b.id; return; }
       if (P.blocks.some(function (o) { return o !== b && o.id === v; })) { toast("ID " + v + " ist schon vergeben."); idI.value = b.id; return; } b.id = v; commit(); }; td(idI);
     var nm = inp("text", b.name, "w-name"); nm.onchange = function () { b.name = nm.value.trim() || b.name; commit(); }; td(nm);
-    var kind = sel([["func","Funktion"],["design","Design"]], b.kind); kind.onchange = function () { b.kind = kind.value; commit(); }; td(kind);
-    var tbs = []; for (var i = 1; i <= 9; i++) tbs.push([String(i), String(i)]);
-    var tbSel = sel(tbs, String(b.toolbar)); tbSel.onchange = function () { b.toolbar = +tbSel.value; commit(); }; td(tbSel);
+    var lay = sel([["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]], String(blockLayerNum(b))); lay.onchange = function () { setBlockLayer(b, +lay.value); commit(); }; td(lay);
+    var sz = document.createElement("div"); sz.className = "szbox";
+    if (blockLayerNum(b) === 2) { sz.textContent = "16 × 16"; } else {
+      var wI = inp("number", bw(b), "w-sz"), hI = inp("number", bh(b), "w-sz"); wI.min = hI.min = 1; wI.max = hI.max = 2048;
+      var setSz = function () { var w = Math.max(1, Math.min(2048, parseInt(wI.value, 10) || bw(b))), h = Math.max(1, Math.min(2048, parseInt(hI.value, 10) || bh(b))); if (w === bw(b) && h === bh(b)) return; b.w = w; b.h = h; commit(); };
+      wI.onchange = setSz; hI.onchange = setSz; sz.appendChild(wI); sz.appendChild(document.createTextNode(" × ")); sz.appendChild(hI);
+      var pre = sel([["", "…"], ["8x8", "8×8"], ["16x16", "16×16"], ["32x32", "32×32"], ["512x288", "Bildschirm"]], ""); pre.className = "w-pre"; pre.onchange = function () { if (!pre.value) return; var a = pre.value.split("x"); b.w = +a[0]; b.h = +a[1]; commit(); }; sz.appendChild(pre);
+    }
+    td(sz);
+    var mv = sel([["1", "fest"], ["0.75", "Parallax 75 %"], ["0.5", "Parallax 50 %"], ["0.25", "Parallax 25 %"]], String(+b.par || 1)); mv.onchange = function () { b.par = +mv.value; commit(); }; td(mv);
+    var an = sel([["off", "Aus"], ["on", "An (folgt)"]], b.anim || "off"); an.onchange = function () { b.anim = an.value; commit(); }; td(an);
+    if (blockLayerNum(b) === 2) { mv.disabled = true; an.disabled = true; }
     var code = inp("text", b.code, "w-code"); code.maxLength = 2; code.onchange = function () { b.code = (code.value + "  ").slice(0, 2); commit(); }; td(code);
     var ic = sel(ICONS, b.icon); ic.onchange = function () { b.icon = ic.value; commit(); }; td(ic);
     var pt = document.createElement("div"), pl = inp("text", b.plabel, "w-plabel"), pvI = inp("text", b.pvals, "w-pvals"); pl.placeholder = "Bezeichnung"; pvI.placeholder = "Werte: 1,2,3";
@@ -1464,8 +1548,8 @@ function renderBlockEditor() {
     var imgBox = document.createElement("div"); imgBox.appendChild(btn("Zeichnen", function () { openPix(b.uid); }));
     imgBox.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
     if (b.image || b.imgV) imgBox.appendChild(btn("Entfernen", function () { if (!confirm("Alle Bilder von „" + b.name + "“ entfernen (inkl. Versionen)?")) return; b.image = null; delete b.pix; delete b.pixV; delete b.imgV; dropImgs(b); commit(); })); td(imgBox);
-    td(btn("Löschen", function () { var n = usage(b.uid); if (!confirm("Block „" + b.name + "“ löschen?" + (n ? " Er ist " + n + "× gesetzt – diese Zellen werden geleert." : ""))) return;
-      P.rooms.forEach(function (r) { P.layers.forEach(function (lo) { var l = lo.id; for (var k in r[l] || {}) if (r[l][k].b === b.uid) delete r[l][k]; }); });
+    td(btn("Löschen", function () { var n = usage(b.uid); if (!confirm("Objekt „" + b.name + "“ löschen?" + (n ? " Es ist " + n + "× gesetzt – diese Platzierungen werden entfernt." : ""))) return;
+      P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === b.uid) delete r.func[k]; ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.b !== b.uid; }); }); });
       P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; commit(); }));
     body.appendChild(tr);
   });
@@ -1474,21 +1558,32 @@ function inp(type, val, cls) { var i = document.createElement("input"); i.type =
 function sel(opts, val) { var s = document.createElement("select"); opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === val) op.selected = true; s.appendChild(op); }); return s; }
 function btn(t, fn) { var b = document.createElement("button"); b.className = "smallbtn"; b.textContent = t; b.onclick = fn; return b; }
 function commit() { renderBlockEditor(); buildBlockPanel(); autosave(); }
-function addBlock(kind) {
-  var maxId = 0; P.blocks.forEach(function (b) { if ((kind === "func" ? b.id < 100 : b.id >= 100) && b.id > maxId) maxId = b.id; });
-  var id = maxId ? maxId + 1 : (kind === "func" ? 1 : 101); while (P.blocks.some(function (b) { return b.id === id; })) id++;
-  P.blocks.push({ uid: "b" + (P.nextUid++), id: id, name: kind === "func" ? "Neuer Block" : "Neues Design", kind: kind, toolbar: kind === "func" ? 1 : 2, code: "? ", icon: "letter", plabel: "", pvals: "", image: null });
-  commit();
+function addBlock(layer) {
+  var func = layer === 2, maxId = 0; P.blocks.forEach(function (b) { if ((func ? b.id < 100 : b.id >= 100) && b.id > maxId) maxId = b.id; });
+  var id = maxId ? maxId + 1 : (func ? 1 : 101); while (P.blocks.some(function (b) { return b.id === id; })) id++;
+  var o = { uid: "b" + (P.nextUid++), id: id, name: func ? "Neues Objekt" : (layer === 1 ? "Neuer Hintergrund" : "Neue Deko"), kind: func ? "func" : "design", layer: layer, toolbar: layer, code: "? ", icon: "letter", plabel: "", pvals: "", image: null, par: 1, anim: "off" };
+  if (!func) { o.w = layer === 1 ? 16 : 8; o.h = layer === 1 ? 16 : 8; }
+  P.blocks.push(o); commit();
 }
-$("b-addFunc").onclick = function () { addBlock("func"); };
-$("b-addDesign").onclick = function () { addBlock("design"); };
+function setBlockLayer(b, n) {
+  var from = layerOfBlock(b); if (blockLayerNum(b) === n) return; b.layer = n; b.toolbar = n; b.kind = n === 2 ? "func" : "design";
+  if (n !== 2 && !b.w) { b.w = 16; b.h = 16; } var to = layerOfBlock(b);
+  P.rooms.forEach(function (r) {
+    if (from === "func") { for (var k in r.func) if (r.func[k].b === b.uid) { var a = k.split(","), v = r.func[k]; var o = { b: b.uid, x: +a[0] * 16, y: +a[1] * 16 }; if (v.p) o.p = v.p; r.objs[to].push(o); delete r.func[k]; } }
+    else { var keep = []; (r.objs[from] || []).forEach(function (o) { if (o.b !== b.uid) { keep.push(o); return; }
+      if (to === "func") { var v = { b: b.uid }; if (o.p) v.p = o.p; r.func[Math.floor(o.x / 16) + "," + Math.floor(o.y / 16)] = v; } else r.objs[to].push(o); }); r.objs[from] = keep; }
+  });
+  if (curBlock === b.uid && page === "map") setMode(to, true);
+}
+$("b-addFunc").onclick = function () { addBlock(2); }; $("b-addBg").onclick = function () { addBlock(1); };
+$("b-addDesign").onclick = function () { addBlock(3); };
 $("fileImg").addEventListener("change", function () {
   var f = this.files[0], b = imgTarget; this.value = ""; if (!f || !b) return;
   var rd = new FileReader();
   rd.onload = function () { var im = new Image();
-    im.onload = function () { var S = 64, c = document.createElement("canvas"); c.width = S; c.height = S; var g = c.getContext("2d");
-      g.fillStyle = "#fff"; g.fillRect(0, 0, S, S); g.imageSmoothingEnabled = im.width > S;
-      var sc = Math.min(S / im.width, S / im.height), w = im.width * sc, h = im.height * sc; g.drawImage(im, (S - w) / 2, (S - h) / 2, w, h);
+    im.onload = function () { var BW = bw(b), BH = bh(b), k = Math.max(1, Math.floor(64 / Math.max(BW, BH))), CWd = Math.min(2048, BW * k), CHd = Math.min(2048, BH * k), c = document.createElement("canvas"); c.width = CWd; c.height = CHd; var g = c.getContext("2d");
+      g.fillStyle = "#fff"; g.fillRect(0, 0, CWd, CHd); g.imageSmoothingEnabled = im.width > CWd;
+      var sc = Math.min(CWd / im.width, CHd / im.height), w = im.width * sc, h = im.height * sc; g.drawImage(im, (CWd - w) / 2, (CHd - h) / 2, w, h);
       try { b.image = c.toDataURL("image/png"); } catch (e) { b.image = rd.result; } delete b.pix;
       dropImgs(b); commit(); toast("Bild für „" + b.name + "“ übernommen."); };
     im.src = rd.result; };
@@ -1533,7 +1628,7 @@ setPage("map");
 if (!restored) { fitRoom(); toast("Willkommen! Hilfe → Kurzanleitung erklärt Stift und Gesten."); } else render();
 
 window.__planer = { get P() { return P; }, get view() { return view; }, roomText: roomText, select: function (t) { tool = t; buildTools(); },
-  pick: function (id) { var b = P.blocks.filter(function (x) { return x.id === id; })[0]; curBlock = b.uid; mode = layerFor(b.kind); tool = "brush"; buildTools(); buildBlockPanel(); },
+  pick: function (id) { var b = P.blocks.filter(function (x) { return x.id === id; })[0]; curBlock = b.uid; mode = layerOfBlock(b); tool = "brush"; buildTools(); buildBlockPanel(); },
   w2s: w2s, act: function (a) { ACTIONS[a](); }, get tool() { return tool; } };
 })();
 </script>
