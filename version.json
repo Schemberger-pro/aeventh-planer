@@ -1,1 +1,1 @@
-{ "version": "0.7.1", "app": "0.7.1", "notes": "Ebenen-Menü: Nur aktive Ebene anzeigen (⇧O) und Andere Ebenen blass anzeigen." }
+{ "version": "0.8.0", "app": "0.8.0", "notes": "Objekt-Datenbank: Galerie mit Suche, Filter und Sortierung; Detailseite wie ein Wiki-Artikel (Infobox, Beschreibung, Verhalten, Varianten, Vorkommen, Verwandte, Notizen). Export als .md." }

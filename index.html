@@ -128,6 +128,44 @@
   #blockEditor { position:absolute; inset:0; overflow:auto; padding:16px 18px 40px; display:none; background:var(--paper); }
   #blockEditor h2 { margin:0 0 4px; font-size:calc(21px*var(--fs)); }
   #blockEditor p.hint { margin:0 0 12px; font-size:calc(13px*var(--fs)); }
+  .dbhead { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; } .dbhead h2 { margin:0 auto 0 0; }
+  .dbbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
+  .dbsearch, .dbsort { border:1.5px solid var(--line); border-radius:9px; height:38px; padding:0 10px; background:var(--paper); }
+  .dbsearch { flex:1; min-width:160px; }
+  .dbgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(132px, 1fr)); gap:10px; }
+  .dbcard { border:1.5px solid var(--line); border-radius:12px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; text-align:center; }
+  .dbcard:active { background:var(--ink); color:var(--paper); }
+  .dbcard canvas { width:72px; height:72px; }
+  .dbname { font-weight:700; } .dbmeta { font-size:calc(11px*var(--fs)); }
+  .dbtags { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
+  .dbtag { font-size:calc(10px*min(var(--fs),1.15)); border:1.5px solid var(--line); border-radius:20px; padding:1px 7px; background:var(--ink); color:var(--paper); }
+  .dbtag.ghost { background:var(--paper); color:var(--ink); }
+  .dbtitle { display:flex; align-items:baseline; gap:12px; border-bottom:2px solid var(--line); padding-bottom:4px; margin-bottom:8px; }
+  .dbname-in { font-size:calc(24px*var(--fs)); font-weight:700; border:0; border-bottom:1.5px dashed transparent; flex:1; min-width:0; background:var(--paper); }
+  .dbname-in:focus { border-bottom-color:var(--line); outline:none; } .dbnum { font-size:calc(18px*var(--fs)); font-weight:700; }
+  .dblead { margin:0 0 12px; }
+  .dbwiki { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; } .dbmain { order:1; } .dbbox { order:2; }
+  @media (max-width: 640px) { .dbbox { order:0; flex-basis:100%; } }
+  .dbmain { flex:1 1 320px; min-width:0; }
+  .dbbox { flex:0 1 300px; border:2px solid var(--line); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding-bottom:10px; }
+  .dbbox-h { width:100%; background:var(--ink); color:var(--paper); text-align:center; font-weight:700; padding:8px; }
+  .dbbox > canvas { width:160px; height:160px; margin:8px 0 4px; }
+  .dbbtns { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; } .dbbtns .smallbtn { display:inline-block; }
+  .dbib { width:100%; padding:0 10px; }
+  .dbgrp { font-weight:700; border-bottom:1.5px solid var(--line); margin:12px 0 2px; padding-bottom:2px; text-align:center; }
+  .dbrow { display:flex; gap:8px; align-items:center; padding:4px 0; border-bottom:1px dotted var(--line); }
+  .dbk { flex:0 0 84px; font-weight:600; font-size:calc(12px*var(--fs)); } .dbv { flex:1; min-width:0; font-size:calc(13px*var(--fs)); }
+  .dbv input, .dbv select { width:100%; border:1.5px solid var(--line); border-radius:7px; padding:5px 6px; background:var(--paper); }
+  .dbv .szbox input { width:64px; } .dbv .szbox select { width:auto; }
+  .dbdel { margin-top:12px; }
+  .dbsec { margin-bottom:16px; } .dbsec h3 { margin:0 0 6px; font-size:calc(16px*var(--fs)); border-bottom:1.5px solid var(--line); padding-bottom:3px; }
+  .dbta { width:100%; border:1.5px solid var(--line); border-radius:9px; padding:8px; background:var(--paper); font:inherit; resize:vertical; }
+  .dbvars { display:flex; gap:8px; flex-wrap:wrap; } .dbvar { border:1.5px solid var(--line); border-radius:10px; padding:4px; text-align:center; cursor:pointer; } .dbvar canvas { width:56px; height:56px; display:block; }
+  .dbtable { border-collapse:collapse; width:100%; } .dbtable th, .dbtable td { border-bottom:1px solid var(--line); padding:5px 6px; text-align:left; } .dbtable .smallbtn { margin:0; }
+  .dbchips { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+  .dbchip { display:inline-flex; align-items:center; gap:5px; border:1.5px solid var(--line); border-radius:20px; padding:2px 4px 2px 6px; } .dbchip canvas { width:22px; height:22px; }
+  .dbchip button { border:0; background:var(--paper); font-weight:700; padding:2px 6px; }
+  .dbchips select { border:1.5px solid var(--line); border-radius:9px; height:34px; background:var(--paper); }
   table.blk { border-collapse:collapse; width:100%; }
   table.blk th { text-align:left; font-size:calc(11px*var(--fs)); border-bottom:1.5px solid var(--line); padding:6px 3px; }
   table.blk td { border-bottom:1px solid var(--line); padding:5px 3px; vertical-align:middle; font-size:calc(13px*var(--fs)); }
@@ -198,6 +236,7 @@
     <div class="msep"></div>
     <div class="mitem" data-act="copyRoom">Raum als Text kopieren</div>
     <div class="mitem" data-act="exportMd">Alle Räume als .md exportieren</div>
+    <div class="mitem" data-act="exportDb">Objekt-Datenbank als .md exportieren</div>
     <div class="msep"></div>
     <div class="mitem" data-act="settings">Einstellungen …</div>
   </div></div>
@@ -243,7 +282,7 @@
   <div class="menu" data-menu="layers"><div class="mlabel">Ebenen</div><div class="mdrop" id="layerDrop"></div></div>
   <div class="menu" data-menu="editor"><div class="mlabel">Editor</div><div class="mdrop">
     <div class="mitem check" data-act="pageMap" id="mi-map">Mapeditor</div>
-    <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Objekteditor</div>
+    <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Objekt-Datenbank</div>
     <div class="mitem check" data-act="pagePixels" id="mi-pixedit">Pixeleditor</div>
   </div></div>
   <div class="menu" data-menu="help"><div class="mlabel">Hilfe</div><div class="mdrop">
@@ -264,19 +303,7 @@
 
 <div id="main">
   <canvas id="cv"></canvas>
-  <div id="blockEditor">
-    <h2>Objekteditor</h2>
-    <p class="hint">Die Funktion hängt an der ID, nicht am Bild. „Ebene“ legt fest, wo das Objekt liegt: 1 Hintergrund, 2 Spielebene (Funktion, fest 16×16 im Raster), 3 Vordergrund. Objekte auf 1 und 3 haben eine frei wählbare Größe in Pixeln (16 px = 1 Zelle, Bildschirm = 512×288) und können sich bewegen (Parallax-Tempo). Das Kürzel (2 Zeichen) wird im Text-Export benutzt.</p>
-    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-      <button class="bigbtn" id="b-addBg">+ Hintergrund</button>
-      <button class="bigbtn" id="b-addFunc">+ Spielebene</button>
-      <button class="bigbtn" id="b-addDesign">+ Vordergrund</button>
-      <button class="bigbtn dark" id="b-backMap">Zurück zum Mapeditor</button>
-    </div>
-    <table class="blk"><thead><tr>
-      <th>Bild</th><th>ID</th><th>Name</th><th>Ebene</th><th>Größe (px)</th><th>Bewegung</th><th>Animation</th><th>Kürzel</th><th>Symbol</th><th>Parameter</th><th>Bild</th><th></th>
-    </tr></thead><tbody id="blkBody"></tbody></table>
-  </div>
+  <div id="blockEditor"></div>
   <div id="pixEditor">
     <div class="pxHead"><h2>Pixeleditor</h2><select id="pxSel"></select><select id="pxVar"></select>
       <button class="bigbtn dark" id="px-backMap">Zurück zum Mapeditor</button><div id="pxInfo"></div></div>
@@ -314,7 +341,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.7.1", APP_VERSION = "0.7.1", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.8.0", APP_VERSION = "0.8.0", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
@@ -393,7 +420,8 @@ function newRoom(nr, x, y, w, h) {
     dark: "", notes: "", func: {}, objs: { bg: [], fg: [] }, texts: [] };
 }
 function addRoomLayers(r) { if (!r.objs) r.objs = { bg: [], fg: [] }; if (!r.func) r.func = {}; return r; }
-function defaultProject() {
+function defaultProject() { var p = defaultProjectRaw(); ensureLayers(p); seedDb(p); return p; }
+function defaultProjectRaw() {
   return { format: FORMAT, dungeon: "", blocks: defaultBlocks(), nextUid: 17, layersV3: true, layers: LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: true }; }), rooms: [newRoom("001", 0, 0)],
     settings: { eink: true, dots: true, labels: true, showOther: true } };
 }
@@ -441,7 +469,7 @@ function migrateSettings(st) {
   if (!st.penBarrel) st.penBarrel = "pick"; if (!st.penEraser) st.penEraser = "erase"; if (!st.keys) st.keys = {};
 }
 function migrateGroups(p) { if (p.grpV2) return; var bl = p.blocks || []; if (bl.length && !bl.some(function (b) { return +b.toolbar === 1; })) bl.forEach(function (b) { b.toolbar = Math.max(1, (+b.toolbar || 2) - 1); }); p.grpV2 = true; }
-function stripShy(p) { migrateGroups(p); ensureLayers(p); (p.blocks || []).forEach(function (b) { delete b.shyOpt; }); (p.rooms || []).forEach(function (r) { ["func", "design"].forEach(function (k) { var m = r[k] || {}; for (var key in m) if (m[key] && m[key].s) delete m[key].s; }); }); }
+function stripShy(p) { migrateGroups(p); ensureLayers(p); seedDb(p); (p.blocks || []).forEach(function (b) { delete b.shyOpt; }); (p.rooms || []).forEach(function (r) { ["func", "design"].forEach(function (k) { var m = r[k] || {}; for (var key in m) if (m[key] && m[key].s) delete m[key].s; }); }); }
 $("verTag").textContent = VERSION;
 function loadSaved() {
   try {
@@ -1179,7 +1207,7 @@ function buildBlockPanel() {
   var bl = groups[bpGroup] || [];
   if (mode === "move") { buildMovePanel(list, L); return; }
   $("bpGrpCap").textContent = "Ebene " + L.num + " · " + L.name + (L.visible ? "" : " (aus)");
-  if (!bl.length) { var e = document.createElement("div"); e.className = "bempty"; e.textContent = P.settings.blockNames ? "Keine Objekte auf dieser Ebene – im Objekteditor anlegen." : "–"; list.appendChild(e); }
+  if (!bl.length) { var e = document.createElement("div"); e.className = "bempty"; e.textContent = P.settings.blockNames ? "Keine Objekte auf dieser Ebene – in der Objekt-Datenbank anlegen." : "–"; list.appendChild(e); }
   bl.forEach(function (b) {
       var pv = pvalsOf(b), par = curParam[b.uid] || pv[0];
       var it = document.createElement("div");
@@ -1271,7 +1299,7 @@ function buildLayerMenu() {
 function layerCount(id) { if (id === "move") return (P.paths || []).length; var n = 0; P.rooms.forEach(function (r) { n += id === "func" ? Object.keys(r.func).length : (r.objs[id] || []).length; }); return n; }
 function openLayerSettings() {
   var S = P.settings;
-  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Vier feste Ebenen, oben = vorne. Ebene 4 „Bewegung“ ist nur zum Planen der Spielerwege und erscheint nie in der Spielansicht. Die Nummer entspricht der Zahl unten in der Objektleiste. Was sich bewegt oder animiert, stellst du pro Objekt im Objekteditor ein.</p>';
+  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Vier feste Ebenen, oben = vorne. Ebene 4 „Bewegung“ ist nur zum Planen der Spielerwege und erscheint nie in der Spielansicht. Die Nummer entspricht der Zahl unten in der Objektleiste. Was sich bewegt oder animiert, stellst du pro Objekt in der Objekt-Datenbank ein.</p>';
   P.layers.slice().reverse().forEach(function (l) {
     var objs = sortedBlocks().filter(function (b) { return blockLayerNum(b) === l.num; }).length;
     h += '<div class="lrow"><canvas class="lnum" data-num="' + l.num + '"></canvas><div class="lmain"><div class="lhead"><input data-name="' + l.id + '" value="' + esc(l.name) + '"></div>' +
@@ -1299,7 +1327,7 @@ var KEYDEFS = [
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
     ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
   ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["toggleSolo", "Nur aktive Ebene anzeigen", "Shift+O"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
-  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
+  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekt-Datenbank", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
 ];
 var KEYLABEL = {}; KEYDEFS.forEach(function (g) { g[1].forEach(function (k) { KEYLABEL[k[0]] = k[1]; }); });
 function keyOf(id) { var o = P.settings.keys || {}; if (id in o) return o[id]; for (var i = 0; i < KEYDEFS.length; i++) for (var j = 0; j < KEYDEFS[i][1].length; j++) if (KEYDEFS[i][1][j][0] === id) return KEYDEFS[i][1][j][2]; return ""; }
@@ -1442,7 +1470,6 @@ function setPage(pg) {
   activeSim = null; showSimPad(); resize(); if (map) { buildTools(); buildBlockPanel(); render(); } else if (pg === "blocks") renderBlockEditor(); else pxLayout();
   updateStatus();
 }
-$("b-backMap").onclick = function () { setPage("map"); };
 
 /* ================= menus ================= */
 function placeDrop(m) { var d = m.querySelector(".mdrop"); d.style.left = "0px"; var r = d.getBoundingClientRect(), over = r.right - (window.innerWidth - 6); if (over > 0) d.style.left = (-Math.min(over, m.getBoundingClientRect().left - 6)) + "px"; }
@@ -1461,6 +1488,7 @@ var ACTIONS = {
   openProject: function () { $("fileOpen").click(); },
   saveProject: function () { download("aeventh_projekt_" + stamp() + ".json", JSON.stringify({ P: P }, null, 1), "application/json"); toast("Projekt gespeichert (Download-Ordner)."); },
   copyRoom: function () { var r = roomById(selRoom) || P.rooms[0]; if (r) copyText(legendText() + "\n\n" + roomText(r)); },
+  exportDb: function () { download("aeventh_objekte_" + stamp() + ".md", dbMarkdown(), "text/markdown"); toast("Datenbank exportiert (Download-Ordner)."); },
   exportMd: function () { download("aeventh_raeume_" + stamp() + ".md", projectMd(), "text/markdown"); toast("Export gespeichert (Download-Ordner)."); },
   undo: undo, redo: redo,
   newRoom: function () { var x = 0, y = 0; if (P.rooms.length) { var last = P.rooms[P.rooms.length - 1]; x = last.x + last.w; y = last.y; }
@@ -1507,10 +1535,10 @@ var ACTIONS = {
     "<p><b>Links:</b> Objekte der aktiven Ebene. Der Kreis unten mit der Zahl schaltet zur nächsten Ebene. Antippen = Pinsel mit diesem Objekt. Daneben öffnet sich eine senkrechte Leiste mit den Varianten (Tür-Nr., Richtung …); sie schließt sich nach der Auswahl oder nach einigen Sekunden (einstellbar). Erneutes Antippen schaltet die Variante weiter.</p>" +
     "<p><b>Unten:</b> Werkzeuge (Verschieben bewegt einzelne Objekte), Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Die Ebene wechselt automatisch mit dem gewählten Objekt.</p>" +
     "<p><b>Räume:</b> Menü Raum → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
-    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekteditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
-    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
+    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekt-Datenbank und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
+    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du in der Objekt-Datenbank ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
-  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekteditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
+  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekt-Datenbank. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
 };
 updateMenuKeys();
 document.querySelectorAll(".mitem").forEach(function (it) { it.addEventListener("click", function (ev) { ev.stopPropagation(); closeMenus(); var a = ACTIONS[it.getAttribute("data-act")]; if (a) a(); }); });
@@ -1539,7 +1567,7 @@ document.addEventListener("keydown", function (ev) {
 
 /* ================= pixel editor ================= */
 var px = { uid: null, v: "", w: 16, h: 16, d: null, tool: "pen", undo: [], redo: [], cell: 20, drawing: null, penAt: 0, big: false };
-var PX_MAX = 128;
+var PX_MAX = 128, pxReturn = "map";
 function pxSize(b) { return [bw(b), bh(b)]; }
 function pxFromLook(b, W, H, v, symbolOnly) {
   var k = Math.max(1, Math.min(8, Math.floor(1024 / Math.max(W, H)))), SW = W * k, SH = H * k, c = document.createElement("canvas"); c.width = SW; c.height = SH; var g = c.getContext("2d");
@@ -1580,8 +1608,8 @@ function openPix(uid, v) {
   }
   var sl = $("pxSel"); sl.innerHTML = "";
   sortedBlocks().forEach(function (o) { var op = document.createElement("option"); op.value = o.uid; op.textContent = "ID " + o.id + " · " + o.name + " (" + bw(o) + "×" + bh(o) + ")"; if (o.uid === b.uid) op.selected = true; sl.appendChild(op); });
-  $("pxInfo").textContent = px.big ? "Zu groß zum Zeichnen (" + px.w + "×" + px.h + " px, max. " + PX_MAX + "). Bild im Objekteditor hochladen – z. B. eine Skizze vom Boox." : own ? "" : (v && b.pix ? "Version ohne eigenes Bild – Vorlage ist das Grundbild" : "Vorlage aus Symbol") + " – wird beim ersten Strich gespeichert";
-  if (page !== "pixels") setPage("pixels"); else pxLayout();
+  $("pxInfo").textContent = px.big ? "Zu groß zum Zeichnen (" + px.w + "×" + px.h + " px, max. " + PX_MAX + "). Bild in der Objekt-Datenbank hochladen – z. B. eine Skizze vom Boox." : own ? "" : (v && b.pix ? "Version ohne eigenes Bild – Vorlage ist das Grundbild" : "Vorlage aus Symbol") + " – wird beim ersten Strich gespeichert";
+  if (page !== "pixels") { pxReturn = page; setPage("pixels"); } else pxLayout(); $("px-backMap").textContent = pxReturn === "blocks" ? "Zurück zur Datenbank" : "Zurück zum Mapeditor";
 }
 function pxLayout() {
   var m = $("main"), top = $("pxCv").getBoundingClientRect().top - m.getBoundingClientRect().top + $("pixEditor").scrollTop;
@@ -1684,50 +1712,165 @@ function pxFill(x, y, v) {
   document.querySelectorAll(".pxActs button").forEach(function (e) { e.onclick = function () { pxAct(e.getAttribute("data-pa")); }; });
   $("pxSel").onchange = function () { openPix($("pxSel").value); };
   $("pxVar").onchange = function () { openPix(px.uid, $("pxVar").value); };
-  $("px-backMap").onclick = function () { setPage("map"); };
+  $("px-backMap").onclick = function () { setPage(pxReturn === "blocks" ? "blocks" : "map"); };
 })();
 
 /* ================= block editor ================= */
 var ICONS = [["wall","Wand"],["start","Start"],["checkpoint","Checkpoint"],["crystal","Kristall"],["redirect","Richtungswechsel"],["door","Tür"],["stone","Stein"],["breakable","Zerstörbar"],["yoku","Yoku"],["hazard","Gefahr"],["flyer","Flieger"],["shooter","Schütze"],["teleporter","Teleporter"],["crack","Riss"],["moss","Moos"],["rune","Rune"],["letter","Buchstabe"]];
 var imgTarget = null;
 function usage(uid) { var n = 0; P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === uid) n++; ["bg", "fg"].forEach(function (l) { (r.objs[l] || []).forEach(function (o) { if (o.b === uid) n++; }); }); }); return n; }
+var dbSel = null, dbFilter = "all", dbSearch = "", dbSort = "id";
+var DB_STATUS = [["idee", "Idee"], ["entwurf", "Entwurf"], ["test", "Im Test"], ["fertig", "Fertig"]];
+function usageByRoom(uid) { var out = []; P.rooms.forEach(function (r) { var n = 0; for (var k in r.func) if (r.func[k].b === uid) n++; ["bg", "fg"].forEach(function (l) { (r.objs[l] || []).forEach(function (o) { if (o.b === uid) n++; }); }); if (n) out.push([r, n]); }); return out; }
+function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+function touchBlock(b) { b.updated = Date.now(); if (!b.created) b.created = b.updated; autosave(); }
+function fmtDate(t) { if (!t) return "–"; var d = new Date(t); return ("0" + d.getDate()).slice(-2) + "." + ("0" + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear(); }
 function renderBlockEditor() {
-  var body = $("blkBody"); body.innerHTML = "";
-  var ids = {}; P.blocks.forEach(function (b) { ids[b.id] = (ids[b.id] || 0) + 1; });
-  sortedBlocks().forEach(function (b) {
-    var tr = document.createElement("tr"), td = function (el) { var t = document.createElement("td"); if (el) t.appendChild(el); tr.appendChild(t); return t; }, pv = pvalsOf(b);
-    var prev = iconCanvas(function (g, s) { drawBlock(g, b, 2, 2, s - 4, pv[0], false); }, 40); prev.className = "prev"; td(prev);
-    var idI = inp("number", b.id, "w-id"); if (ids[b.id] > 1) idI.classList.add("bad");
-    idI.onchange = function () { var v = parseInt(idI.value, 10); if (isNaN(v) || v < 1) { idI.value = b.id; return; }
-      if (P.blocks.some(function (o) { return o !== b && o.id === v; })) { toast("ID " + v + " ist schon vergeben."); idI.value = b.id; return; } b.id = v; commit(); }; td(idI);
-    var nm = inp("text", b.name, "w-name"); nm.onchange = function () { b.name = nm.value.trim() || b.name; commit(); }; td(nm);
-    var lay = sel([["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]], String(blockLayerNum(b))); lay.onchange = function () { setBlockLayer(b, +lay.value); commit(); }; td(lay);
-    var sz = document.createElement("div"); sz.className = "szbox";
-    if (blockLayerNum(b) === 2) { sz.textContent = "16 × 16"; } else {
-      var wI = inp("number", bw(b), "w-sz"), hI = inp("number", bh(b), "w-sz"); wI.min = hI.min = 1; wI.max = hI.max = 2048;
-      var setSz = function () { var w = Math.max(1, Math.min(2048, parseInt(wI.value, 10) || bw(b))), h = Math.max(1, Math.min(2048, parseInt(hI.value, 10) || bh(b))); if (w === bw(b) && h === bh(b)) return; b.w = w; b.h = h; commit(); };
-      wI.onchange = setSz; hI.onchange = setSz; sz.appendChild(wI); sz.appendChild(document.createTextNode(" × ")); sz.appendChild(hI);
-      var pre = sel([["", "…"], ["8x8", "8×8"], ["16x16", "16×16"], ["32x32", "32×32"], ["512x288", "Bildschirm"]], ""); pre.className = "w-pre"; pre.onchange = function () { if (!pre.value) return; var a = pre.value.split("x"); b.w = +a[0]; b.h = +a[1]; commit(); }; sz.appendChild(pre);
-    }
-    td(sz);
-    var mv = sel([["1", "fest"], ["0.75", "Parallax 75 %"], ["0.5", "Parallax 50 %"], ["0.25", "Parallax 25 %"]], String(+b.par || 1)); mv.onchange = function () { b.par = +mv.value; commit(); }; td(mv);
-    var an = sel([["off", "Aus"], ["on", "An (folgt)"]], b.anim || "off"); an.onchange = function () { b.anim = an.value; commit(); }; td(an);
-    if (blockLayerNum(b) === 2) { mv.disabled = true; an.disabled = true; }
-    var code = inp("text", b.code, "w-code"); code.maxLength = 2; code.onchange = function () { b.code = (code.value + "  ").slice(0, 2); commit(); }; td(code);
-    var ic = sel(ICONS, b.icon); ic.onchange = function () { b.icon = ic.value; commit(); }; td(ic);
-    var pt = document.createElement("div"), pl = inp("text", b.plabel, "w-plabel"), pvI = inp("text", b.pvals, "w-pvals"); pl.placeholder = "Bezeichnung"; pvI.placeholder = "Werte: 1,2,3";
-    pl.onchange = function () { b.plabel = pl.value.trim(); commit(); };
-    pvI.onchange = function () { b.pvals = pvI.value.split(",").map(function (s) { return s.trim().charAt(0); }).filter(function (s) { return s; }).join(","); commit(); };
-    pt.appendChild(pl); pt.appendChild(document.createElement("br")); pt.appendChild(pvI); td(pt);
-    var imgBox = document.createElement("div"); imgBox.appendChild(btn("Zeichnen", function () { openPix(b.uid); }));
-    imgBox.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
-    if (b.image || b.imgV) imgBox.appendChild(btn("Entfernen", function () { if (!confirm("Alle Bilder von „" + b.name + "“ entfernen (inkl. Versionen)?")) return; b.image = null; delete b.pix; delete b.pixV; delete b.imgV; dropImgs(b); commit(); })); td(imgBox);
-    td(btn("Löschen", function () { var n = usage(b.uid); if (!confirm("Objekt „" + b.name + "“ löschen?" + (n ? " Es ist " + n + "× gesetzt – diese Platzierungen werden entfernt." : ""))) return;
-      P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === b.uid) delete r.func[k]; ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.b !== b.uid; }); }); });
-      P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; undoStack = []; redoStack = []; commit(); }));
-    body.appendChild(tr);
-  });
+  var root = $("blockEditor"), keepY = root.scrollTop, same = root.getAttribute("data-view") === (dbSel || "grid"); root.innerHTML = ""; root.setAttribute("data-view", dbSel || "grid");
+  var b = blockByUid(dbSel); if (dbSel && !b) dbSel = null;
+  if (b) renderDbDetail(root, b); else renderDbGrid(root);
+  if (same) root.scrollTop = keepY;
 }
+function renderDbGrid(root) {
+  var head = el("div", "dbhead"); head.appendChild(el("h2", "", "Objekt-Datenbank"));
+  var back = el("button", "bigbtn dark", "Zurück zum Mapeditor"); back.onclick = function () { setPage("map"); }; head.appendChild(back); root.appendChild(head);
+  var bar = el("div", "dbbar"), segs = el("span", "sseg");
+  [["all", "Alle"], ["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]].forEach(function (f) { var x = el("button", dbFilter === f[0] ? "on" : "", f[1]); x.onclick = function () { dbFilter = f[0]; renderBlockEditor(); }; segs.appendChild(x); });
+  bar.appendChild(segs);
+  var q = el("input", "dbsearch"); q.type = "search"; q.placeholder = "Suchen (Name, ID, Tag …)"; q.value = dbSearch; q.oninput = function () { dbSearch = q.value; drawCards(); }; bar.appendChild(q);
+  var so = sel([["id", "nach ID"], ["name", "nach Name"], ["use", "nach Verwendung"], ["status", "nach Status"]], dbSort); so.className = "dbsort"; so.onchange = function () { dbSort = so.value; drawCards(); }; bar.appendChild(so);
+  root.appendChild(bar);
+  var add = el("div", "dbbar"); [["+ Hintergrund", 1], ["+ Spielebene", 2], ["+ Vordergrund", 3]].forEach(function (a) { var x = el("button", "bigbtn", a[0]); x.onclick = function () { addBlock(a[1]); }; add.appendChild(x); }); root.appendChild(add);
+  var grid = el("div", "dbgrid"); root.appendChild(grid);
+  function drawCards() {
+    grid.innerHTML = ""; var term = dbSearch.trim().toLowerCase();
+    var list = sortedBlocks().filter(function (b) { if (dbFilter !== "all" && blockLayerNum(b) !== +dbFilter) return false; if (!term) return true;
+      return [b.name, b.id, b.code, b.tags, b.cat, b.en, b.desc].join(" ").toLowerCase().indexOf(term) >= 0; });
+    var st = function (b) { return DB_STATUS.map(function (x) { return x[0]; }).indexOf(b.status || "idee"); };
+    if (dbSort === "name") list.sort(function (a, c) { return a.name.localeCompare(c.name, "de"); });
+    if (dbSort === "use") list.sort(function (a, c) { return usage(c.uid) - usage(a.uid); });
+    if (dbSort === "status") list.sort(function (a, c) { return st(c) - st(a); });
+    if (!list.length) grid.appendChild(el("p", "sh", "Keine Objekte gefunden."));
+    list.forEach(function (b) {
+      var c = el("div", "dbcard"), pv = pvalsOf(b), n = usage(b.uid);
+      c.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 4, 4, sz - 8, pv[0]); }, 72));
+      c.appendChild(el("div", "dbname", b.name));
+      c.appendChild(el("div", "dbmeta", "#" + ("00" + b.id).slice(-3) + " · Ebene " + blockLayerNum(b)));
+      var tags = el("div", "dbtags"); tags.appendChild(el("span", "dbtag", (DB_STATUS.filter(function (x) { return x[0] === (b.status || "idee"); })[0] || DB_STATUS[0])[1])); tags.appendChild(el("span", "dbtag ghost", n + "× gesetzt")); c.appendChild(tags);
+      c.onclick = function () { dbSel = b.uid; renderBlockEditor(); $("blockEditor").scrollTop = 0; };
+      grid.appendChild(c);
+    });
+  }
+  drawCards();
+}
+function dbSection(parent, title) { var sct = el("section", "dbsec"); sct.appendChild(el("h3", "", title)); parent.appendChild(sct); return sct; }
+function dbText(sct, b, key, ph, rows) { var t = el("textarea", "dbta"); t.value = b[key] || ""; t.placeholder = ph; t.rows = Math.min(14, Math.max(rows || 3, Math.ceil((t.value || "").length / 55) + 1, (t.value || "").split("\n").length + 1)); t.onchange = function () { b[key] = t.value; touchBlock(b); }; sct.appendChild(t); return t; }
+function renderDbDetail(root, b) {
+  var pv = pvalsOf(b), num = blockLayerNum(b), all = sortedBlocks(), idx = all.indexOf(b);
+  var nav = el("div", "dbhead");
+  var bk = el("button", "bigbtn", "← Galerie"); bk.onclick = function () { dbSel = null; renderBlockEditor(); }; nav.appendChild(bk);
+  var pr = el("button", "bigbtn", "‹"), nx = el("button", "bigbtn", "›"); pr.title = "Voriges Objekt"; nx.title = "Nächstes Objekt";
+  pr.onclick = function () { dbSel = all[(idx - 1 + all.length) % all.length].uid; renderBlockEditor(); }; nx.onclick = function () { dbSel = all[(idx + 1) % all.length].uid; renderBlockEditor(); };
+  nav.appendChild(pr); nav.appendChild(nx);
+  var useB = el("button", "bigbtn dark", "Auf der Karte verwenden"); useB.onclick = function () { setPage("map"); setMode(layerOfBlock(b), true); curBlock = b.uid; tool = "brush"; buildTools(); buildBlockPanel(); render(); toast("Pinsel: " + b.name); }; nav.appendChild(useB);
+  root.appendChild(nav);
+  var title = el("div", "dbtitle"); var nm = inp("text", b.name, "dbname-in"); nm.onchange = function () { b.name = nm.value.trim() || b.name; touchBlock(b); buildBlockPanel(); renderBlockEditor(); }; title.appendChild(nm);
+  title.appendChild(el("span", "dbnum", "#" + ("00" + b.id).slice(-3))); root.appendChild(title);
+  var lead = el("p", "dblead"); lead.textContent = (b.name || "Dieses Objekt") + " ist ein Objekt der Ebene " + num + " (" + LAYER_TYPES[layerOfBlock(b)] + ")" + (num === 2 ? " und belegt genau eine Zelle im 16×16-Raster." : " mit " + bw(b) + "×" + bh(b) + " Pixeln.") + " Es ist " + usage(b.uid) + "× in " + usageByRoom(b.uid).length + " Raum/Räumen gesetzt.";
+  root.appendChild(lead);
+  var wrap = el("div", "dbwiki"), main = el("div", "dbmain"), box = el("aside", "dbbox"); wrap.appendChild(main); wrap.appendChild(box); root.appendChild(wrap);
+  // ---- Infobox
+  box.appendChild(el("div", "dbbox-h", b.name));
+  box.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 6, 6, sz - 12, curParam[b.uid] || pv[0]); }, 160));
+  var ib = el("div", "dbib");
+  var imgRow = el("div", "dbbtns"); imgRow.appendChild(btn("Zeichnen", function () { openPix(b.uid); })); imgRow.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
+  if (b.image || b.imgV) imgRow.appendChild(btn("Bilder entfernen", function () { if (!confirm("Alle Bilder von „" + b.name + "“ entfernen (inkl. Varianten)?")) return; b.image = null; delete b.pix; delete b.pixV; delete b.imgV; dropImgs(b); commit(); }));
+  box.appendChild(imgRow);
+  var row = function (label, node) { var r = el("div", "dbrow"); r.appendChild(el("div", "dbk", label)); var v = el("div", "dbv"); if (typeof node === "string") v.textContent = node; else v.appendChild(node); r.appendChild(v); ib.appendChild(r); return v; };
+  var grp = function (t) { ib.appendChild(el("div", "dbgrp", t)); };
+  grp("Allgemein");
+  var idI = inp("number", b.id, "w-id"); idI.onchange = function () { var v = parseInt(idI.value, 10); if (isNaN(v) || v < 1) { idI.value = b.id; return; }
+    if (P.blocks.some(function (o) { return o !== b && o.id === v; })) { toast("ID " + v + " ist schon vergeben."); idI.value = b.id; return; } b.id = v; touchBlock(b); commit(); }; row("ID", idI);
+  var en = inp("text", b.en || "", "w-name"); en.placeholder = "z. B. Wall"; en.onchange = function () { b.en = en.value.trim(); touchBlock(b); }; row("Englisch", en);
+  var stt = sel(DB_STATUS, b.status || "idee"); stt.onchange = function () { b.status = stt.value; touchBlock(b); }; row("Status", stt);
+  var cat = inp("text", b.cat || "", "w-name"); cat.placeholder = "z. B. Gegner, Hindernis"; cat.onchange = function () { b.cat = cat.value.trim(); touchBlock(b); }; row("Kategorie", cat);
+  var ab = inp("text", b.ability || "", "w-name"); ab.placeholder = "z. B. Bomben Stufe 2"; ab.onchange = function () { b.ability = ab.value.trim(); touchBlock(b); }; row("Benötigt", ab);
+  grp("Ebene & Darstellung");
+  var lay = sel([["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]], String(num)); lay.onchange = function () { setBlockLayer(b, +lay.value); touchBlock(b); commit(); }; row("Ebene", lay);
+  if (num === 2) row("Größe", "16 × 16 px (1 Zelle)"); else {
+    var sz = el("div", "szbox"), wI = inp("number", bw(b), "w-sz"), hI = inp("number", bh(b), "w-sz");
+    var setSz = function () { var w = Math.max(1, Math.min(2048, parseInt(wI.value, 10) || bw(b))), h = Math.max(1, Math.min(2048, parseInt(hI.value, 10) || bh(b))); if (w === bw(b) && h === bh(b)) return; b.w = w; b.h = h; touchBlock(b); commit(); };
+    wI.onchange = setSz; hI.onchange = setSz; sz.appendChild(wI); sz.appendChild(document.createTextNode(" × ")); sz.appendChild(hI);
+    var pre = sel([["", "…"], ["8x8", "8×8"], ["16x16", "16×16"], ["32x32", "32×32"], ["512x288", "Bildschirm"]], ""); pre.className = "w-pre"; pre.onchange = function () { if (!pre.value) return; var a = pre.value.split("x"); b.w = +a[0]; b.h = +a[1]; touchBlock(b); commit(); }; sz.appendChild(pre);
+    row("Größe (px)", sz); }
+  var ic = sel(ICONS, b.icon); ic.onchange = function () { b.icon = ic.value; touchBlock(b); commit(); }; row("Symbol", ic);
+  var code = inp("text", b.code, "w-code"); code.maxLength = 2; code.onchange = function () { b.code = (code.value + "  ").slice(0, 2); touchBlock(b); commit(); }; row("Kürzel", code);
+  if (num !== 2) {
+    var mv = sel([["1", "fest"], ["0.75", "Parallax 75 %"], ["0.5", "Parallax 50 %"], ["0.25", "Parallax 25 %"]], String(+b.par || 1)); mv.onchange = function () { b.par = +mv.value; touchBlock(b); }; row("Bewegung", mv);
+    var an = sel([["off", "Aus"], ["on", "An (folgt)"]], b.anim || "off"); an.onchange = function () { b.anim = an.value; touchBlock(b); }; row("Animation", an); }
+  grp("Varianten");
+  var pl = inp("text", b.plabel, "w-name"), pvI = inp("text", b.pvals, "w-name"); pl.placeholder = "Bezeichnung, z. B. Richtung"; pvI.placeholder = "Werte, z. B. 1,2,3";
+  pl.onchange = function () { b.plabel = pl.value.trim(); touchBlock(b); commit(); };
+  pvI.onchange = function () { b.pvals = pvI.value.split(",").map(function (x) { return x.trim().charAt(0); }).filter(function (x) { return x; }).join(","); touchBlock(b); commit(); };
+  row("Parameter", pl); row("Werte", pvI);
+  grp("Statistik");
+  row("Gesetzt", usage(b.uid) + "× in " + usageByRoom(b.uid).length + " Raum/Räumen"); row("Angelegt", fmtDate(b.created)); row("Geändert", fmtDate(b.updated));
+  box.appendChild(ib);
+  var del = btn("Objekt löschen", function () { var n = usage(b.uid); if (!confirm("Objekt „" + b.name + "“ löschen?" + (n ? " Es ist " + n + "× gesetzt – diese Platzierungen werden entfernt." : ""))) return;
+      P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === b.uid) delete r.func[k]; ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.b !== b.uid; }); }); });
+      P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; undoStack = []; redoStack = []; dbSel = null; commit(); });
+  del.classList.add("dbdel"); box.appendChild(del);
+  // ---- Artikel
+  dbText(dbSection(main, "Beschreibung"), b, "desc", "Was ist das Objekt? Wie sieht es aus, wo kommt es vor?", 4);
+  dbText(dbSection(main, "Verhalten im Spiel"), b, "behav", "Was passiert bei Kontakt, beim Gleiten, mit Fähigkeiten? (Quelle: GDD)", 4);
+  if (pv.length) {
+    var vs = dbSection(main, "Varianten · " + (b.plabel || "Wert")), vg = el("div", "dbvars");
+    pv.forEach(function (v) { var vc = el("div", "dbvar"); vc.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 3, 3, sz - 6, v); }, 56)); vc.appendChild(el("div", "dbmeta", paramLabel(v) + (b.imgV && b.imgV[v] ? " ✓" : "")));
+      vc.title = "Im Pixeleditor öffnen"; vc.onclick = function () { openPix(b.uid, v); }; vg.appendChild(vc); });
+    vs.appendChild(vg); vs.appendChild(el("p", "sh", "✓ = eigenes Bild. Antippen öffnet die Variante im Pixeleditor."));
+  }
+  var us = dbSection(main, "Vorkommen"), ur = usageByRoom(b.uid);
+  if (!ur.length) us.appendChild(el("p", "sh", "Noch in keinem Raum gesetzt."));
+  else { var tb = el("table", "dbtable"), hr = el("tr"); ["Raum", "Name", "Anzahl", ""].forEach(function (h) { hr.appendChild(el("th", "", h)); }); tb.appendChild(hr);
+    ur.forEach(function (u) { var r = u[0], tr = el("tr"); tr.appendChild(el("td", "", r.nr)); tr.appendChild(el("td", "", r.name || "–")); tr.appendChild(el("td", "", u[1] + "×"));
+      var td = el("td"); td.appendChild(btn("Zum Raum", function () { setPage("map"); selRoom = r.rid; setMode(layerOfBlock(b), true); fitRoom(); toast("Raum " + r.nr); })); tr.appendChild(td); tb.appendChild(tr); });
+    us.appendChild(tb); }
+  var rel = dbSection(main, "Verwandte Objekte"), chips = el("div", "dbchips"); b.rel = b.rel || [];
+  b.rel.forEach(function (uid) { var o = blockByUid(uid); if (!o) return; var ch = el("span", "dbchip"); ch.appendChild(iconCanvas(function (g, sz) { drawBlock(g, o, 1, 1, sz - 2); }, 22)); ch.appendChild(el("span", "", o.name));
+    var go = el("button", "", "›"); go.title = "Öffnen"; go.onclick = function () { dbSel = o.uid; renderBlockEditor(); }; var rm = el("button", "", "×"); rm.title = "Entfernen"; rm.onclick = function () { b.rel = b.rel.filter(function (x) { return x !== uid; }); touchBlock(b); renderBlockEditor(); };
+    ch.appendChild(go); ch.appendChild(rm); chips.appendChild(ch); });
+  var addRel = sel([["", "+ Objekt verknüpfen …"]].concat(all.filter(function (o) { return o !== b && b.rel.indexOf(o.uid) < 0; }).map(function (o) { return [o.uid, "#" + o.id + " " + o.name]; })), "");
+  addRel.onchange = function () { if (!addRel.value) return; b.rel.push(addRel.value); var o = blockByUid(addRel.value); if (o) { o.rel = o.rel || []; if (o.rel.indexOf(b.uid) < 0) o.rel.push(b.uid); } touchBlock(b); renderBlockEditor(); };
+  chips.appendChild(addRel); rel.appendChild(chips);
+  dbText(dbSection(main, "Sound & Effekte"), b, "sound", "Geräusch, Effekt, Hitstop … (siehe Effekt-Styleguide)", 2);
+  dbText(dbSection(main, "Design-Notizen"), b, "notes", "Ideen, offene Fragen, Varianten für später …", 4);
+  var tg = dbSection(main, "Tags"), ti = inp("text", b.tags || "", "dbta"); ti.placeholder = "z. B. sperre, bomben, chaos-dungeon-1"; ti.onchange = function () { b.tags = ti.value; touchBlock(b); }; tg.appendChild(ti);
+}
+function dbMarkdown() {
+  var out = ["# " + (P.dungeon || "Æventh") + " – Objekt-Datenbank", "", "- Stand: " + fmtDate(Date.now()), "- Objekte: " + P.blocks.length, ""];
+  sortedBlocks().forEach(function (b) { var pv = pvalsOf(b);
+    out.push("## #" + ("00" + b.id).slice(-3) + " " + b.name + (b.en ? " (" + b.en + ")" : ""), "",
+      "| Feld | Wert |", "|---|---|", "| Ebene | " + blockLayerNum(b) + " " + LAYER_TYPES[layerOfBlock(b)] + " |", "| Größe | " + bw(b) + "×" + bh(b) + " px |", "| Kürzel | `" + String(b.code).replace(/\|/g, "\\|") + "` |",
+      "| Status | " + ((DB_STATUS.filter(function (x) { return x[0] === (b.status || "idee"); })[0] || DB_STATUS[0])[1]) + " |", "| Kategorie | " + (b.cat || "–") + " |", "| Benötigt | " + (b.ability || "–") + " |",
+      "| Varianten | " + (pv.length ? (b.plabel || "Wert") + ": " + pv.map(paramLabel).join(", ").replace(/\|/g, "\\|") : "–") + " |", "| Vorkommen | " + usageByRoom(b.uid).map(function (u) { return "R" + u[0].nr + " (" + u[1] + "×)"; }).join(", ") + " |", "");
+    [["Beschreibung", "desc"], ["Verhalten im Spiel", "behav"], ["Sound & Effekte", "sound"], ["Design-Notizen", "notes"]].forEach(function (f) { if (b[f[1]]) out.push("### " + f[0], "", b[f[1]], ""); });
+    if (b.rel && b.rel.length) out.push("Verwandt: " + b.rel.map(function (u) { var o = blockByUid(u); return o ? o.name : ""; }).filter(Boolean).join(", "), "");
+    if (b.tags) out.push("Tags: " + b.tags, "");
+  });
+  return out.join("\n");
+}
+var GDD_SEED; GDD_SEED = { wall: ["Hindernis", "Massives Hindernis. Die gleitende Spielfigur hält exakt auf der letzten freien Zelle davor an."],
+  stone: ["Hindernis", "Steht mitten im Raum und blockiert Wege – für die Spielfigur und für Gegner (Flieger kehren um, Schüsse enden daran). Mit dem Impuls lässt er sich wegstoßen und bleibt liegen, wo er landet, bis die Taschenuhr den Raum zurücksetzt. Ohne Impuls eine Metroidvania-Sperre.", "Impuls (zum Wegstoßen)"],
+  breakable: ["Sperre", "Hat eine Stärke (1–3) und lässt sich mit einer Bombe mindestens gleicher Stufe dauerhaft sprengen – Metroidvania-Sperre für die Bomben-Stufen.", "Bomben (Stufe ≥ Stärke)"],
+  yoku: ["Hindernis", "Erscheint und verschwindet in festem Rhythmus. Solange er da ist, ist er eine echte Wand; verschwindet er, gleitet die Spielfigur durch. Steht die Figur auf seinem Feld, wartet er. Blinkt vor dem Verschwinden; ein schwacher Umriss zeigt, wo er erscheinen wird. Gegner und Schüsse werden nicht aufgehalten."],
+  crystal: ["Sammelobjekt", "Anfangs verunreinigt. Gleitet die Spielfigur darüber, wird er dauerhaft und ohne Kosten erweckt. Sind alle Lichtkristalle eines Raums erweckt, gilt der Raum als erhellt."],
+  redirect: ["Mechanik", "Feste Stelle im Raum. Mit der Fähigkeit Richtungswechsel hält die Spielfigur an jedem Punkt, den sie überquert, und schwebt, bis eine Richtung gedrückt wird; eine blockierte Richtung lässt sie weiter schweben.", "Richtungswechsel"],
+  door: ["Übergang", "Verbindet Stellen, die nicht aneinandergrenzen. Harter Schnitt; die Spielfigur gleitet im neuen Raum in derselben Richtung weiter."],
+  hazard: ["Gefahr", "Feste Stelle; Betreten kostet Energie. Blockiert nicht – die Spielfigur gleitet hindurch und ist danach kurz unverwundbar."],
+  flyer: ["Gegner", "Gleitet fließend senkrecht oder waagerecht und kehrt an Wänden um (optional mit kurzer Pause). Ist er auf beiden Seiten eingeschlossen, bleibt er stehen."],
+  shooter: ["Gegner", "Schießt entlang gerader Linien – Geschosse (Zelle für Zelle bis zur Wand) oder Laserstrahl (die ganze Linie ist kurz gefährlich). Viele Varianten als Gegner und Fallen."],
+  teleporter: ["Gegner", "Teleportiert sich innerhalb des Raums – im Takt oder nach einem Schuss, zufällig oder an festgelegte Stellen, nie zu nah an die Spielfigur; blinkt vorher auf."] };
+function seedDb(p) { if (p.dbV1 || typeof GDD_SEED === "undefined") return; (p.blocks || []).forEach(function (b) { var g = GDD_SEED[b.icon]; if (!g) return; if (!b.cat) b.cat = g[0]; if (!b.behav) b.behav = g[1] + " (Quelle: GDD v15)"; if (g[2] && !b.ability) b.ability = g[2]; }); p.dbV1 = true; }
 function inp(type, val, cls) { var i = document.createElement("input"); i.type = type; i.value = val == null ? "" : val; i.className = cls; return i; }
 function sel(opts, val) { var s = document.createElement("select"); opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === val) op.selected = true; s.appendChild(op); }); return s; }
 function btn(t, fn) { var b = document.createElement("button"); b.className = "smallbtn"; b.textContent = t; b.onclick = fn; return b; }
@@ -1737,7 +1880,7 @@ function addBlock(layer) {
   var id = maxId ? maxId + 1 : (func ? 1 : 101); while (P.blocks.some(function (b) { return b.id === id; })) id++;
   var o = { uid: "b" + (P.nextUid++), id: id, name: func ? "Neues Objekt" : (layer === 1 ? "Neuer Hintergrund" : "Neue Deko"), kind: func ? "func" : "design", layer: layer, toolbar: layer, code: "? ", icon: "letter", plabel: "", pvals: "", image: null, par: 1, anim: "off" };
   if (!func) { o.w = layer === 1 ? 16 : 8; o.h = layer === 1 ? 16 : 8; }
-  P.blocks.push(o); commit();
+  P.blocks.push(o); dbSel = o.uid; o.created = o.updated = Date.now(); commit();
 }
 function setBlockLayer(b, n) {
   var from = layerOfBlock(b); if (blockLayerNum(b) === n) return; b.layer = n; b.toolbar = n; b.kind = n === 2 ? "func" : "design";
@@ -1750,8 +1893,6 @@ function setBlockLayer(b, n) {
   if (curBlock === b.uid) { mode = to; if (isObjLayer(to)) P.lastDeco = to; }
   undoStack = []; redoStack = [];
 }
-$("b-addFunc").onclick = function () { addBlock(2); }; $("b-addBg").onclick = function () { addBlock(1); };
-$("b-addDesign").onclick = function () { addBlock(3); };
 $("fileImg").addEventListener("change", function () {
   var f = this.files[0], b = imgTarget; this.value = ""; if (!f || !b) return;
   var rd = new FileReader();
@@ -1800,6 +1941,7 @@ if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
 var restored = loadSaved();
 window.addEventListener("resize", function () { resize(); fitToolbar(); buildParams(); if (page === "pixels") pxLayout(); });
 setPage("map");
+seedDb(P);
 if (!restored) { fitRoom(); toast("Willkommen! Hilfe → Kurzanleitung erklärt Stift und Gesten."); } else render();
 
 window.__planer = { get P() { return P; }, get view() { return view; }, roomText: roomText, select: function (t) { tool = t; buildTools(); },
