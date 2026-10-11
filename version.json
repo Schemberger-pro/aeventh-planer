@@ -1,1 +1,1 @@
-{ "version": "0.4.9", "app": "0.4.9", "notes": "Einstellungen jetzt unter Datei als eigenes Fenster (Darstellung, Stift & Touch, Tastenkürzel). Neues Menü Raum, Menüs neu sortiert. Tastenkürzel und Stift frei belegbar." }
+{ "version": "0.4.10", "app": "0.4.10", "notes": "Varianten (Richtung, Tür-Nr. …) erscheinen als schwebende Leiste neben dem gewählten Block. Auswahlpunkte im Menü mittig." }

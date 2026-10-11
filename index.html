@@ -32,7 +32,9 @@
   .mitem:active { background:var(--ink); color:var(--paper); }
   @media (hover:hover) { .mitem:hover { background:var(--ink); color:var(--paper); } }
   .mitem .key { font-size:calc(13px*var(--fs)); }
-  .mitem.check::before { content:"○ "; } .mitem.check.on::before { content:"● "; }
+  .mitem.check { align-items:center; }
+  .mitem.check::before { content:""; flex:0 0 auto; width:calc(11px*min(var(--fs),1.15)); height:calc(11px*min(var(--fs),1.15)); border:2px solid currentColor; border-radius:50%; margin-right:6px; box-sizing:border-box; }
+  .mitem.check.on::before { background:currentColor; }
   .msep { border-top:1px solid var(--line); margin:4px 0; }
   #status { margin-left:auto; display:flex; align-items:center; padding:0 12px; font-size:calc(12px*var(--fs)); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   /* ---------- block panel (links) ---------- */
@@ -89,7 +91,9 @@
   #blockPanel.narrow .bitem > div { display:none; }
   #blockPanel.narrow .grp { text-align:center; margin:10px 2px 4px; }
   #blockPanel.narrow #bpParams .pl { font-size:calc(11px*var(--fs)); }
-  #bpParams { max-height:42vh; overflow-y:auto; }
+  #bpFloat { position:fixed; z-index:17; display:none; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; overflow:hidden; flex-wrap:wrap; max-width:calc(100vw - 80px); }
+  #bpFloat.show { display:flex; }
+  #bpFloat .tb .pv { height:32px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:calc(17px*min(var(--fs),1.15)); }
   #blockPanel.narrow #bpParams { padding:6px 5px; }
   #blockPanel.narrow #bpParams .pgrid { display:grid; grid-template-columns:1fr 1fr; gap:4px; }
   #blockPanel.narrow .pbtn { min-width:0; height:32px; font-size:calc(14px*var(--fs)); padding:0; }
@@ -236,7 +240,6 @@
 <div id="blockPanel">
   <div id="bpHead" class="bcell" title="Blockleiste ausblenden"><canvas id="bpHideIc"></canvas><div class="bct">Ausblenden</div></div>
   <div id="bpList"></div>
-  <div id="bpParams"></div>
   <div id="bpFoot" class="bcell" title="Nächste Blockleiste"><canvas id="bpGrpIc"></canvas><div class="bct" id="bpGrpCap">Leiste</div></div>
 </div>
 
@@ -281,6 +284,7 @@
 <div id="toolWrap"><div id="toolbar"></div><div id="toolTab" title="Werkzeugleiste anzeigen"></div></div>
 
 <div id="zoomPop"></div>
+<div id="bpFloat"></div>
 <div id="modalBg"><div id="modal"></div></div>
 <div id="toast"></div>
 <input type="file" id="fileOpen" accept=".json,application/json" style="display:none">
@@ -289,7 +293,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.4.9", APP_VERSION = "0.4.9", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.4.10", APP_VERSION = "0.4.10", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, labels: true, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: true, fontSize: "L", bold: false };
 
@@ -506,7 +510,7 @@ function resize() {
   var m = $("main"); CW = m.clientWidth; CH = m.clientHeight;
   var dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr); cv.style.width = CW + "px"; cv.style.height = CH + "px";
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); render();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); render(); if (typeof buildParams === "function" && $("bpFloat")) buildParams();
 }
 function w2s(wx, wy) { return [view.px + wx * view.z, view.py + wy * view.z]; }
 function s2w(sx, sy) { return [(sx - view.px) / view.z, (sy - view.py) / view.z]; }
@@ -893,17 +897,31 @@ function buildBlockPanel() {
   buildParams();
 }
 function buildParams() {
-  var el = $("bpParams"); el.innerHTML = ""; var b = blockByUid(curBlock);
-  if (!b || !(tool === "brush" || tool === "rect")) { el.classList.remove("show"); return; }
-  var pv = pvalsOf(b); if (!pv.length) { el.classList.remove("show"); return; }
-  el.classList.add("show");
-  if (pv.length) {
-    var l = document.createElement("div"); l.className = "pl"; l.textContent = b.name + " – " + (b.plabel || "Wert"); el.appendChild(l);
-    var gr = document.createElement("div"); gr.className = "pgrid";
-    pv.forEach(function (v) { var x = document.createElement("button"); x.className = "pbtn" + ((curParam[b.uid] || pv[0]) === v ? " on" : ""); x.textContent = paramLabel(v); x.onclick = function () { curParam[b.uid] = v; buildBlockPanel(); updateStatus(); }; gr.appendChild(x); });
-    el.appendChild(gr);
-  }
+  var el = $("bpFloat"); el.innerHTML = ""; el.classList.remove("show"); var b = blockByUid(curBlock);
+  if (!b || !(tool === "brush" || tool === "rect") || page !== "map" || gameView || !P.settings.showBlocks) return;
+  var pv = pvalsOf(b); if (!pv.length) return;
+  var item = $("bpList").querySelector(".bitem.sel"); if (!item) return;
+  var cur = curParam[b.uid] || pv[0], hasImg = b.imgV && Object.keys(b.imgV).length;
+  pv.forEach(function (v) {
+    var c = document.createElement("div"); c.className = "tb" + (cur === v ? " sel" : ""); c.title = (b.plabel || "Wert") + ": " + paramLabel(v);
+    var useIcon = hasImg || ["shooter", "flyer"].indexOf(b.icon) >= 0;
+    if (useIcon) c.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 2, 2, sz - 4, v); }));
+    else { var t = document.createElement("div"); t.className = "pv"; t.textContent = paramLabel(v); c.appendChild(t); }
+    if (useIcon && P.settings.labels) { var sp = document.createElement("span"); sp.textContent = paramLabel(v); c.appendChild(sp); }
+    c.onclick = function (ev) { ev.stopPropagation(); curParam[b.uid] = v; buildBlockPanel(); updateStatus(); render(); };
+    el.appendChild(c);
+  });
+  el.classList.add("show"); placeFloat();
 }
+function placeFloat() {
+  var el = $("bpFloat"); if (!el.classList.contains("show")) return; var item = $("bpList").querySelector(".bitem.sel");
+  if (!item) { el.classList.remove("show"); return; }
+  var r = item.getBoundingClientRect(), lr = $("bpList").getBoundingClientRect(), pr = $("blockPanel").getBoundingClientRect();
+  if (r.bottom < lr.top || r.top > lr.bottom) { el.style.visibility = "hidden"; return; } el.style.visibility = "";
+  var h = el.offsetHeight; el.style.left = (pr.right + 8) + "px";
+  el.style.top = Math.max(52, Math.min(window.innerHeight - h - 8, r.top + r.height / 2 - h / 2)) + "px";
+}
+$("bpList").addEventListener("scroll", placeFloat);
 $("bpHead").onclick = function () { P.settings.showBlocks = false; resize(); updateStatus(); autosave(); };
 $("bpFoot").onclick = function () {
   var keys = Object.keys(blockGroups()).map(Number).sort(function (a, b) { return a - b; }); if (!keys.length) return;
@@ -1402,7 +1420,7 @@ if ("serviceWorker" in navigator && /^https?:/.test(location.protocol)) {
 
 /* ================= start ================= */
 var restored = loadSaved();
-window.addEventListener("resize", function () { resize(); fitToolbar(); if (page === "pixels") pxLayout(); });
+window.addEventListener("resize", function () { resize(); fitToolbar(); buildParams(); if (page === "pixels") pxLayout(); });
 setPage("map");
 if (!restored) { fitRoom(); toast("Willkommen! Hilfe → Kurzanleitung erklärt Stift und Gesten."); } else render();
 
