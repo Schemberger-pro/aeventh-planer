@@ -1,1 +1,1 @@
-{ "version": "2026.41.1", "app": "2026.41.1", "notes": "Neue Versionierung: Alpha JJJJ.WW.Build (Jahr . Kalenderwoche . Build der Woche). Folgt auf 0.9.2 – inhaltlich unverändert." }
+{ "version": "2026.41.2", "app": "2026.41.2", "notes": "Neu: Audioeditor (Editor → Audioeditor, Alt+4) – Musik, Stinger, Ambience, Soundeffekte und Stimmen planen und dem Dungeon, Räumen und Objekten zuordnen. Raum-Eigenschaften mit Musik/Ambience, Objekteditor mit Sounds, Raumbeschriftung zeigt ♪." }

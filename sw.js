@@ -1,5 +1,5 @@
 /* Æventh Planer – Service Worker. VERSION bei jedem Release erhöhen. */
-var VERSION = "2026.41.1";
+var VERSION = "2026.41.2";
 var CACHE = "aeventh-planer-" + VERSION;
 var FILES = ["./", "index.html", "manifest.webmanifest", "icon-192.png", "icon-512.png"];
 self.addEventListener("install", function (e) {
