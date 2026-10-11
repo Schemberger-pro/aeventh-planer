@@ -1,1 +1,1 @@
-{ "version": "0.8.0", "app": "0.8.0", "notes": "Objekt-Datenbank: Galerie mit Suche, Filter und Sortierung; Detailseite wie ein Wiki-Artikel (Infobox, Beschreibung, Verhalten, Varianten, Vorkommen, Verwandte, Notizen). Export als .md." }
+{ "version": "0.8.1", "app": "0.8.1", "notes": "Objekteditor neu: Objektleiste links (Kacheln/Liste, Suche, Ebenenfilter), Inspektor rechts mit Reitern Eigenschaften / Bilder / Verwendung / Notizen, Werkzeugleiste unten. Bilder je Variante auch hochladbar; Duplizieren." }

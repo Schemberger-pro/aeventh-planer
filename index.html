@@ -128,44 +128,46 @@
   #blockEditor { position:absolute; inset:0; overflow:auto; padding:16px 18px 40px; display:none; background:var(--paper); }
   #blockEditor h2 { margin:0 0 4px; font-size:calc(21px*var(--fs)); }
   #blockEditor p.hint { margin:0 0 12px; font-size:calc(13px*var(--fs)); }
-  .dbhead { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; } .dbhead h2 { margin:0 auto 0 0; }
-  .dbbar { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-bottom:12px; }
-  .dbsearch, .dbsort { border:1.5px solid var(--line); border-radius:9px; height:38px; padding:0 10px; background:var(--paper); }
-  .dbsearch { flex:1; min-width:160px; }
-  .dbgrid { display:grid; grid-template-columns:repeat(auto-fill, minmax(132px, 1fr)); gap:10px; }
-  .dbcard { border:1.5px solid var(--line); border-radius:12px; padding:10px 8px; display:flex; flex-direction:column; align-items:center; gap:4px; cursor:pointer; text-align:center; }
-  .dbcard:active { background:var(--ink); color:var(--paper); }
-  .dbcard canvas { width:72px; height:72px; }
-  .dbname { font-weight:700; } .dbmeta { font-size:calc(11px*var(--fs)); }
-  .dbtags { display:flex; gap:4px; flex-wrap:wrap; justify-content:center; }
-  .dbtag { font-size:calc(10px*min(var(--fs),1.15)); border:1.5px solid var(--line); border-radius:20px; padding:1px 7px; background:var(--ink); color:var(--paper); }
-  .dbtag.ghost { background:var(--paper); color:var(--ink); }
-  .dbtitle { display:flex; align-items:baseline; gap:12px; border-bottom:2px solid var(--line); padding-bottom:4px; margin-bottom:8px; }
-  .dbname-in { font-size:calc(24px*var(--fs)); font-weight:700; border:0; border-bottom:1.5px dashed transparent; flex:1; min-width:0; background:var(--paper); }
-  .dbname-in:focus { border-bottom-color:var(--line); outline:none; } .dbnum { font-size:calc(18px*var(--fs)); font-weight:700; }
-  .dblead { margin:0 0 12px; }
-  .dbwiki { display:flex; gap:18px; flex-wrap:wrap; align-items:flex-start; } .dbmain { order:1; } .dbbox { order:2; }
-  @media (max-width: 640px) { .dbbox { order:0; flex-basis:100%; } }
-  .dbmain { flex:1 1 320px; min-width:0; }
-  .dbbox { flex:0 1 300px; border:2px solid var(--line); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; align-items:center; padding-bottom:10px; }
-  .dbbox-h { width:100%; background:var(--ink); color:var(--paper); text-align:center; font-weight:700; padding:8px; }
-  .dbbox > canvas { width:160px; height:160px; margin:8px 0 4px; }
-  .dbbtns { display:flex; gap:6px; flex-wrap:wrap; justify-content:center; } .dbbtns .smallbtn { display:inline-block; }
-  .dbib { width:100%; padding:0 10px; }
-  .dbgrp { font-weight:700; border-bottom:1.5px solid var(--line); margin:12px 0 2px; padding-bottom:2px; text-align:center; }
-  .dbrow { display:flex; gap:8px; align-items:center; padding:4px 0; border-bottom:1px dotted var(--line); }
-  .dbk { flex:0 0 84px; font-weight:600; font-size:calc(12px*var(--fs)); } .dbv { flex:1; min-width:0; font-size:calc(13px*var(--fs)); }
-  .dbv input, .dbv select { width:100%; border:1.5px solid var(--line); border-radius:7px; padding:5px 6px; background:var(--paper); }
-  .dbv .szbox input { width:64px; } .dbv .szbox select { width:auto; }
-  .dbdel { margin-top:12px; }
-  .dbsec { margin-bottom:16px; } .dbsec h3 { margin:0 0 6px; font-size:calc(16px*var(--fs)); border-bottom:1.5px solid var(--line); padding-bottom:3px; }
-  .dbta { width:100%; border:1.5px solid var(--line); border-radius:9px; padding:8px; background:var(--paper); font:inherit; resize:vertical; }
-  .dbvars { display:flex; gap:8px; flex-wrap:wrap; } .dbvar { border:1.5px solid var(--line); border-radius:10px; padding:4px; text-align:center; cursor:pointer; } .dbvar canvas { width:56px; height:56px; display:block; }
-  .dbtable { border-collapse:collapse; width:100%; } .dbtable th, .dbtable td { border-bottom:1px solid var(--line); padding:5px 6px; text-align:left; } .dbtable .smallbtn { margin:0; }
-  .dbchips { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
-  .dbchip { display:inline-flex; align-items:center; gap:5px; border:1.5px solid var(--line); border-radius:20px; padding:2px 4px 2px 6px; } .dbchip canvas { width:22px; height:22px; }
-  .dbchip button { border:0; background:var(--paper); font-weight:700; padding:2px 6px; }
-  .dbchips select { border:1.5px solid var(--line); border-radius:9px; height:34px; background:var(--paper); }
+  #blockEditor { overflow:hidden; padding:0; }
+  .oeWrap { position:absolute; inset:0; display:flex; }
+  .oePane { width:188px; flex:0 0 auto; border-right:1.5px solid var(--line); display:flex; flex-direction:column; min-height:0; }
+  .oePane.tiles { width:236px; } .oePane.icons { width:56px; }
+  .oeHeadBar { display:flex; gap:6px; align-items:center; padding:6px; border-bottom:1.5px solid var(--line); min-height:52px; }
+  .oeSearch { flex:1; min-width:0; height:38px; border:1.5px solid var(--line); border-radius:9px; padding:0 9px; background:var(--paper); }
+  .oeIcoBtn { flex:0 0 38px; width:38px; height:38px; border:1.5px solid var(--line); border-radius:9px; background:var(--paper); padding:0; display:flex; align-items:center; justify-content:center; }
+  .oeIcoBtn canvas { width:26px; height:26px; }
+  .oeItems { flex:1; overflow-y:auto; min-height:0; }
+  .oePane .grp { margin:10px 8px 0; } .oePane.icons .grp { text-align:center; margin:10px 2px 0; }
+  .oePane.icons .bitem { justify-content:center; padding:7px 0 5px; }
+  .oeTiles { display:grid; grid-template-columns:repeat(3, 1fr); }
+  .oeTile { display:flex; flex-direction:column; align-items:center; gap:2px; padding:7px 3px 6px; cursor:pointer; user-select:none; min-width:0; }
+  .oeTile canvas { width:44px; height:44px; }
+  .oeTn { font-size:calc(11px*min(var(--fs),1.15)); font-weight:600; line-height:1.2; text-align:center; width:100%; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow-wrap:break-word; hyphens:auto; -webkit-hyphens:auto; }
+  .oeTile.sel { background:var(--ink); color:var(--paper); } .oeTile.sel canvas { filter:invert(1); }
+  .oeFoot { border-top:1.5px solid var(--line); } .oePane.icons .oeFoot { justify-content:center; padding:7px 0 5px; }
+  .oeMain { flex:1; min-width:0; position:relative; }
+  .oeInsp { position:absolute; inset:0; overflow-y:auto; padding:14px 18px 110px; }
+  .oeInsp > * { max-width:660px; }
+  .oeHead { display:flex; gap:14px; align-items:center; margin-bottom:12px; }
+  .oeHead canvas { width:64px; height:64px; flex:0 0 64px; border:1.5px solid var(--line); border-radius:10px; }
+  .oeHc { flex:1; min-width:0; display:flex; flex-direction:column; gap:4px; }
+  .oeIn { border:1.5px solid var(--line); border-radius:8px; height:38px; padding:0 9px; background:var(--paper); min-width:0; max-width:100%; }
+  select.oeIn, .srow select { border:1.5px solid var(--line); border-radius:8px; height:38px; padding:0 6px; background:var(--paper); max-width:100%; }
+  .oeName { font-size:calc(18px*var(--fs)); font-weight:700; width:100%; height:42px; }
+  .oeTabs { border:1.5px solid var(--line); border-radius:10px; overflow:hidden; }
+  .oeBody { padding:2px 0 0; } .oeBody .kgrp:first-child { margin-top:10px; }
+  .oeBody .srow > div:first-child { flex:1 1 180px; min-width:0; } .oeBody .srow .oeIn, .oeBody .srow select { width:210px; } .oeBody .srow .oeIn.w-id, .oeBody .srow .oeIn.w-code { width:96px; }
+  .oeBody .srow > div:last-child:not(:first-child) { flex:0 1 auto; } .oeBody .sseg { justify-content:flex-end; }
+  .oeVal { font-weight:600; } .oeSz { display:flex; align-items:center; gap:6px; } .oeBody .oeSz .oeIn { width:76px; }
+  .oeImgL { display:flex; gap:10px; align-items:center; } .oeImgL canvas { flex:0 0 auto; border:1.5px solid var(--line); border-radius:8px; }
+  .oeImgRow .oeImgL canvas[width] { width:48px; height:48px; }
+  .obtns { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
+  .obtn { border:1.5px solid var(--line); border-radius:9px; background:var(--paper); min-height:38px; padding:0 12px; font-weight:600; cursor:pointer; }
+  .obtn:active { background:var(--ink); color:var(--paper); }
+  .oeField { padding:10px 0; border-bottom:1px solid var(--line); } .oeField .sl { margin-bottom:6px; } .oeField .oeIn { width:100%; }
+  .oeTa { width:100%; border:1.5px solid var(--line); border-radius:8px; padding:8px 9px; background:var(--paper); font:inherit; resize:vertical; display:block; }
+  .oeToolWrap { position:absolute; left:0; right:0; bottom:12px; display:flex; justify-content:center; pointer-events:none; z-index:5; }
+  .oeTools { pointer-events:auto; background:var(--paper); border:1.5px solid var(--line); border-radius:14px; display:flex; flex-wrap:wrap; justify-content:center; overflow:hidden; max-width:calc(100% - 16px); }
   table.blk { border-collapse:collapse; width:100%; }
   table.blk th { text-align:left; font-size:calc(11px*var(--fs)); border-bottom:1.5px solid var(--line); padding:6px 3px; }
   table.blk td { border-bottom:1px solid var(--line); padding:5px 3px; vertical-align:middle; font-size:calc(13px*var(--fs)); }
@@ -236,7 +238,7 @@
     <div class="msep"></div>
     <div class="mitem" data-act="copyRoom">Raum als Text kopieren</div>
     <div class="mitem" data-act="exportMd">Alle Räume als .md exportieren</div>
-    <div class="mitem" data-act="exportDb">Objekt-Datenbank als .md exportieren</div>
+    <div class="mitem" data-act="exportDb">Objekte als .md exportieren</div>
     <div class="msep"></div>
     <div class="mitem" data-act="settings">Einstellungen …</div>
   </div></div>
@@ -282,7 +284,7 @@
   <div class="menu" data-menu="layers"><div class="mlabel">Ebenen</div><div class="mdrop" id="layerDrop"></div></div>
   <div class="menu" data-menu="editor"><div class="mlabel">Editor</div><div class="mdrop">
     <div class="mitem check" data-act="pageMap" id="mi-map">Mapeditor</div>
-    <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Objekt-Datenbank</div>
+    <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Objekteditor</div>
     <div class="mitem check" data-act="pagePixels" id="mi-pixedit">Pixeleditor</div>
   </div></div>
   <div class="menu" data-menu="help"><div class="mlabel">Hilfe</div><div class="mdrop">
@@ -341,7 +343,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.8.0", APP_VERSION = "0.8.0", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.8.1", APP_VERSION = "0.8.1", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
@@ -588,6 +590,16 @@ function drawIcon(c, icon, x, y, s, param, name) {
       c.moveTo(x + s * 0.25, cy - dy2 * s * 0.12); c.lineTo(cx, cy + dy2 * s * 0.14); c.lineTo(x + s * 0.75, cy - dy2 * s * 0.12); c.stroke(); break;
     case "t-text": letter("T", 0.62); c.beginPath(); c.moveTo(x + s * 0.25, y + s * 0.88); c.lineTo(x + s * 0.75, y + s * 0.88); c.stroke(); break;
     case "t-room": c.lineWidth = Math.max(1.5, s * 0.08); c.strokeRect(x + p, y + p * 1.5, s - 2 * p, s - 3 * p); c.fillRect(x + p, y + p * 0.6, s * 0.36, p * 0.9); letter("+", 0.45, s * 0.05, s * 0.06); break;
+    case "t-list": c.lineWidth = Math.max(1.6, s * 0.08); c.beginPath(); for (var li = 0; li < 3; li++) { var ly = y + s * (0.27 + li * 0.23); c.moveTo(x + s * 0.34, ly); c.lineTo(x + s * 0.84, ly); } c.stroke(); for (li = 0; li < 3; li++) c.fillRect(x + s * 0.14, y + s * (0.21 + li * 0.23), s * 0.12, s * 0.12); break;
+    case "t-grid": c.lineWidth = Math.max(1.4, s * 0.07); [[0.14, 0.14], [0.54, 0.14], [0.14, 0.54], [0.54, 0.54]].forEach(function (q) { c.strokeRect(x + s * q[0], y + s * q[1], s * 0.32, s * 0.32); }); break;
+    case "t-new": c.lineWidth = Math.max(1.5, s * 0.07); c.strokeRect(x + s * 0.16, y + s * 0.16, s * 0.68, s * 0.68); c.lineWidth = Math.max(1.8, s * 0.09); c.beginPath(); c.moveTo(cx, y + s * 0.32); c.lineTo(cx, y + s * 0.68); c.moveTo(x + s * 0.32, cy); c.lineTo(x + s * 0.68, cy); c.stroke(); break;
+    case "t-dup": c.lineWidth = Math.max(1.5, s * 0.07); c.strokeRect(x + s * 0.12, y + s * 0.12, s * 0.48, s * 0.48); c.fillStyle = "#fff"; c.fillRect(x + s * 0.38, y + s * 0.38, s * 0.5, s * 0.5); c.strokeRect(x + s * 0.38, y + s * 0.38, s * 0.5, s * 0.5); c.fillStyle = "#000"; break;
+    case "t-del": c.lineWidth = Math.max(1.5, s * 0.07); c.beginPath(); c.moveTo(x + s * 0.16, y + s * 0.26); c.lineTo(x + s * 0.84, y + s * 0.26); c.moveTo(x + s * 0.4, y + s * 0.26); c.lineTo(x + s * 0.42, y + s * 0.14); c.lineTo(x + s * 0.58, y + s * 0.14); c.lineTo(x + s * 0.6, y + s * 0.26); c.stroke();
+      c.beginPath(); c.moveTo(x + s * 0.24, y + s * 0.3); c.lineTo(x + s * 0.3, y + s * 0.86); c.lineTo(x + s * 0.7, y + s * 0.86); c.lineTo(x + s * 0.76, y + s * 0.3); c.stroke(); c.beginPath(); c.moveTo(x + s * 0.43, y + s * 0.42); c.lineTo(x + s * 0.44, y + s * 0.74); c.moveTo(x + s * 0.57, y + s * 0.42); c.lineTo(x + s * 0.56, y + s * 0.74); c.stroke(); break;
+    case "t-pix": c.lineWidth = Math.max(1.2, s * 0.05); c.strokeRect(x + s * 0.14, y + s * 0.14, s * 0.72, s * 0.72); var pq = s * 0.18; [[0, 0], [1, 1], [2, 2], [3, 3], [0, 3], [3, 0], [1, 2], [2, 1]].forEach(function (q) { if ((q[0] + q[1]) % 2 === 0 || q[0] === q[1]) c.fillRect(x + s * 0.14 + q[0] * pq, y + s * 0.14 + q[1] * pq, pq, pq); }); break;
+    case "t-img": c.lineWidth = Math.max(1.5, s * 0.07); c.strokeRect(x + s * 0.12, y + s * 0.2, s * 0.76, s * 0.6); c.beginPath(); c.moveTo(x + s * 0.18, y + s * 0.74); c.lineTo(x + s * 0.42, y + s * 0.44); c.lineTo(x + s * 0.58, y + s * 0.62); c.lineTo(x + s * 0.68, y + s * 0.52); c.lineTo(x + s * 0.82, y + s * 0.74); c.closePath(); c.fill(); c.beginPath(); c.arc(x + s * 0.68, y + s * 0.36, s * 0.07, 0, 7); c.fill(); break;
+    case "t-map": c.lineWidth = Math.max(1.5, s * 0.07); c.beginPath(); c.moveTo(x + s * 0.1, y + s * 0.24); c.lineTo(x + s * 0.36, y + s * 0.14); c.lineTo(x + s * 0.64, y + s * 0.24); c.lineTo(x + s * 0.9, y + s * 0.14); c.lineTo(x + s * 0.9, y + s * 0.76); c.lineTo(x + s * 0.64, y + s * 0.86); c.lineTo(x + s * 0.36, y + s * 0.76); c.lineTo(x + s * 0.1, y + s * 0.86); c.closePath(); c.stroke();
+      c.beginPath(); c.moveTo(x + s * 0.36, y + s * 0.14); c.lineTo(x + s * 0.36, y + s * 0.76); c.moveTo(x + s * 0.64, y + s * 0.24); c.lineTo(x + s * 0.64, y + s * 0.86); c.stroke(); break;
     default: letter((name || "?").charAt(0).toUpperCase(), 0.55);
   }
   c.restore();
@@ -630,7 +642,7 @@ function resize() {
   var m = $("main"); CW = m.clientWidth; CH = m.clientHeight;
   var dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr); cv.style.width = CW + "px"; cv.style.height = CH + "px";
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); render(); if (typeof buildParams === "function" && $("bpFloat")) buildParams();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); render(); if (page === "blocks" && typeof oeNarrow === "boolean" && oeNarrow !== (CW < 620)) renderBlockEditor(); if (typeof buildParams === "function" && $("bpFloat")) buildParams();
 }
 function w2s(wx, wy) { return [view.px + wx * view.z, view.py + wy * view.z]; }
 function s2w(sx, sy) { return [(sx - view.px) / view.z, (sy - view.py) / view.z]; }
@@ -1207,7 +1219,7 @@ function buildBlockPanel() {
   var bl = groups[bpGroup] || [];
   if (mode === "move") { buildMovePanel(list, L); return; }
   $("bpGrpCap").textContent = "Ebene " + L.num + " · " + L.name + (L.visible ? "" : " (aus)");
-  if (!bl.length) { var e = document.createElement("div"); e.className = "bempty"; e.textContent = P.settings.blockNames ? "Keine Objekte auf dieser Ebene – in der Objekt-Datenbank anlegen." : "–"; list.appendChild(e); }
+  if (!bl.length) { var e = document.createElement("div"); e.className = "bempty"; e.textContent = P.settings.blockNames ? "Keine Objekte auf dieser Ebene – im Objekteditor anlegen." : "–"; list.appendChild(e); }
   bl.forEach(function (b) {
       var pv = pvalsOf(b), par = curParam[b.uid] || pv[0];
       var it = document.createElement("div");
@@ -1299,7 +1311,7 @@ function buildLayerMenu() {
 function layerCount(id) { if (id === "move") return (P.paths || []).length; var n = 0; P.rooms.forEach(function (r) { n += id === "func" ? Object.keys(r.func).length : (r.objs[id] || []).length; }); return n; }
 function openLayerSettings() {
   var S = P.settings;
-  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Vier feste Ebenen, oben = vorne. Ebene 4 „Bewegung“ ist nur zum Planen der Spielerwege und erscheint nie in der Spielansicht. Die Nummer entspricht der Zahl unten in der Objektleiste. Was sich bewegt oder animiert, stellst du pro Objekt in der Objekt-Datenbank ein.</p>';
+  var h = '<h3>Ebenen verwalten</h3><div class="body sbody"><p class="sh" style="margin:8px 0">Vier feste Ebenen, oben = vorne. Ebene 4 „Bewegung“ ist nur zum Planen der Spielerwege und erscheint nie in der Spielansicht. Die Nummer entspricht der Zahl unten in der Objektleiste. Was sich bewegt oder animiert, stellst du pro Objekt im Objekteditor ein.</p>';
   P.layers.slice().reverse().forEach(function (l) {
     var objs = sortedBlocks().filter(function (b) { return blockLayerNum(b) === l.num; }).length;
     h += '<div class="lrow"><canvas class="lnum" data-num="' + l.num + '"></canvas><div class="lmain"><div class="lhead"><input data-name="' + l.id + '" value="' + esc(l.name) + '"></div>' +
@@ -1327,7 +1339,7 @@ var KEYDEFS = [
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
     ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
   ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["toggleSolo", "Nur aktive Ebene anzeigen", "Shift+O"], ["layerSettings", "Ebenen verwalten", "Ctrl+L"]]],
-  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekt-Datenbank", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
+  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
 ];
 var KEYLABEL = {}; KEYDEFS.forEach(function (g) { g[1].forEach(function (k) { KEYLABEL[k[0]] = k[1]; }); });
 function keyOf(id) { var o = P.settings.keys || {}; if (id in o) return o[id]; for (var i = 0; i < KEYDEFS.length; i++) for (var j = 0; j < KEYDEFS[i][1].length; j++) if (KEYDEFS[i][1][j][0] === id) return KEYDEFS[i][1][j][2]; return ""; }
@@ -1488,7 +1500,7 @@ var ACTIONS = {
   openProject: function () { $("fileOpen").click(); },
   saveProject: function () { download("aeventh_projekt_" + stamp() + ".json", JSON.stringify({ P: P }, null, 1), "application/json"); toast("Projekt gespeichert (Download-Ordner)."); },
   copyRoom: function () { var r = roomById(selRoom) || P.rooms[0]; if (r) copyText(legendText() + "\n\n" + roomText(r)); },
-  exportDb: function () { download("aeventh_objekte_" + stamp() + ".md", dbMarkdown(), "text/markdown"); toast("Datenbank exportiert (Download-Ordner)."); },
+  exportDb: function () { download("aeventh_objekte_" + stamp() + ".md", dbMarkdown(), "text/markdown"); toast("Objekte exportiert (Download-Ordner)."); },
   exportMd: function () { download("aeventh_raeume_" + stamp() + ".md", projectMd(), "text/markdown"); toast("Export gespeichert (Download-Ordner)."); },
   undo: undo, redo: redo,
   newRoom: function () { var x = 0, y = 0; if (P.rooms.length) { var last = P.rooms[P.rooms.length - 1]; x = last.x + last.w; y = last.y; }
@@ -1535,10 +1547,10 @@ var ACTIONS = {
     "<p><b>Links:</b> Objekte der aktiven Ebene. Der Kreis unten mit der Zahl schaltet zur nächsten Ebene. Antippen = Pinsel mit diesem Objekt. Daneben öffnet sich eine senkrechte Leiste mit den Varianten (Tür-Nr., Richtung …); sie schließt sich nach der Auswahl oder nach einigen Sekunden (einstellbar). Erneutes Antippen schaltet die Variante weiter.</p>" +
     "<p><b>Unten:</b> Werkzeuge (Verschieben bewegt einzelne Objekte), Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Die Ebene wechselt automatisch mit dem gewählten Objekt.</p>" +
     "<p><b>Räume:</b> Menü Raum → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
-    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekt-Datenbank und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
-    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du in der Objekt-Datenbank ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
+    "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekteditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
+    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
-  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekt-Datenbank. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
+  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekteditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
 };
 updateMenuKeys();
 document.querySelectorAll(".mitem").forEach(function (it) { it.addEventListener("click", function (ev) { ev.stopPropagation(); closeMenus(); var a = ACTIONS[it.getAttribute("data-act")]; if (a) a(); }); });
@@ -1608,8 +1620,8 @@ function openPix(uid, v) {
   }
   var sl = $("pxSel"); sl.innerHTML = "";
   sortedBlocks().forEach(function (o) { var op = document.createElement("option"); op.value = o.uid; op.textContent = "ID " + o.id + " · " + o.name + " (" + bw(o) + "×" + bh(o) + ")"; if (o.uid === b.uid) op.selected = true; sl.appendChild(op); });
-  $("pxInfo").textContent = px.big ? "Zu groß zum Zeichnen (" + px.w + "×" + px.h + " px, max. " + PX_MAX + "). Bild in der Objekt-Datenbank hochladen – z. B. eine Skizze vom Boox." : own ? "" : (v && b.pix ? "Version ohne eigenes Bild – Vorlage ist das Grundbild" : "Vorlage aus Symbol") + " – wird beim ersten Strich gespeichert";
-  if (page !== "pixels") { pxReturn = page; setPage("pixels"); } else pxLayout(); $("px-backMap").textContent = pxReturn === "blocks" ? "Zurück zur Datenbank" : "Zurück zum Mapeditor";
+  $("pxInfo").textContent = px.big ? "Zu groß zum Zeichnen (" + px.w + "×" + px.h + " px, max. " + PX_MAX + "). Bild im Objekteditor hochladen – z. B. eine Skizze vom Boox." : own ? "" : (v && b.pix ? "Version ohne eigenes Bild – Vorlage ist das Grundbild" : "Vorlage aus Symbol") + " – wird beim ersten Strich gespeichert";
+  if (page !== "pixels") { pxReturn = page; setPage("pixels"); } else pxLayout(); $("px-backMap").textContent = pxReturn === "blocks" ? "Zurück zum Objekteditor" : "Zurück zum Mapeditor";
 }
 function pxLayout() {
   var m = $("main"), top = $("pxCv").getBoundingClientRect().top - m.getBoundingClientRect().top + $("pixEditor").scrollTop;
@@ -1717,7 +1729,7 @@ function pxFill(x, y, v) {
 
 /* ================= block editor ================= */
 var ICONS = [["wall","Wand"],["start","Start"],["checkpoint","Checkpoint"],["crystal","Kristall"],["redirect","Richtungswechsel"],["door","Tür"],["stone","Stein"],["breakable","Zerstörbar"],["yoku","Yoku"],["hazard","Gefahr"],["flyer","Flieger"],["shooter","Schütze"],["teleporter","Teleporter"],["crack","Riss"],["moss","Moos"],["rune","Rune"],["letter","Buchstabe"]];
-var imgTarget = null;
+var imgTarget = null, imgTargetV = null;
 function usage(uid) { var n = 0; P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === uid) n++; ["bg", "fg"].forEach(function (l) { (r.objs[l] || []).forEach(function (o) { if (o.b === uid) n++; }); }); }); return n; }
 var dbSel = null, dbFilter = "all", dbSearch = "", dbSort = "id";
 var DB_STATUS = [["idee", "Idee"], ["entwurf", "Entwurf"], ["test", "Im Test"], ["fertig", "Fertig"]];
@@ -1725,129 +1737,159 @@ function usageByRoom(uid) { var out = []; P.rooms.forEach(function (r) { var n =
 function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 function touchBlock(b) { b.updated = Date.now(); if (!b.created) b.created = b.updated; autosave(); }
 function fmtDate(t) { if (!t) return "–"; var d = new Date(t); return ("0" + d.getDate()).slice(-2) + "." + ("0" + (d.getMonth() + 1)).slice(-2) + "." + d.getFullYear(); }
+var oeTab = "props", oeNarrow = null;
+function oeView() { return P.settings.oeView === "list" ? "list" : "tiles"; }
+function statusName(b) { return (DB_STATUS.filter(function (x) { return x[0] === (b.status || "idee"); })[0] || DB_STATUS[0])[1]; }
+function oeFiltered() { var term = dbSearch.trim().toLowerCase();
+  return sortedBlocks().filter(function (b) { if (dbFilter !== "all" && blockLayerNum(b) !== +dbFilter) return false; if (!term) return true;
+    return [b.name, b.id, b.code, b.tags, b.cat, b.en, b.desc, b.behav, b.notes].join(" ").toLowerCase().indexOf(term) >= 0; }); }
+function oeSelect(uid) { dbSel = uid; renderBlockEditor(); }
+function oeSeg(opts, val, fn) { var g = el("div", "sseg"); opts.forEach(function (o) { var x = el("button", String(o[0]) === String(val) ? "on" : "", o[1]); x.onclick = function () { fn(o[0]); }; g.appendChild(x); }); return g; }
+function oeRow(parent, label, hint, ctrl) { var r = el("div", "srow"), l = el("div"); l.appendChild(el("div", "sl", label)); if (hint) l.appendChild(el("div", "sh", hint)); r.appendChild(l); if (ctrl) r.appendChild(ctrl); parent.appendChild(r); return r; }
+function oeIn(type, val, ph, fn, cls) { var i = inp(type, val, "oeIn" + (cls ? " " + cls : "")); if (ph) i.placeholder = ph; i.onchange = function () { fn(i.value, i); }; return i; }
+function oeBtn(t, fn) { var x = el("button", "obtn", t); x.onclick = fn; return x; }
+function oeBtns(list) { var w = el("div", "obtns"); list.forEach(function (x) { if (x) w.appendChild(x); }); return w; }
+function popMenu(anchor, items) {
+  var zp = $("zoomPop"); zp.innerHTML = ""; items.forEach(function (o) { var x = document.createElement("button"); x.textContent = o[0]; x.onclick = function () { zp.classList.remove("show"); o[1](); }; zp.appendChild(x); });
+  zp.classList.add("show"); var r = anchor.getBoundingClientRect(), h = zp.offsetHeight, w = zp.offsetWidth;
+  zp.style.left = Math.max(6, Math.min(window.innerWidth - w - 6, r.left + r.width / 2 - w / 2)) + "px"; zp.style.top = Math.max(50, r.top - h - 8) + "px";
+}
 function renderBlockEditor() {
-  var root = $("blockEditor"), keepY = root.scrollTop, same = root.getAttribute("data-view") === (dbSel || "grid"); root.innerHTML = ""; root.setAttribute("data-view", dbSel || "grid");
-  var b = blockByUid(dbSel); if (dbSel && !b) dbSel = null;
-  if (b) renderDbDetail(root, b); else renderDbGrid(root);
-  if (same) root.scrollTop = keepY;
-}
-function renderDbGrid(root) {
-  var head = el("div", "dbhead"); head.appendChild(el("h2", "", "Objekt-Datenbank"));
-  var back = el("button", "bigbtn dark", "Zurück zum Mapeditor"); back.onclick = function () { setPage("map"); }; head.appendChild(back); root.appendChild(head);
-  var bar = el("div", "dbbar"), segs = el("span", "sseg");
-  [["all", "Alle"], ["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]].forEach(function (f) { var x = el("button", dbFilter === f[0] ? "on" : "", f[1]); x.onclick = function () { dbFilter = f[0]; renderBlockEditor(); }; segs.appendChild(x); });
-  bar.appendChild(segs);
-  var q = el("input", "dbsearch"); q.type = "search"; q.placeholder = "Suchen (Name, ID, Tag …)"; q.value = dbSearch; q.oninput = function () { dbSearch = q.value; drawCards(); }; bar.appendChild(q);
-  var so = sel([["id", "nach ID"], ["name", "nach Name"], ["use", "nach Verwendung"], ["status", "nach Status"]], dbSort); so.className = "dbsort"; so.onchange = function () { dbSort = so.value; drawCards(); }; bar.appendChild(so);
-  root.appendChild(bar);
-  var add = el("div", "dbbar"); [["+ Hintergrund", 1], ["+ Spielebene", 2], ["+ Vordergrund", 3]].forEach(function (a) { var x = el("button", "bigbtn", a[0]); x.onclick = function () { addBlock(a[1]); }; add.appendChild(x); }); root.appendChild(add);
-  var grid = el("div", "dbgrid"); root.appendChild(grid);
-  function drawCards() {
-    grid.innerHTML = ""; var term = dbSearch.trim().toLowerCase();
-    var list = sortedBlocks().filter(function (b) { if (dbFilter !== "all" && blockLayerNum(b) !== +dbFilter) return false; if (!term) return true;
-      return [b.name, b.id, b.code, b.tags, b.cat, b.en, b.desc].join(" ").toLowerCase().indexOf(term) >= 0; });
-    var st = function (b) { return DB_STATUS.map(function (x) { return x[0]; }).indexOf(b.status || "idee"); };
-    if (dbSort === "name") list.sort(function (a, c) { return a.name.localeCompare(c.name, "de"); });
-    if (dbSort === "use") list.sort(function (a, c) { return usage(c.uid) - usage(a.uid); });
-    if (dbSort === "status") list.sort(function (a, c) { return st(c) - st(a); });
-    if (!list.length) grid.appendChild(el("p", "sh", "Keine Objekte gefunden."));
-    list.forEach(function (b) {
-      var c = el("div", "dbcard"), pv = pvalsOf(b), n = usage(b.uid);
-      c.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 4, 4, sz - 8, pv[0]); }, 72));
-      c.appendChild(el("div", "dbname", b.name));
-      c.appendChild(el("div", "dbmeta", "#" + ("00" + b.id).slice(-3) + " · Ebene " + blockLayerNum(b)));
-      var tags = el("div", "dbtags"); tags.appendChild(el("span", "dbtag", (DB_STATUS.filter(function (x) { return x[0] === (b.status || "idee"); })[0] || DB_STATUS[0])[1])); tags.appendChild(el("span", "dbtag ghost", n + "× gesetzt")); c.appendChild(tags);
-      c.onclick = function () { dbSel = b.uid; renderBlockEditor(); $("blockEditor").scrollTop = 0; };
-      grid.appendChild(c);
-    });
+  var root = $("blockEditor"), oldL = root.querySelector(".oeItems"), oldI = root.querySelector(".oeInsp");
+  var keepL = oldL ? oldL.scrollTop : 0, keepI = oldI && oldI.getAttribute("data-k") === (dbSel + "|" + oeTab) ? oldI.scrollTop : 0;
+  var fl = oeFiltered(), b = blockByUid(dbSel); if (!b || (!dbSearch.trim() && fl.indexOf(b) < 0)) { b = fl[0] || null; dbSel = b ? b.uid : null; }
+  root.innerHTML = ""; var narrow = oeNarrow = ($("main").clientWidth || 800) < 620, view = narrow ? "icons" : oeView();
+  var wrap = el("div", "oeWrap"), pane = el("div", "oePane " + view), mainC = el("div", "oeMain"); wrap.appendChild(pane); wrap.appendChild(mainC); root.appendChild(wrap);
+  // ---- Objektliste (wie die Objektleiste im Mapeditor)
+  var head = el("div", "oeHeadBar");
+  if (!narrow) { var q = el("input", "oeSearch"); q.type = "search"; q.placeholder = "Suchen …"; q.value = dbSearch; q.oninput = function () { dbSearch = q.value; drawItems(); }; head.appendChild(q); }
+  var vt = el("button", "oeIcoBtn"); vt.title = view === "list" ? "Als Kacheln anzeigen" : "Als Liste anzeigen";
+  vt.appendChild(iconCanvas(function (g, sz) { drawIcon(g, oeView() === "list" ? "t-grid" : "t-list", 2, 2, sz - 4); }, 26));
+  vt.onclick = function () { P.settings.oeView = oeView() === "list" ? "tiles" : "list"; autosave(); renderBlockEditor(); }; if (!narrow) head.appendChild(vt);
+  if (narrow) head.style.display = "none";
+  pane.appendChild(head);
+  var items = el("div", "oeItems"); pane.appendChild(items);
+  var FL = [["all", "A", "Alle Ebenen"], ["1", "1", "1 Hintergrund"], ["2", "2", "2 Spielebene"], ["3", "3", "3 Vordergrund"]], fi = FL.map(function (f) { return f[0]; }).indexOf(dbFilter); if (fi < 0) fi = 0;
+  var foot = el("div", "bcell oeFoot"); foot.title = "Ebene filtern"; foot.appendChild(iconCanvas(function (g, sz) { drawIcon(g, "t-ring", 2, 2, sz - 4, FL[fi][1]); }));
+  if (!narrow) foot.appendChild(el("div", "bct", FL[fi][2])); foot.onclick = function () { dbFilter = FL[(fi + 1) % FL.length][0]; renderBlockEditor(); }; pane.appendChild(foot);
+  function drawItems() {
+    items.innerHTML = ""; var list = oeFiltered(), lastL = 0;
+    if (!list.length) items.appendChild(el("div", "bempty", narrow ? "–" : "Keine Objekte."));
+    var box = null;
+    list.forEach(function (o) { var L = blockLayerNum(o), pv = pvalsOf(o);
+      if (dbFilter === "all" && L !== lastL) { lastL = L; items.appendChild(el("div", "grp", narrow ? String(L) : L + " " + LAYER_TYPES[["bg", "func", "fg"][L - 1]])); box = null; }
+      if (view === "tiles") { if (!box) { box = el("div", "oeTiles"); items.appendChild(box); }
+        var t = el("div", "oeTile" + (o.uid === dbSel ? " sel" : "")); t.title = "#" + o.id + " " + o.name;
+        t.appendChild(iconCanvas(function (g, sz) { drawBlock(g, o, 2, 2, sz - 4, pv[0]); }, 44)); t.appendChild(el("div", "oeTn", o.name)); t.onclick = function () { oeSelect(o.uid); }; box.appendChild(t); return; }
+      var r = el("div", "bitem" + (o.uid === dbSel ? " sel" : "")); r.title = "#" + o.id + " " + o.name;
+      r.appendChild(iconCanvas(function (g, sz) { drawBlock(g, o, 1, 1, sz - 2, pv[0]); }));
+      if (view === "list") { var d = el("div"); d.appendChild(el("div", "bn", o.name)); d.appendChild(el("div", "bid", "#" + ("00" + o.id).slice(-3) + " · " + statusName(o))); r.appendChild(d); }
+      r.onclick = function () { oeSelect(o.uid); }; items.appendChild(r); });
   }
-  drawCards();
+  drawItems(); items.scrollTop = keepL;
+  // ---- Inspektor
+  var insp = el("div", "oeInsp"); insp.setAttribute("data-k", dbSel + "|" + oeTab); mainC.appendChild(insp);
+  if (!b) { insp.appendChild(el("p", "sh", (dbFilter === "all" ? "Noch keine Objekte." : "Keine Objekte auf Ebene " + dbFilter + ".") + " „Neu“ in der Werkzeugleiste legt eines an.")); }
+  else renderInspector(insp, b);
+  insp.scrollTop = keepI;
+  // ---- Werkzeugleiste (wie im Mapeditor)
+  var tw = el("div", "oeToolWrap"), tb = el("div", "oeTools"); tw.appendChild(tb); mainC.appendChild(tw);
+  tb.appendChild(tbBtn("t-map", "Karte", "Zurück zum Mapeditor", function () { setPage("map"); })); tb.appendChild(el("div", "vsep"));
+  var nw = tbBtn("t-new", "Neu", "Neues Objekt", function (ev) { ev.stopPropagation(); if ($("zoomPop").classList.contains("show")) { $("zoomPop").classList.remove("show"); return; }
+    popMenu(nw, [["Neu auf 1 Hintergrund", function () { addBlock(1); }], ["Neu auf 2 Spielebene", function () { addBlock(2); }], ["Neu auf 3 Vordergrund", function () { addBlock(3); }]]); }); tb.appendChild(nw);
+  if (b) { tb.appendChild(tbBtn("t-dup", "Kopie", "Objekt duplizieren", function () { dupBlock(b); }));
+    tb.appendChild(tbBtn("t-del", "Löschen", "Objekt löschen", function () { delBlock(b); })); tb.appendChild(el("div", "vsep"));
+    tb.appendChild(tbBtn("t-pix", "Zeichnen", "Im Pixeleditor zeichnen", function () { openPix(b.uid); }));
+    tb.appendChild(tbBtn("t-img", "Bild", "Bild laden", function () { imgTarget = b; imgTargetV = null; $("fileImg").click(); })); tb.appendChild(el("div", "vsep"));
+    tb.appendChild(tbBtn("t-brush", "Pinsel", "Als Pinsel im Mapeditor verwenden", function () { setPage("map"); setMode(layerOfBlock(b), true); curBlock = b.uid; tool = "brush"; buildTools(); buildBlockPanel(); render(); toast("Pinsel: " + b.name); })); }
 }
-function dbSection(parent, title) { var sct = el("section", "dbsec"); sct.appendChild(el("h3", "", title)); parent.appendChild(sct); return sct; }
-function dbText(sct, b, key, ph, rows) { var t = el("textarea", "dbta"); t.value = b[key] || ""; t.placeholder = ph; t.rows = Math.min(14, Math.max(rows || 3, Math.ceil((t.value || "").length / 55) + 1, (t.value || "").split("\n").length + 1)); t.onchange = function () { b[key] = t.value; touchBlock(b); }; sct.appendChild(t); return t; }
-function renderDbDetail(root, b) {
-  var pv = pvalsOf(b), num = blockLayerNum(b), all = sortedBlocks(), idx = all.indexOf(b);
-  var nav = el("div", "dbhead");
-  var bk = el("button", "bigbtn", "← Galerie"); bk.onclick = function () { dbSel = null; renderBlockEditor(); }; nav.appendChild(bk);
-  var pr = el("button", "bigbtn", "‹"), nx = el("button", "bigbtn", "›"); pr.title = "Voriges Objekt"; nx.title = "Nächstes Objekt";
-  pr.onclick = function () { dbSel = all[(idx - 1 + all.length) % all.length].uid; renderBlockEditor(); }; nx.onclick = function () { dbSel = all[(idx + 1) % all.length].uid; renderBlockEditor(); };
-  nav.appendChild(pr); nav.appendChild(nx);
-  var useB = el("button", "bigbtn dark", "Auf der Karte verwenden"); useB.onclick = function () { setPage("map"); setMode(layerOfBlock(b), true); curBlock = b.uid; tool = "brush"; buildTools(); buildBlockPanel(); render(); toast("Pinsel: " + b.name); }; nav.appendChild(useB);
-  root.appendChild(nav);
-  var title = el("div", "dbtitle"); var nm = inp("text", b.name, "dbname-in"); nm.onchange = function () { b.name = nm.value.trim() || b.name; touchBlock(b); buildBlockPanel(); renderBlockEditor(); }; title.appendChild(nm);
-  title.appendChild(el("span", "dbnum", "#" + ("00" + b.id).slice(-3))); root.appendChild(title);
-  var lead = el("p", "dblead"); lead.textContent = (b.name || "Dieses Objekt") + " ist ein Objekt der Ebene " + num + " (" + LAYER_TYPES[layerOfBlock(b)] + ")" + (num === 2 ? " und belegt genau eine Zelle im 16×16-Raster." : " mit " + bw(b) + "×" + bh(b) + " Pixeln.") + " Es ist " + usage(b.uid) + "× in " + usageByRoom(b.uid).length + " Raum/Räumen gesetzt.";
-  root.appendChild(lead);
-  var wrap = el("div", "dbwiki"), main = el("div", "dbmain"), box = el("aside", "dbbox"); wrap.appendChild(main); wrap.appendChild(box); root.appendChild(wrap);
-  // ---- Infobox
-  box.appendChild(el("div", "dbbox-h", b.name));
-  box.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 6, 6, sz - 12, curParam[b.uid] || pv[0]); }, 160));
-  var ib = el("div", "dbib");
-  var imgRow = el("div", "dbbtns"); imgRow.appendChild(btn("Zeichnen", function () { openPix(b.uid); })); imgRow.appendChild(btn("Hochladen", function () { imgTarget = b; $("fileImg").click(); }));
-  if (b.image || b.imgV) imgRow.appendChild(btn("Bilder entfernen", function () { if (!confirm("Alle Bilder von „" + b.name + "“ entfernen (inkl. Varianten)?")) return; b.image = null; delete b.pix; delete b.pixV; delete b.imgV; dropImgs(b); commit(); }));
-  box.appendChild(imgRow);
-  var row = function (label, node) { var r = el("div", "dbrow"); r.appendChild(el("div", "dbk", label)); var v = el("div", "dbv"); if (typeof node === "string") v.textContent = node; else v.appendChild(node); r.appendChild(v); ib.appendChild(r); return v; };
-  var grp = function (t) { ib.appendChild(el("div", "dbgrp", t)); };
-  grp("Allgemein");
-  var idI = inp("number", b.id, "w-id"); idI.onchange = function () { var v = parseInt(idI.value, 10); if (isNaN(v) || v < 1) { idI.value = b.id; return; }
-    if (P.blocks.some(function (o) { return o !== b && o.id === v; })) { toast("ID " + v + " ist schon vergeben."); idI.value = b.id; return; } b.id = v; touchBlock(b); commit(); }; row("ID", idI);
-  var en = inp("text", b.en || "", "w-name"); en.placeholder = "z. B. Wall"; en.onchange = function () { b.en = en.value.trim(); touchBlock(b); }; row("Englisch", en);
-  var stt = sel(DB_STATUS, b.status || "idee"); stt.onchange = function () { b.status = stt.value; touchBlock(b); }; row("Status", stt);
-  var cat = inp("text", b.cat || "", "w-name"); cat.placeholder = "z. B. Gegner, Hindernis"; cat.onchange = function () { b.cat = cat.value.trim(); touchBlock(b); }; row("Kategorie", cat);
-  var ab = inp("text", b.ability || "", "w-name"); ab.placeholder = "z. B. Bomben Stufe 2"; ab.onchange = function () { b.ability = ab.value.trim(); touchBlock(b); }; row("Benötigt", ab);
-  grp("Ebene & Darstellung");
-  var lay = sel([["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]], String(num)); lay.onchange = function () { setBlockLayer(b, +lay.value); touchBlock(b); commit(); }; row("Ebene", lay);
-  if (num === 2) row("Größe", "16 × 16 px (1 Zelle)"); else {
-    var sz = el("div", "szbox"), wI = inp("number", bw(b), "w-sz"), hI = inp("number", bh(b), "w-sz");
-    var setSz = function () { var w = Math.max(1, Math.min(2048, parseInt(wI.value, 10) || bw(b))), h = Math.max(1, Math.min(2048, parseInt(hI.value, 10) || bh(b))); if (w === bw(b) && h === bh(b)) return; b.w = w; b.h = h; touchBlock(b); commit(); };
-    wI.onchange = setSz; hI.onchange = setSz; sz.appendChild(wI); sz.appendChild(document.createTextNode(" × ")); sz.appendChild(hI);
-    var pre = sel([["", "…"], ["8x8", "8×8"], ["16x16", "16×16"], ["32x32", "32×32"], ["512x288", "Bildschirm"]], ""); pre.className = "w-pre"; pre.onchange = function () { if (!pre.value) return; var a = pre.value.split("x"); b.w = +a[0]; b.h = +a[1]; touchBlock(b); commit(); }; sz.appendChild(pre);
-    row("Größe (px)", sz); }
-  var ic = sel(ICONS, b.icon); ic.onchange = function () { b.icon = ic.value; touchBlock(b); commit(); }; row("Symbol", ic);
-  var code = inp("text", b.code, "w-code"); code.maxLength = 2; code.onchange = function () { b.code = (code.value + "  ").slice(0, 2); touchBlock(b); commit(); }; row("Kürzel", code);
-  if (num !== 2) {
-    var mv = sel([["1", "fest"], ["0.75", "Parallax 75 %"], ["0.5", "Parallax 50 %"], ["0.25", "Parallax 25 %"]], String(+b.par || 1)); mv.onchange = function () { b.par = +mv.value; touchBlock(b); }; row("Bewegung", mv);
-    var an = sel([["off", "Aus"], ["on", "An (folgt)"]], b.anim || "off"); an.onchange = function () { b.anim = an.value; touchBlock(b); }; row("Animation", an); }
-  grp("Varianten");
-  var pl = inp("text", b.plabel, "w-name"), pvI = inp("text", b.pvals, "w-name"); pl.placeholder = "Bezeichnung, z. B. Richtung"; pvI.placeholder = "Werte, z. B. 1,2,3";
-  pl.onchange = function () { b.plabel = pl.value.trim(); touchBlock(b); commit(); };
-  pvI.onchange = function () { b.pvals = pvI.value.split(",").map(function (x) { return x.trim().charAt(0); }).filter(function (x) { return x; }).join(","); touchBlock(b); commit(); };
-  row("Parameter", pl); row("Werte", pvI);
-  grp("Statistik");
-  row("Gesetzt", usage(b.uid) + "× in " + usageByRoom(b.uid).length + " Raum/Räumen"); row("Angelegt", fmtDate(b.created)); row("Geändert", fmtDate(b.updated));
-  box.appendChild(ib);
-  var del = btn("Objekt löschen", function () { var n = usage(b.uid); if (!confirm("Objekt „" + b.name + "“ löschen?" + (n ? " Es ist " + n + "× gesetzt – diese Platzierungen werden entfernt." : ""))) return;
-      P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === b.uid) delete r.func[k]; ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.b !== b.uid; }); }); });
-      P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; undoStack = []; redoStack = []; dbSel = null; commit(); });
-  del.classList.add("dbdel"); box.appendChild(del);
-  // ---- Artikel
-  dbText(dbSection(main, "Beschreibung"), b, "desc", "Was ist das Objekt? Wie sieht es aus, wo kommt es vor?", 4);
-  dbText(dbSection(main, "Verhalten im Spiel"), b, "behav", "Was passiert bei Kontakt, beim Gleiten, mit Fähigkeiten? (Quelle: GDD)", 4);
-  if (pv.length) {
-    var vs = dbSection(main, "Varianten · " + (b.plabel || "Wert")), vg = el("div", "dbvars");
-    pv.forEach(function (v) { var vc = el("div", "dbvar"); vc.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 3, 3, sz - 6, v); }, 56)); vc.appendChild(el("div", "dbmeta", paramLabel(v) + (b.imgV && b.imgV[v] ? " ✓" : "")));
-      vc.title = "Im Pixeleditor öffnen"; vc.onclick = function () { openPix(b.uid, v); }; vg.appendChild(vc); });
-    vs.appendChild(vg); vs.appendChild(el("p", "sh", "✓ = eigenes Bild. Antippen öffnet die Variante im Pixeleditor."));
+function renderInspector(insp, b) {
+  var pv = pvalsOf(b), num = blockLayerNum(b), ur = usageByRoom(b.uid), n = usage(b.uid);
+  var hd = el("div", "oeHead"); hd.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 4, 4, sz - 8, curParam[b.uid] || pv[0]); }, 64));
+  var hc = el("div", "oeHc"), nm = oeIn("text", b.name, "Name", function (v) { b.name = v.trim() || b.name; touchBlock(b); commit(); }, "oeName"); hc.appendChild(nm);
+  hc.appendChild(el("div", "sh", "#" + ("00" + b.id).slice(-3) + " · Ebene " + num + " " + LAYER_TYPES[layerOfBlock(b)] + " · " + bw(b) + "×" + bh(b) + " px · " + (n ? n + "× platziert" : "nicht platziert")));
+  hd.appendChild(hc); insp.appendChild(hd);
+  var tabs = el("div", "stabs oeTabs"); [["props", "Eigenschaften"], ["img", "Bilder"], ["use", "Verwendung"], ["notes", "Notizen"]].forEach(function (t) {
+    var x = el("button", oeTab === t[0] ? "on" : "", t[1]); x.onclick = function () { oeTab = t[0]; renderBlockEditor(); }; tabs.appendChild(x); }); insp.appendChild(tabs);
+  var bd = el("div", "oeBody"); insp.appendChild(bd);
+  var grp = function (t) { bd.appendChild(el("div", "kgrp", t)); };
+  if (oeTab === "props") {
+    grp("Allgemein");
+    oeRow(bd, "ID", "Spielebene 1–99, Hinter-/Vordergrund ab 101", oeIn("number", b.id, "", function (v, i) { var x = parseInt(v, 10); if (isNaN(x) || x < 1) { i.value = b.id; return; }
+      if (P.blocks.some(function (o) { return o !== b && o.id === x; })) { toast("ID " + x + " ist schon vergeben."); i.value = b.id; return; } b.id = x; touchBlock(b); commit(); }, "w-id"));
+    oeRow(bd, "Englischer Name", "Für Code und Dateinamen", oeIn("text", b.en || "", "z. B. Wall", function (v) { b.en = v.trim(); touchBlock(b); }));
+    var catI = oeIn("text", b.cat || "", "z. B. Gegner", function (v) { b.cat = v.trim(); touchBlock(b); }), dl = el("datalist"); dl.id = "oeCats";
+    P.blocks.map(function (o) { return o.cat; }).filter(function (c, k, a) { return c && a.indexOf(c) === k; }).forEach(function (c) { var op = el("option"); op.value = c; dl.appendChild(op); }); catI.setAttribute("list", "oeCats");
+    var cw = el("div"); cw.appendChild(catI); cw.appendChild(dl); oeRow(bd, "Kategorie", "", cw);
+    oeRow(bd, "Status", "", oeSeg(DB_STATUS, b.status || "idee", function (v) { b.status = v; touchBlock(b); commit(); }));
+    oeRow(bd, "Benötigt", "Fähigkeit, die das Objekt voraussetzt", oeIn("text", b.ability || "", "z. B. Bomben Stufe 2", function (v) { b.ability = v.trim(); touchBlock(b); }));
+    grp("Ebene & Darstellung");
+    oeRow(bd, "Ebene", "Wechsel verschiebt alle Platzierungen mit", oeSeg([["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]], String(num), function (v) {
+      if (+v === num) return; if (n && !confirm("„" + b.name + "“ auf Ebene " + v + " verschieben? " + n + " Platzierung(en) wandern mit (Rückgängig wird geleert).")) return; setBlockLayer(b, +v); touchBlock(b); commit(); }));
+    if (num === 2) oeRow(bd, "Größe", "", el("div", "oeVal", "16 × 16 px"));
+    else { var sz = el("div", "oeSz"), setSz = function () { var w = Math.max(1, Math.min(2048, parseInt(wI.value, 10) || bw(b))), h = Math.max(1, Math.min(2048, parseInt(hI.value, 10) || bh(b))); if (w === bw(b) && h === bh(b)) return; b.w = w; b.h = h; dropImgs(b); touchBlock(b); commit(); };
+      var wI = oeIn("number", bw(b), "", setSz, "w-sz"), hI = oeIn("number", bh(b), "", setSz, "w-sz"); sz.appendChild(wI); sz.appendChild(el("span", "", "×")); sz.appendChild(hI); sz.appendChild(el("span", "", "px"));
+      oeRow(bd, "Größe", "Breite × Höhe in Pixeln", sz);
+      var cur = bw(b) + "x" + bh(b); oeRow(bd, "Vorgabe", "", oeSeg([["8x8", "8"], ["16x16", "16"], ["32x32", "32"], ["512x288", "Bildschirm"]], cur, function (v) { var a = v.split("x"); b.w = +a[0]; b.h = +a[1]; dropImgs(b); touchBlock(b); commit(); })); }
+    oeRow(bd, "Symbol", "Erscheint, solange kein Bild gesetzt ist", sel(ICONS, b.icon)).lastChild.onchange = function () { b.icon = this.value; touchBlock(b); commit(); };
+    oeRow(bd, "Kürzel", "2 Zeichen, für Text-Export", oeIn("text", b.code, "", function (v) { b.code = (v + "  ").slice(0, 2); touchBlock(b); commit(); }, "w-code")).lastChild.maxLength = 2;
+    if (num !== 2) {
+      oeRow(bd, "Parallax", "Bewegt sich langsamer als die Kamera", oeSeg([["1", "Fest"], ["0.75", "75 %"], ["0.5", "50 %"], ["0.25", "25 %"]], String(+b.par || 1), function (v) { b.par = +v; touchBlock(b); commit(); }));
+      oeRow(bd, "Animation", "", oeSeg([["off", "Aus"], ["on", "An"]], b.anim || "off", function (v) { b.anim = v; touchBlock(b); commit(); })); }
+    grp("Varianten");
+    oeRow(bd, "Parameter", "Bezeichnung, z. B. Richtung oder Tür-Nr.", oeIn("text", b.plabel, "–", function (v) { b.plabel = v.trim(); touchBlock(b); commit(); }));
+    oeRow(bd, "Werte", "Kommagetrennt, je 1 Zeichen. Im Mapeditor wechselt erneutes Antippen die Variante.", oeIn("text", b.pvals, "z. B. 1,2,3", function (v) { b.pvals = v.split(",").map(function (x) { return x.trim().charAt(0); }).filter(function (x) { return x; }).join(","); touchBlock(b); commit(); }));
+  } else if (oeTab === "img") {
+    var big = Math.max(bw(b), bh(b)) > PX_MAX;
+    var imgRow = function (title, v) { var own = v ? !!(b.imgV && b.imgV[v]) : !!b.image, r = el("div", "srow oeImgRow"), l = el("div", "oeImgL");
+      l.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 2, 2, sz - 4, v || pv[0]); }, 48));
+      var t = el("div"); t.appendChild(el("div", "sl", title)); t.appendChild(el("div", "sh", own ? ((v ? b.pixV && b.pixV[v] : b.pix) ? "Pixelbild" : "Geladenes Bild") : (v ? "Nutzt das Grundbild" : "Kein Bild – Symbol wird gezeigt"))); l.appendChild(t); r.appendChild(l);
+      r.appendChild(oeBtns([big ? null : oeBtn("Zeichnen", function () { openPix(b.uid, v || undefined); }), oeBtn("Laden", function () { imgTarget = b; imgTargetV = v || null; $("fileImg").click(); }),
+        own ? oeBtn("Entfernen", function () { if (!confirm("Bild " + (v ? "der Variante „" + paramLabel(v) + "“" : "„Grundbild“") + " entfernen?")) return;
+          if (v) { delete b.imgV[v]; if (b.pixV) delete b.pixV[v]; } else { b.image = null; delete b.pix; } dropImgs(b); touchBlock(b); commit(); }) : null])); bd.appendChild(r); };
+    grp("Grundbild"); imgRow(bw(b) + " × " + bh(b) + " px", null);
+    if (big) bd.appendChild(el("p", "sh", "Größer als " + PX_MAX + " px – zum Zeichnen zu groß. Skizze (z. B. vom Boox) als Bild laden."));
+    grp("Varianten" + (pv.length ? " · " + (b.plabel || "Wert") : ""));
+    if (!pv.length) bd.appendChild(el("p", "sh", "Keine Varianten. Anlegen unter Eigenschaften → Varianten."));
+    pv.forEach(function (v) { imgRow(paramLabel(v), v); });
+  } else if (oeTab === "use") {
+    grp("Übersicht");
+    oeRow(bd, "Platziert", "", el("div", "oeVal", n ? n + "× in " + ur.length + (ur.length === 1 ? " Raum" : " Räumen") : "nicht platziert"));
+    oeRow(bd, "Angelegt", "", el("div", "oeVal", fmtDate(b.created))); oeRow(bd, "Geändert", "", el("div", "oeVal", fmtDate(b.updated)));
+    grp("Räume");
+    if (!ur.length) bd.appendChild(el("p", "sh", "Noch in keinem Raum platziert."));
+    ur.forEach(function (u) { var r = u[0]; oeRow(bd, "Raum " + r.nr + (r.name ? " · " + r.name : ""), u[1] + "×", oeBtns([oeBtn("Anzeigen", function () { setPage("map"); selRoom = r.rid; setMode(layerOfBlock(b), true); fitRoom(); toast("Raum " + r.nr); })])); });
+    grp("Verknüpfte Objekte"); b.rel = b.rel || [];
+    b.rel.forEach(function (uid) { var o = blockByUid(uid); if (!o) return; var r = el("div", "srow oeImgRow"), l = el("div", "oeImgL");
+      l.appendChild(iconCanvas(function (g, sz) { drawBlock(g, o, 1, 1, sz - 2); })); var t = el("div"); t.appendChild(el("div", "sl", o.name)); t.appendChild(el("div", "sh", "#" + ("00" + o.id).slice(-3) + " · Ebene " + blockLayerNum(o))); l.appendChild(t); r.appendChild(l);
+      r.appendChild(oeBtns([oeBtn("Öffnen", function () { oeSelect(o.uid); }), oeBtn("Lösen", function () { b.rel = b.rel.filter(function (x) { return x !== uid; }); if (o.rel) o.rel = o.rel.filter(function (x) { return x !== b.uid; }); touchBlock(b); commit(); })])); bd.appendChild(r); });
+    var addRel = sel([["", "Objekt verknüpfen …"]].concat(sortedBlocks().filter(function (o) { return o !== b && b.rel.indexOf(o.uid) < 0; }).map(function (o) { return [o.uid, "#" + o.id + " " + o.name]; })), ""); addRel.className = "oeIn";
+    addRel.onchange = function () { if (!addRel.value) return; b.rel.push(addRel.value); var o = blockByUid(addRel.value); if (o) { o.rel = o.rel || []; if (o.rel.indexOf(b.uid) < 0) o.rel.push(b.uid); } touchBlock(b); commit(); };
+    oeRow(bd, "Hinzufügen", "Wird bei beiden Objekten eingetragen", addRel);
+  } else {
+    var field = function (label, key, ph, rows) { var f = el("div", "oeField"); f.appendChild(el("div", "sl", label)); var t = el("textarea", "oeTa"); t.value = b[key] || ""; t.placeholder = ph;
+      t.rows = Math.min(14, Math.max(rows, (t.value || "").split("\n").length + Math.ceil((t.value || "").length / 70))); t.onchange = function () { b[key] = t.value; touchBlock(b); }; f.appendChild(t); bd.appendChild(f); };
+    field("Beschreibung", "desc", "Aussehen, Einsatzort, Zweck …", 3);
+    field("Spielverhalten", "behav", "Kontakt, Gleiten, Fähigkeiten (laut GDD) …", 4);
+    field("Sound & Effekte", "sound", "Geräusch, Effekt, Hitstop …", 2);
+    field("Notizen", "notes", "Ideen, offene Fragen …", 4);
+    var tf = el("div", "oeField"); tf.appendChild(el("div", "sl", "Tags")); tf.appendChild(oeIn("text", b.tags || "", "kommagetrennt, z. B. sperre, bomben", function (v) { b.tags = v; touchBlock(b); })); bd.appendChild(tf);
   }
-  var us = dbSection(main, "Vorkommen"), ur = usageByRoom(b.uid);
-  if (!ur.length) us.appendChild(el("p", "sh", "Noch in keinem Raum gesetzt."));
-  else { var tb = el("table", "dbtable"), hr = el("tr"); ["Raum", "Name", "Anzahl", ""].forEach(function (h) { hr.appendChild(el("th", "", h)); }); tb.appendChild(hr);
-    ur.forEach(function (u) { var r = u[0], tr = el("tr"); tr.appendChild(el("td", "", r.nr)); tr.appendChild(el("td", "", r.name || "–")); tr.appendChild(el("td", "", u[1] + "×"));
-      var td = el("td"); td.appendChild(btn("Zum Raum", function () { setPage("map"); selRoom = r.rid; setMode(layerOfBlock(b), true); fitRoom(); toast("Raum " + r.nr); })); tr.appendChild(td); tb.appendChild(tr); });
-    us.appendChild(tb); }
-  var rel = dbSection(main, "Verwandte Objekte"), chips = el("div", "dbchips"); b.rel = b.rel || [];
-  b.rel.forEach(function (uid) { var o = blockByUid(uid); if (!o) return; var ch = el("span", "dbchip"); ch.appendChild(iconCanvas(function (g, sz) { drawBlock(g, o, 1, 1, sz - 2); }, 22)); ch.appendChild(el("span", "", o.name));
-    var go = el("button", "", "›"); go.title = "Öffnen"; go.onclick = function () { dbSel = o.uid; renderBlockEditor(); }; var rm = el("button", "", "×"); rm.title = "Entfernen"; rm.onclick = function () { b.rel = b.rel.filter(function (x) { return x !== uid; }); touchBlock(b); renderBlockEditor(); };
-    ch.appendChild(go); ch.appendChild(rm); chips.appendChild(ch); });
-  var addRel = sel([["", "+ Objekt verknüpfen …"]].concat(all.filter(function (o) { return o !== b && b.rel.indexOf(o.uid) < 0; }).map(function (o) { return [o.uid, "#" + o.id + " " + o.name]; })), "");
-  addRel.onchange = function () { if (!addRel.value) return; b.rel.push(addRel.value); var o = blockByUid(addRel.value); if (o) { o.rel = o.rel || []; if (o.rel.indexOf(b.uid) < 0) o.rel.push(b.uid); } touchBlock(b); renderBlockEditor(); };
-  chips.appendChild(addRel); rel.appendChild(chips);
-  dbText(dbSection(main, "Sound & Effekte"), b, "sound", "Geräusch, Effekt, Hitstop … (siehe Effekt-Styleguide)", 2);
-  dbText(dbSection(main, "Design-Notizen"), b, "notes", "Ideen, offene Fragen, Varianten für später …", 4);
-  var tg = dbSection(main, "Tags"), ti = inp("text", b.tags || "", "dbta"); ti.placeholder = "z. B. sperre, bomben, chaos-dungeon-1"; ti.onchange = function () { b.tags = ti.value; touchBlock(b); }; tg.appendChild(ti);
+}
+function dupBlock(b) {
+  var o = JSON.parse(JSON.stringify(b)), func = blockLayerNum(b) === 2, id = b.id + 1; o.uid = "b" + (P.nextUid++);
+  while (P.blocks.some(function (x) { return x.id === id; }) || (func && id >= 100)) id = func && id >= 99 ? 1 : id + 1;
+  o.id = id; o.name = b.name + " (Kopie)"; o.rel = []; o.created = o.updated = Date.now(); P.blocks.push(o); dbSel = o.uid; commit(); toast("Kopie angelegt: #" + id);
+}
+function delBlock(b) {
+  var n = usage(b.uid); if (!confirm("Objekt „" + b.name + "“ löschen?" + (n ? " Es ist " + n + "× platziert – diese Platzierungen werden entfernt." : ""))) return;
+  var list = oeFiltered(), k = list.indexOf(b), next = list[k + 1] || list[k - 1];
+  P.rooms.forEach(function (r) { for (var key in r.func) if (r.func[key].b === b.uid) delete r.func[key]; ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.b !== b.uid; }); }); });
+  P.blocks.forEach(function (o) { if (o.rel) o.rel = o.rel.filter(function (x) { return x !== b.uid; }); });
+  P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; undoStack = []; redoStack = []; dbSel = next ? next.uid : null; commit();
 }
 function dbMarkdown() {
-  var out = ["# " + (P.dungeon || "Æventh") + " – Objekt-Datenbank", "", "- Stand: " + fmtDate(Date.now()), "- Objekte: " + P.blocks.length, ""];
+  var out = ["# " + (P.dungeon || "Æventh") + " – Objekte", "", "- Stand: " + fmtDate(Date.now()), "- Objekte: " + P.blocks.length, ""];
   sortedBlocks().forEach(function (b) { var pv = pvalsOf(b);
     out.push("## #" + ("00" + b.id).slice(-3) + " " + b.name + (b.en ? " (" + b.en + ")" : ""), "",
       "| Feld | Wert |", "|---|---|", "| Ebene | " + blockLayerNum(b) + " " + LAYER_TYPES[layerOfBlock(b)] + " |", "| Größe | " + bw(b) + "×" + bh(b) + " px |", "| Kürzel | `" + String(b.code).replace(/\|/g, "\\|") + "` |",
@@ -1880,7 +1922,7 @@ function addBlock(layer) {
   var id = maxId ? maxId + 1 : (func ? 1 : 101); while (P.blocks.some(function (b) { return b.id === id; })) id++;
   var o = { uid: "b" + (P.nextUid++), id: id, name: func ? "Neues Objekt" : (layer === 1 ? "Neuer Hintergrund" : "Neue Deko"), kind: func ? "func" : "design", layer: layer, toolbar: layer, code: "? ", icon: "letter", plabel: "", pvals: "", image: null, par: 1, anim: "off" };
   if (!func) { o.w = layer === 1 ? 16 : 8; o.h = layer === 1 ? 16 : 8; }
-  P.blocks.push(o); dbSel = o.uid; o.created = o.updated = Date.now(); commit();
+  P.blocks.push(o); dbSel = o.uid; if (dbFilter !== "all" && +dbFilter !== layer) dbFilter = "all"; dbSearch = ""; o.created = o.updated = Date.now(); commit();
 }
 function setBlockLayer(b, n) {
   var from = layerOfBlock(b); if (blockLayerNum(b) === n) return; b.layer = n; b.toolbar = n; b.kind = n === 2 ? "func" : "design";
@@ -1900,7 +1942,8 @@ $("fileImg").addEventListener("change", function () {
     im.onload = function () { var BW = bw(b), BH = bh(b), k = Math.max(1, Math.floor(64 / Math.max(BW, BH))), CWd = Math.min(2048, BW * k), CHd = Math.min(2048, BH * k), c = document.createElement("canvas"); c.width = CWd; c.height = CHd; var g = c.getContext("2d");
       g.fillStyle = "#fff"; g.fillRect(0, 0, CWd, CHd); g.imageSmoothingEnabled = im.width > CWd;
       var sc = Math.min(CWd / im.width, CHd / im.height), w = im.width * sc, h = im.height * sc; g.drawImage(im, (CWd - w) / 2, (CHd - h) / 2, w, h);
-      try { b.image = c.toDataURL("image/png"); } catch (e) { b.image = rd.result; } delete b.pix;
+      var url; try { url = c.toDataURL("image/png"); } catch (e) { url = rd.result; } var v = imgTargetV; imgTargetV = null;
+      if (v) { b.imgV = b.imgV || {}; b.imgV[v] = url; if (b.pixV) delete b.pixV[v]; } else { b.image = url; delete b.pix; } touchBlock(b);
       dropImgs(b); commit(); toast("Bild für „" + b.name + "“ übernommen."); };
     im.src = rd.result; };
   rd.readAsDataURL(f);
