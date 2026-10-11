@@ -129,6 +129,9 @@
   #blockEditor h2 { margin:0 0 4px; font-size:calc(21px*var(--fs)); }
   #blockEditor p.hint { margin:0 0 12px; font-size:calc(13px*var(--fs)); }
   #blockEditor { overflow:hidden; padding:0; }
+  #audioEditor { position:absolute; inset:0; overflow:hidden; display:none; background:var(--paper); }
+  .oeAdd { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; align-items:center; } .oeBody .srow .oeAdd .oeIn, .oeBody .srow .oeAdd select { width:150px; }
+  #modal select { width:100%; border:1.5px solid var(--line); border-radius:8px; padding:7px; background:var(--paper); }
   .oeWrap { position:absolute; inset:0; display:flex; }
   .oePane { width:188px; flex:0 0 auto; border-right:1.5px solid var(--line); display:flex; flex-direction:column; min-height:0; }
   .oePane.tiles { width:236px; } .oePane.icons { width:56px; }
@@ -240,6 +243,7 @@
     <div class="mitem" data-act="copyRoom">Raum als Text kopieren</div>
     <div class="mitem" data-act="exportMd">Alle Räume als .md exportieren</div>
     <div class="mitem" data-act="exportDb">Objekte als .md exportieren</div>
+    <div class="mitem" data-act="exportAudio">Audio als .md exportieren</div>
     <div class="msep"></div>
     <div class="mitem" data-act="settings">Einstellungen …</div>
   </div></div>
@@ -282,6 +286,7 @@
     <div class="mitem check" data-act="toggleDots" id="mi-dots">Raster</div>
     <div class="mitem check" data-act="toggleGuides" id="mi-guides">Hilfslinien</div>
     <div class="mitem check" data-act="toggleCenter" id="mi-center">Raummitte anzeigen</div>
+    <div class="mitem check" data-act="toggleAudioLbl" id="mi-audiolbl">Musik an Räumen anzeigen</div>
     <div class="msep"></div>
     <div class="mitem check" data-act="toggleGame" id="mi-game">Spielansicht (nur Inhalt)</div>
     <div class="mitem check" data-act="toggleBlocks" id="mi-blocks">Objektleiste</div>
@@ -292,6 +297,7 @@
     <div class="mitem check" data-act="pageMap" id="mi-map">Mapeditor</div>
     <div class="mitem check" data-act="pageBlocks" id="mi-blkedit">Objekteditor</div>
     <div class="mitem check" data-act="pagePixels" id="mi-pixedit">Pixeleditor</div>
+    <div class="mitem check" data-act="pageAudio" id="mi-audio">Audioeditor</div>
   </div></div>
   <div class="menu" data-menu="help"><div class="mlabel">Hilfe</div><div class="mdrop">
     <div class="mitem" data-act="help">Kurzanleitung</div>
@@ -312,6 +318,7 @@
 <div id="main">
   <canvas id="cv"></canvas>
   <div id="blockEditor"></div>
+  <div id="audioEditor"></div>
   <div id="pixEditor">
     <div class="pxHead"><h2>Pixeleditor</h2><select id="pxSel"></select><select id="pxVar"></select>
       <button class="bigbtn dark" id="px-backMap">Zurück zum Mapeditor</button><div id="pxInfo"></div></div>
@@ -351,7 +358,7 @@
 "use strict";
 var VERSION = "Alpha 2026.41.1", APP_VERSION = "2026.41.1", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { showGuides: true, guideCenter: false, eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { showAudio: true, showGuides: true, guideCenter: false, eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -512,7 +519,7 @@ function updateStatus() {
   var S = P.settings;
   var set = function (id, on) { var e = $(id); if (e) e.classList.toggle("on", !!on); };
   ["select","hand","move","brush","erase","rect","pick","text","guide"].forEach(function (t) { set("mi-t-" + t, page === "map" && tool === t); });
-  set("mi-guides", S.showGuides); set("mi-center", S.guideCenter);
+  set("mi-guides", S.showGuides); set("mi-center", S.guideCenter); set("mi-audiolbl", S.showAudio); set("mi-audio", page === "audio");
   set("mi-other", S.showOther && !S.soloLayer);
   set("mi-eink", S.eink); set("mi-dots", +S.raster > 0); set("mi-labels", S.labels); set("mi-penbtn", S.penBtnErase); set("mi-erundo", S.eraserUndo); set("mi-palm", S.palm); set("mi-fpaint", S.fingerPaint);
   set("mi-blocks", S.showBlocks); set("mi-game", gameView); set("mi-bnames", S.blockNames); set("mi-tools", S.showTools); set("mi-map", page === "map"); set("mi-blkedit", page === "blocks"); set("mi-pixedit", page === "pixels");
@@ -602,6 +609,13 @@ function drawIcon(c, icon, x, y, s, param, name) {
     case "t-guidev": case "t-guideh": case "t-guide": c.lineWidth = Math.max(1.2, s * 0.05); c.strokeRect(x + s * 0.12, y + s * 0.18, s * 0.76, s * 0.64);
       c.save(); c.lineWidth = Math.max(1.6, s * 0.08); c.setLineDash([Math.max(2, s * 0.1), Math.max(1.5, s * 0.07)]); c.beginPath();
       if (icon !== "t-guideh") { c.moveTo(cx, y + s * 0.06); c.lineTo(cx, y + s * 0.94); } else { c.moveTo(x + s * 0.02, cy); c.lineTo(x + s * 0.98, cy); } c.stroke(); c.restore(); break;
+    case "t-a-music": c.beginPath(); c.ellipse(x + s * 0.36, y + s * 0.74, s * 0.15, s * 0.11, -0.4, 0, 7); c.fill(); c.lineWidth = Math.max(1.5, s * 0.08); c.beginPath(); c.moveTo(x + s * 0.5, y + s * 0.72); c.lineTo(x + s * 0.5, y + s * 0.14); c.quadraticCurveTo(x + s * 0.56, y + s * 0.34, x + s * 0.8, y + s * 0.42); c.stroke(); break;
+    case "t-a-stinger": c.beginPath(); [[0.6, 0.06], [0.24, 0.56], [0.47, 0.56], [0.38, 0.94], [0.76, 0.4], [0.53, 0.4], [0.62, 0.06]].forEach(function (q, k) { if (k) c.lineTo(x + s * q[0], y + s * q[1]); else c.moveTo(x + s * q[0], y + s * q[1]); }); c.closePath(); c.fill(); break;
+    case "t-a-amb": c.lineWidth = Math.max(1.4, s * 0.07); for (var wi = 0; wi < 3; wi++) { var wy = y + s * (0.3 + wi * 0.2); c.beginPath(); c.moveTo(x + s * 0.1, wy); c.quadraticCurveTo(x + s * 0.3, wy - s * 0.12, x + s * 0.5, wy); c.quadraticCurveTo(x + s * 0.7, wy + s * 0.12, x + s * 0.9, wy); c.stroke(); } break;
+    case "t-a-sfx": c.beginPath(); c.moveTo(x + s * 0.12, y + s * 0.38); c.lineTo(x + s * 0.28, y + s * 0.38); c.lineTo(x + s * 0.5, y + s * 0.18); c.lineTo(x + s * 0.5, y + s * 0.82); c.lineTo(x + s * 0.28, y + s * 0.62); c.lineTo(x + s * 0.12, y + s * 0.62); c.closePath(); c.fill();
+      c.lineWidth = Math.max(1.4, s * 0.07); [0.16, 0.3].forEach(function (rr) { c.beginPath(); c.arc(x + s * 0.54, cy, s * rr, -0.8, 0.8); c.stroke(); }); break;
+    case "t-a-voice": c.lineWidth = Math.max(1.4, s * 0.07); c.beginPath(); c.moveTo(x + s * 0.14, y + s * 0.18); c.lineTo(x + s * 0.86, y + s * 0.18); c.lineTo(x + s * 0.86, y + s * 0.66); c.lineTo(x + s * 0.44, y + s * 0.66); c.lineTo(x + s * 0.26, y + s * 0.84); c.lineTo(x + s * 0.28, y + s * 0.66); c.lineTo(x + s * 0.14, y + s * 0.66); c.closePath(); c.stroke();
+      [0.34, 0.5, 0.66].forEach(function (dx) { c.beginPath(); c.arc(x + s * dx, y + s * 0.42, s * 0.05, 0, 7); c.fill(); }); break;
     case "t-list": c.lineWidth = Math.max(1.6, s * 0.08); c.beginPath(); for (var li = 0; li < 3; li++) { var ly = y + s * (0.27 + li * 0.23); c.moveTo(x + s * 0.34, ly); c.lineTo(x + s * 0.84, ly); } c.stroke(); for (li = 0; li < 3; li++) c.fillRect(x + s * 0.14, y + s * (0.21 + li * 0.23), s * 0.12, s * 0.12); break;
     case "t-grid": c.lineWidth = Math.max(1.4, s * 0.07); [[0.14, 0.14], [0.54, 0.14], [0.14, 0.54], [0.54, 0.54]].forEach(function (q) { c.strokeRect(x + s * q[0], y + s * q[1], s * 0.32, s * 0.32); }); break;
     case "t-new": c.lineWidth = Math.max(1.5, s * 0.07); c.strokeRect(x + s * 0.16, y + s * 0.16, s * 0.68, s * 0.68); c.lineWidth = Math.max(1.8, s * 0.09); c.beginPath(); c.moveTo(cx, y + s * 0.32); c.lineTo(cx, y + s * 0.68); c.moveTo(x + s * 0.32, cy); c.lineTo(x + s * 0.68, cy); c.stroke(); break;
@@ -654,7 +668,7 @@ function resize() {
   var m = $("main"); CW = m.clientWidth; CH = m.clientHeight;
   var dpr = window.devicePixelRatio || 1;
   cv.width = Math.round(CW * dpr); cv.height = Math.round(CH * dpr); cv.style.width = CW + "px"; cv.style.height = CH + "px";
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); render(); if (page === "blocks" && typeof oeNarrow === "boolean" && oeNarrow !== (CW < 620)) renderBlockEditor(); if (typeof buildParams === "function" && $("bpFloat")) buildParams();
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0); render(); if (page === "blocks" && typeof oeNarrow === "boolean" && oeNarrow !== (CW < 620)) renderBlockEditor(); if (page === "audio" && typeof auNarrow === "boolean" && auNarrow !== (CW < 620)) renderAudioEditor(); if (typeof buildParams === "function" && $("bpFloat")) buildParams();
 }
 function w2s(wx, wy) { return [view.px + wx * view.z, view.py + wy * view.z]; }
 function s2w(sx, sy) { return [(sx - view.px) / view.z, (sy - view.py) / view.z]; }
@@ -705,7 +719,7 @@ function drawRoom(room) {
   ctx.save(); ctx.strokeStyle = "#000"; ctx.lineWidth = sel ? 4 : 2.5; ctx.strokeRect(o[0], o[1], W, H);
   if (sel) { ctx.setLineDash([8, 5]); ctx.lineWidth = 1.5; ctx.strokeRect(o[0] - 6, o[1] - 6, W + 12, H + 12); ctx.setLineDash([]);
     ctx.fillStyle = "#000"; ctx.fillRect(o[0] + W - 11, o[1] + H - 11, 22, 22); ctx.fillStyle = "#fff"; ctx.fillRect(o[0] + W - 6, o[1] + H - 6, 12, 12); }
-  var label = room.nr + (room.name ? " · " + room.name : "") + "   " + room.w + "×" + room.h;
+  var label = room.nr + (room.name ? " · " + room.name : "") + "   " + room.w + "×" + room.h + (P.settings.showAudio ? roomAudioLabel(room) : "");
   var lh = Math.round(24 * fs()); ctx.font = "bold " + Math.round(13 * fs()) + "px system-ui, sans-serif"; var lw = ctx.measureText(label).width + 16;
   ctx.fillStyle = "#000"; ctx.fillRect(o[0] - (sel ? 2 : 1.25), o[1] - lh, lw, lh);
   ctx.fillStyle = "#fff"; ctx.textBaseline = "middle"; ctx.fillText(label, o[0] + 7, o[1] - lh / 2);
@@ -1358,7 +1372,7 @@ var KEYDEFS = [
   ["Ansicht", [["zoomIn", "Vergrößern", "+"], ["zoomOut", "Verkleinern", "-"], ["zoom100", "Zoom 100 %", "1"], ["fitRoom", "Raum einpassen", "0"], ["fitAll", "Alle Räume anzeigen", "A"],
     ["toggleOther", "Andere Ebenen blass", "O"], ["toggleDots", "Raster an/aus", "."], ["toggleGuides", "Hilfslinien an/aus", "Shift+G"], ["toggleCenter", "Raummitte an/aus", ""], ["toggleGame", "Spielansicht", "P"], ["toggleBlocks", "Objektleiste", "["], ["toggleTools", "Werkzeugleiste", "]"]]],
   ["Ebenen", [["nextLayer", "Nächste Ebene", "L"], ["layer1", "Ebene 1 Hintergrund", "Shift+1"], ["modeFunc", "Ebene 2 Spielebene", "F"], ["layer4", "Ebene 4 Bewegung", "Shift+4"], ["layer3", "Ebene 3 Vordergrund", "Shift+3"], ["toggleLayerVis", "Aktive Ebene ein-/ausblenden", "Shift+L"], ["toggleSolo", "Nur aktive Ebene anzeigen", "Shift+O"], ["layerSettings", "Ebenen verwalten", "Ctrl+L", ["clearRoom", "Aktive Ebene im Raum leeren", ""]]]],
-  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"]]]
+  ["Editor", [["pageMap", "Mapeditor", "Alt+1"], ["pageBlocks", "Objekteditor", "Alt+2"], ["pagePixels", "Pixeleditor", "Alt+3"], ["pageAudio", "Audioeditor", "Alt+4"]]]
 ];
 var KEYLABEL = {}; KEYDEFS.forEach(function (g) { g[1].forEach(function (k) { KEYLABEL[k[0]] = k[1]; }); });
 function keyOf(id) { var o = P.settings.keys || {}; if (id in o) return o[id]; for (var i = 0; i < KEYDEFS.length; i++) for (var j = 0; j < KEYDEFS[i][1].length; j++) if (KEYDEFS[i][1][j][0] === id) return KEYDEFS[i][1][j][2]; return ""; }
@@ -1463,11 +1477,12 @@ function openRoomProps() {
   modal('<h3>Raum-Eigenschaften</h3><div class="body">' +
     '<div class="row2"><div><label>Raum-Nr.</label><input id="f-nr" value="' + esc(r.nr) + '"></div><div><label>Name</label><input id="f-name" value="' + esc(r.name) + '"></div></div>' +
     '<div class="row2"><div><label>Breite (min. 32)</label><input id="f-w" type="number" min="32" value="' + r.w + '"></div><div><label>Höhe (min. 18)</label><input id="f-h" type="number" min="18" value="' + r.h + '"></div><div><label>Dunkelheit %</label><input id="f-dark" type="number" min="0" max="100" step="10" value="' + esc(r.dark) + '"></div></div>' +
+    '<div class="row2"><div><label>Musik</label>' + roomAudioSelect(r, "music", "f-mus") + '</div><div><label>Ambience</label>' + roomAudioSelect(r, "amb", "f-amb") + '</div></div>' +
     '<label>Dungeon (ganzes Projekt)</label><input id="f-dungeon" value="' + esc(P.dungeon) + '">' +
     '<label>Notizen</label><textarea id="f-notes">' + esc(r.notes) + '</textarea></div>', function () {
       pushUndo(); r.nr = $("f-nr").value.trim(); r.name = $("f-name").value.trim();
       r.w = Math.max(32, parseInt($("f-w").value, 10) || 32); r.h = Math.max(18, parseInt($("f-h").value, 10) || 18);
-      r.dark = $("f-dark").value.trim(); r.notes = $("f-notes").value; P.dungeon = $("f-dungeon").value.trim(); clipRoom(r); render(); autosave();
+      r.dark = $("f-dark").value.trim(); r.notes = $("f-notes").value; r.audio = { music: $("f-mus").value, amb: $("f-amb").value }; P.dungeon = $("f-dungeon").value.trim(); clipRoom(r); render(); autosave();
     });
 }
 
@@ -1535,6 +1550,178 @@ function openGuideProps(r, g) {
   $("g-del").onclick = function () { pushUndo(); r.guides.splice(r.guides.indexOf(g), 1); selGuide = null; closeModal(); render(); autosave(); toast("Hilfslinie gelöscht"); };
 }
 
+/* ================= Audioeditor ================= */
+var AUDIO_KINDS = [["music", "Musik"], ["stinger", "Stinger"], ["amb", "Ambience"], ["sfx", "Soundeffekt"], ["voice", "Stimme"]];
+var SND_EVENTS = ["Kontakt", "Auslösen", "Aktivieren", "Erwecken", "Sammeln", "Zerstören", "Erscheinen", "Verschwinden", "Schuss", "Teleport", "Treffer", "Dauerton"];
+var auSel = null, auFilter = "all", auSearch = "", auTab = "props", auNarrow = null;
+function kindName(k) { for (var i = 0; i < AUDIO_KINDS.length; i++) if (AUDIO_KINDS[i][0] === k) return AUDIO_KINDS[i][1]; return "Audio"; }
+function kindIdx(k) { for (var i = 0; i < AUDIO_KINDS.length; i++) if (AUDIO_KINDS[i][0] === k) return i; return 9; }
+function audioByUid(u) { var l = P.audio || []; for (var i = 0; i < l.length; i++) if (l[i].uid === u) return l[i]; return null; }
+function sortedAudio() { return (P.audio || []).slice().sort(function (a, b) { return kindIdx(a.kind) - kindIdx(b.kind) || String(a.name).localeCompare(String(b.name), "de"); }); }
+function auFiltered() { var t = auSearch.trim().toLowerCase(); return sortedAudio().filter(function (a) { if (auFilter !== "all" && a.kind !== auFilter) return false; if (!t) return true;
+  return [a.name, a.file, a.key, a.desc, a.notes, a.tags, a.ref, kindName(a.kind)].join(" ").toLowerCase().indexOf(t) >= 0; }); }
+function seedAudio(p) {
+  if (p.audioV1) return; p.audio = p.audio || []; p.audioMap = p.audioMap || {}; p.nextAid = p.nextAid || 1;
+  if (!p.audio.length) {
+    var mk = function (o) { o.uid = "a" + (p.nextAid++); o.created = o.updated = Date.now(); p.audio.push(o); return o; }, NES = "NES: Puls 1, Puls 2, Dreieck, Rauschen (mono, kein Hall)";
+    mk({ name: "Exploration", kind: "music", status: "test", file: "WIP/Audio/Exploration/Game/Exploration_v1.ogg", bpm: 152, key: "e-Moll", len: "63,16 s (40 Takte)", loop: "loop", lufs: "−14,0", chan: NES,
+      desc: "Erkundungsmusik im NES-Stil (Mega-Man-10-Prinzip).", notes: "FL-Projekt: WIP/Audio/Exploration/Exploration_v1.flp. Wiedergabe: endlos loopen, kein Intro." });
+    var st = mk({ name: "Stinger „Begegnung“", kind: "stinger", status: "test", file: "WIP/Audio/Stinger/Game/Stinger_v1.ogg", bpm: 168, len: "1,45 s (1 Takt)", loop: "once", lufs: "−14,0", chan: NES,
+      desc: "Gemeinsamer Stinger als wiedererkennbares Begegnungs-Signal für alle Encounter.", notes: "FL-Projekt: WIP/Audio/Stinger/Stinger_v1.flp" });
+    mk({ name: "Encounter", kind: "music", status: "entwurf", file: "WIP/Audio/Encounter/Game/Encounter_v1.ogg", bpm: 168, key: "c-Moll phrygisch", len: "62,857 s (44 Takte)", loop: "loop", lufs: "−14", chan: NES, after: st.uid, offset: "1,4286 s (63 000 Samples)",
+      desc: "Encounter-Musik im NES-Stil.", notes: "FL-Projekt und Spieldatei folgen (Encounter_v1). Vorlage: WIP/Audio/Random/Encounter_NES/." });
+  }
+  p.audioV1 = true;
+}
+function roomAudioText(r, slot) { var v = (r.audio || {})[slot]; if (v === "-") return slot === "music" ? "Stille" : "keine"; var a = v ? audioByUid(v) : null; if (a) return a.name;
+  var d = audioByUid((P.audioMap || {})[slot]); return "Standard" + (d ? " (" + d.name + ")" : ""); }
+function roomAudioLabel(r) { var A = r.audio || {}, out = ""; if (A.music) { var m = A.music === "-" ? null : audioByUid(A.music); out += "   ♪ " + (A.music === "-" ? "Stille" : m ? m.name : "?"); }
+  if (A.amb) { var b = A.amb === "-" ? null : audioByUid(A.amb); out += "   ≈ " + (A.amb === "-" ? "keine" : b ? b.name : "?"); } return out; }
+function roomAudioSelect(r, slot, id) { var v = (r.audio || {})[slot] || "", d = audioByUid((P.audioMap || {})[slot]);
+  var o = [["", "Standard" + (d ? " (" + d.name + ")" : " (–)")], ["-", slot === "music" ? "Stille" : "Keine"]].concat(sortedAudio().filter(function (a) { return slot === "music" ? a.kind === "music" : a.kind === "amb"; }).map(function (a) { return [a.uid, a.name]; }));
+  return '<select id="' + id + '">' + o.map(function (x) { return '<option value="' + esc(x[0]) + '"' + (x[0] === v ? " selected" : "") + ">" + esc(x[1]) + "</option>"; }).join("") + "</select>"; }
+function audioUse(a) { var u = { dungeon: [], rooms: [], objs: [], after: [] };
+  ["music", "amb"].forEach(function (sl) { if ((P.audioMap || {})[sl] === a.uid) u.dungeon.push(sl); });
+  P.rooms.forEach(function (r) { ["music", "amb"].forEach(function (sl) { if ((r.audio || {})[sl] === a.uid) u.rooms.push([r, sl]); }); });
+  P.blocks.forEach(function (b) { (b.snd || []).forEach(function (sd) { if (sd.a === a.uid) u.objs.push([b, sd]); }); });
+  (P.audio || []).forEach(function (x) { if (x.after === a.uid) u.after.push(x); }); return u; }
+function useCount(u) { return u.dungeon.length + u.rooms.length + u.objs.length; }
+function touchAudio(a) { a.updated = Date.now(); if (!a.created) a.created = a.updated; autosave(); }
+function auCommit() { renderAudioEditor(); render(); autosave(); }
+function audioMeta(a) { return [kindName(a.kind), a.bpm ? a.bpm + " BPM" : "", a.key || "", a.len || ""].filter(Boolean).join(" · "); }
+function sndAddCtl(fn, fixedAudio) {
+  var w = el("div", "oeAdd"), ev = oeIn("text", "", "Ereignis", function () {}), dl = el("datalist"); dl.id = "sndEvents" + Math.random().toString(36).slice(2, 7);
+  SND_EVENTS.forEach(function (e) { var op = el("option"); op.value = e; dl.appendChild(op); }); ev.setAttribute("list", dl.id); w.appendChild(ev); w.appendChild(dl);
+  var pick;
+  if (fixedAudio) pick = sel([["", "Objekt …"]].concat(sortedBlocks().map(function (b) { return [b.uid, "#" + b.id + " " + b.name]; })), "");
+  else pick = sel([["", "Sound …"]].concat(sortedAudio().map(function (a) { return [a.uid, a.name + " (" + kindName(a.kind) + ")"]; })), "");
+  pick.className = "oeIn"; w.appendChild(pick);
+  w.appendChild(oeBtn("Zuordnen", function () { if (!pick.value) { toast(fixedAudio ? "Erst ein Objekt wählen." : "Erst einen Sound wählen."); return; } fn(ev.value.trim() || "Ereignis", pick.value); })); return w;
+}
+function renderAudioEditor() {
+  var root = $("audioEditor"), oldL = root.querySelector(".oeItems"), oldI = root.querySelector(".oeInsp");
+  var keepL = oldL ? oldL.scrollTop : 0, keepI = oldI && oldI.getAttribute("data-k") === (auSel + "|" + auTab) ? oldI.scrollTop : 0;
+  var fl = auFiltered(), a = audioByUid(auSel); if (!a || (!auSearch.trim() && fl.indexOf(a) < 0)) { a = fl[0] || null; auSel = a ? a.uid : null; }
+  root.innerHTML = ""; var narrow = auNarrow = ($("main").clientWidth || 800) < 620;
+  var wrap = el("div", "oeWrap"), pane = el("div", "oePane " + (narrow ? "icons" : "list")), mainC = el("div", "oeMain"); wrap.appendChild(pane); wrap.appendChild(mainC); root.appendChild(wrap);
+  var head = el("div", "oeHeadBar"); if (narrow) head.style.display = "none";
+  var q = el("input", "oeSearch"); q.type = "search"; q.placeholder = "Suchen …"; q.value = auSearch; q.oninput = function () { auSearch = q.value; drawItems(); }; head.appendChild(q); pane.appendChild(head);
+  var items = el("div", "oeItems"); pane.appendChild(items);
+  var FL = [["all", "Alle Arten"]].concat(AUDIO_KINDS), fi = FL.map(function (f) { return f[0]; }).indexOf(auFilter); if (fi < 0) fi = 0;
+  var foot = el("div", "bcell oeFoot"); foot.title = "Art filtern"; foot.appendChild(iconCanvas(function (g, sz) { if (fi) drawIcon(g, "t-a-" + FL[fi][0], 3, 3, sz - 6); else drawIcon(g, "t-ring", 2, 2, sz - 4, "A"); }));
+  if (!narrow) foot.appendChild(el("div", "bct", FL[fi][1])); foot.onclick = function () { auFilter = FL[(fi + 1) % FL.length][0]; renderAudioEditor(); }; pane.appendChild(foot);
+  function drawItems() {
+    items.innerHTML = ""; var list = auFiltered(), last = null;
+    if (!list.length) items.appendChild(el("div", "bempty", narrow ? "–" : "Keine Einträge."));
+    list.forEach(function (x) {
+      if (auFilter === "all" && x.kind !== last) { last = x.kind; items.appendChild(el("div", "grp", narrow ? kindName(x.kind).charAt(0) : kindName(x.kind))); }
+      var r = el("div", "bitem" + (x.uid === auSel ? " sel" : "")); r.title = x.name;
+      r.appendChild(iconCanvas(function (g, sz) { drawIcon(g, "t-a-" + x.kind, 4, 4, sz - 8); }));
+      if (!narrow) { var d = el("div"); d.style.minWidth = "0"; d.appendChild(el("div", "bn", x.name)); d.appendChild(el("div", "bid", statusName(x) + (x.bpm ? " · " + x.bpm + " BPM" : ""))); r.appendChild(d); }
+      r.onclick = function () { auSel = x.uid; renderAudioEditor(); }; items.appendChild(r); });
+  }
+  drawItems(); items.scrollTop = keepL;
+  var insp = el("div", "oeInsp"); insp.setAttribute("data-k", auSel + "|" + auTab); mainC.appendChild(insp);
+  if (!a) insp.appendChild(el("p", "sh", (auFilter === "all" ? "Noch keine Einträge." : "Keine Einträge der Art „" + kindName(auFilter) + "“.") + " „Neu“ in der Werkzeugleiste legt einen an."));
+  else renderAudioInspector(insp, a);
+  insp.scrollTop = keepI;
+  var tw = el("div", "oeToolWrap"), tb = el("div", "oeTools"); tw.appendChild(tb); mainC.appendChild(tw);
+  tb.appendChild(tbBtn("t-map", "Karte", "Zurück zum Mapeditor", function () { setPage("map"); })); tb.appendChild(el("div", "vsep"));
+  var nw = tbBtn("t-new", "Neu", "Neuer Eintrag", function (ev) { ev.stopPropagation(); if ($("zoomPop").classList.contains("show")) { $("zoomPop").classList.remove("show"); return; }
+    popMenu(nw, AUDIO_KINDS.map(function (k) { return ["Neu: " + k[1], function () { addAudio(k[0]); }]; })); }); tb.appendChild(nw);
+  if (a) { tb.appendChild(tbBtn("t-dup", "Kopie", "Eintrag duplizieren", function () { var c = JSON.parse(JSON.stringify(a)); c.uid = "a" + (P.nextAid++); c.name = a.name + " (Kopie)"; c.created = c.updated = Date.now(); P.audio.push(c); auSel = c.uid; auCommit(); toast("Kopie angelegt"); }));
+    tb.appendChild(tbBtn("t-del", "Löschen", "Eintrag löschen", function () { delAudio(a); })); }
+}
+function addAudio(kind) {
+  P.audio = P.audio || []; P.nextAid = P.nextAid || 1;
+  var a = { uid: "a" + (P.nextAid++), kind: kind, name: "Neu: " + kindName(kind), status: "idee", loop: kind === "music" || kind === "amb" ? "loop" : "once" };
+  a.created = a.updated = Date.now(); P.audio.push(a); auSel = a.uid; if (auFilter !== "all" && auFilter !== kind) auFilter = "all"; auSearch = ""; auTab = "props"; auCommit();
+}
+function delAudio(a) {
+  var u = audioUse(a), n = useCount(u);
+  ask("Eintrag löschen", ["„" + a.name + "“ (" + kindName(a.kind) + ") löschen?", n ? "Er ist " + n + "× zugeordnet – diese Zuordnungen werden entfernt. Rückgängig ist danach nicht möglich." : "Rückgängig ist danach nicht möglich."], "Löschen", function () {
+    var list = auFiltered(), k = list.indexOf(a), next = list[k + 1] || list[k - 1];
+    u.dungeon.forEach(function (sl) { delete P.audioMap[sl]; }); u.rooms.forEach(function (x) { x[0].audio[x[1]] = ""; });
+    P.blocks.forEach(function (b) { if (b.snd) b.snd = b.snd.filter(function (sd) { return sd.a !== a.uid; }); }); u.after.forEach(function (x) { delete x.after; });
+    P.audio.splice(P.audio.indexOf(a), 1); auSel = next ? next.uid : null; auCommit(); });
+}
+function renderAudioInspector(insp, a) {
+  var u = audioUse(a), n = useCount(u), slot = a.kind === "music" ? "music" : a.kind === "amb" ? "amb" : null;
+  var hd = el("div", "oeHead"); hd.appendChild(iconCanvas(function (g, sz) { drawIcon(g, "t-a-" + a.kind, 12, 12, sz - 24); }, 64));
+  var hc = el("div", "oeHc"); hc.appendChild(oeIn("text", a.name, "Name", function (v) { a.name = v.trim() || a.name; touchAudio(a); auCommit(); }, "oeName"));
+  hc.appendChild(el("div", "sh", audioMeta(a) + " · " + (n ? n + "× zugeordnet" : "nicht zugeordnet"))); hd.appendChild(hc); insp.appendChild(hd);
+  var tabs = el("div", "stabs oeTabs"); [["props", "Eigenschaften"], ["use", "Verwendung"], ["notes", "Notizen"]].forEach(function (t) {
+    var x = el("button", auTab === t[0] ? "on" : "", t[1]); x.onclick = function () { auTab = t[0]; renderAudioEditor(); }; tabs.appendChild(x); }); insp.appendChild(tabs);
+  var bd = el("div", "oeBody"); insp.appendChild(bd); var grp = function (t) { bd.appendChild(el("div", "kgrp", t)); };
+  var wide = function (label, hint, key, ph) { var f = el("div", "oeField"); f.appendChild(el("div", "sl", label)); if (hint) { var h = el("div", "sh", hint); h.style.margin = "-4px 0 6px"; f.appendChild(h); }
+    f.appendChild(oeIn("text", a[key] || "", ph, function (v) { a[key] = v.trim(); touchAudio(a); auCommit(); })); bd.appendChild(f); };
+  var txt = function (label, hint, key, ph, cls) { oeRow(bd, label, hint, oeIn("text", a[key] || "", ph, function (v) { a[key] = v.trim(); touchAudio(a); auCommit(); }, cls)); };
+  if (auTab === "props") {
+    grp("Allgemein");
+    oeRow(bd, "Art", "", oeSeg(AUDIO_KINDS, a.kind, function (v) { if (v === a.kind) return; var go = function () { a.kind = v; ["music", "amb"].forEach(function (sl) { if ((v === "music" ? "music" : v === "amb" ? "amb" : null) === sl) return;
+        if (P.audioMap[sl] === a.uid) delete P.audioMap[sl]; P.rooms.forEach(function (r) { if (r.audio && r.audio[sl] === a.uid) r.audio[sl] = ""; }); }); touchAudio(a); auCommit(); };
+      if (u.dungeon.length || u.rooms.length) ask("Art ändern", ["„" + a.name + "“ wird " + kindName(v) + "?", "Zuordnungen als Musik/Ambience zu Dungeon und Räumen, die nicht mehr passen, werden entfernt."], "Ändern", go); else go(); }));
+    oeRow(bd, "Status", "", oeSeg(DB_STATUS, a.status || "idee", function (v) { a.status = v; touchAudio(a); auCommit(); }));
+    wide("Datei", "Pfad im Projektordner", "file", "z. B. WIP/Audio/…/Game/Name_v1.ogg");
+    grp(a.kind === "sfx" || a.kind === "voice" ? "Klang" : "Musikalisch");
+    if (a.kind !== "sfx" && a.kind !== "voice") {
+      oeRow(bd, "Tempo", "BPM", oeIn("number", a.bpm || "", "–", function (v) { a.bpm = parseFloat(v) || ""; touchAudio(a); auCommit(); }, "w-id"));
+      var keyI = oeIn("text", a.key || "", "z. B. e-Moll", function (v) { a.key = v.trim(); touchAudio(a); auCommit(); }), kdl = el("datalist"); kdl.id = "auKeys";
+      sortedAudio().map(function (x) { return x.key; }).filter(function (k, i, arr) { return k && arr.indexOf(k) === i; }).forEach(function (k) { var op = el("option"); op.value = k; kdl.appendChild(op); }); keyI.setAttribute("list", "auKeys");
+      var kw = el("div"); kw.appendChild(keyI); kw.appendChild(kdl); oeRow(bd, "Tonart", "", kw); }
+    txt("Länge", "z. B. 63,16 s (40 Takte)", "len", "–");
+    wide("Kanäle / Klangquelle", "", "chan", "z. B. NES: Puls 1, Puls 2, Dreieck, Rauschen");
+    grp("Wiedergabe");
+    oeRow(bd, "Abspielen", "", oeSeg([["loop", "Endlos (Loop)"], ["once", "Einmal"]], a.loop || "once", function (v) { a.loop = v; touchAudio(a); auCommit(); }));
+    if (a.kind === "music" || a.kind === "amb") {
+      var pre = sel([["", "– kein Vorlauf –"]].concat(sortedAudio().filter(function (x) { return x !== a; }).map(function (x) { return [x.uid, x.name + " (" + kindName(x.kind) + ")"]; })), a.after || ""); pre.className = "oeIn";
+      pre.onchange = function () { if (pre.value) a.after = pre.value; else delete a.after; touchAudio(a); auCommit(); }; oeRow(bd, "Vorlauf", "Wird vorher gespielt, z. B. ein Stinger", pre);
+      if (a.after) txt("Start nach", "Versatz ab Start des Vorlaufs", "offset", "z. B. 1,4286 s"); }
+    txt("Lautheit", "LUFS (Ziel −14)", "lufs", "–", "w-id");
+  } else if (auTab === "use") {
+    grp("Übersicht");
+    oeRow(bd, "Zugeordnet", "", el("div", "oeVal", n ? n + "×" : "nicht zugeordnet")); oeRow(bd, "Angelegt", "", el("div", "oeVal", fmtDate(a.created))); oeRow(bd, "Geändert", "", el("div", "oeVal", fmtDate(a.updated)));
+    if (slot) {
+      grp("Dungeon" + (P.dungeon ? " · " + P.dungeon : ""));
+      var cur = audioByUid(P.audioMap[slot]);
+      oeRow(bd, slot === "music" ? "Standard-Musik" : "Standard-Ambience", "Läuft in allen Räumen ohne eigene Zuordnung" + (cur && cur !== a ? " · zurzeit: " + cur.name : ""), oeSeg([["1", "Ja"], ["0", "Nein"]], P.audioMap[slot] === a.uid ? "1" : "0", function (v) {
+        if (v === "1") P.audioMap[slot] = a.uid; else if (P.audioMap[slot] === a.uid) delete P.audioMap[slot]; touchAudio(a); auCommit(); }));
+      grp("Räume");
+      if (!P.rooms.length) bd.appendChild(el("p", "sh", "Noch keine Räume."));
+      P.rooms.slice().sort(function (x, y) { return String(x.nr).localeCompare(String(y.nr), "de", { numeric: true }); }).forEach(function (r) {
+        var v = (r.audio || {})[slot] || "", st = v === a.uid ? "this" : v === "-" ? "none" : v ? "other" : "std";
+        oeRow(bd, "Raum " + r.nr + (r.name ? " · " + r.name : ""), "zurzeit: " + roomAudioText(r, slot), oeSeg([["std", "Standard"], ["this", "Dieser"], ["none", slot === "music" ? "Stille" : "Keine"]], st, function (nv) {
+          r.audio = r.audio || {}; r.audio[slot] = nv === "this" ? a.uid : nv === "none" ? "-" : ""; touchAudio(a); auCommit(); })); });
+    }
+    grp("Objekte");
+    if (!u.objs.length) bd.appendChild(el("p", "sh", "Keinem Objekt zugeordnet."));
+    u.objs.forEach(function (x) { var b = x[0], sd = x[1], r = el("div", "srow oeImgRow"), l = el("div", "oeImgL");
+      l.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 1, 1, sz - 2); })); var t = el("div"); t.appendChild(el("div", "sl", b.name)); t.appendChild(el("div", "sh", (sd.ev || "Ereignis") + " · #" + ("00" + b.id).slice(-3))); l.appendChild(t); r.appendChild(l);
+      r.appendChild(oeBtns([oeBtn("Öffnen", function () { dbSel = b.uid; oeTab = "props"; setPage("blocks"); }), oeBtn("Lösen", function () { b.snd.splice(b.snd.indexOf(sd), 1); touchBlock(b); touchAudio(a); auCommit(); })])); bd.appendChild(r); });
+    oeRow(bd, "Zuordnen", "Ereignis wählen oder frei eintippen", sndAddCtl(function (ev, uid) { var b = blockByUid(uid); if (!b) return; b.snd = b.snd || []; b.snd.push({ ev: ev, a: a.uid }); touchBlock(b); touchAudio(a); auCommit(); }, true));
+    if (u.after.length) { grp("Vorlauf für"); u.after.forEach(function (x) { oeRow(bd, x.name, kindName(x.kind) + (x.offset ? " · Start nach " + x.offset : ""), oeBtns([oeBtn("Öffnen", function () { auSel = x.uid; renderAudioEditor(); })])); }); }
+  } else {
+    var field = function (label, key, ph, rows) { var f = el("div", "oeField"); f.appendChild(el("div", "sl", label)); var t = el("textarea", "oeTa"); t.value = a[key] || ""; t.placeholder = ph;
+      t.rows = Math.min(14, Math.max(rows, (t.value || "").split("\n").length + Math.ceil((t.value || "").length / 70))); t.onchange = function () { a[key] = t.value; touchAudio(a); }; f.appendChild(t); bd.appendChild(f); };
+    field("Beschreibung", "desc", "Stimmung, Einsatz, Wirkung …", 3);
+    field("Referenzen", "ref", "Vorbilder, z. B. Mega Man 10, Metroid II …", 2);
+    field("Notizen", "notes", "FL-Projekt, offene Punkte, Ideen …", 4);
+    var tf = el("div", "oeField"); tf.appendChild(el("div", "sl", "Tags")); tf.appendChild(oeIn("text", a.tags || "", "kommagetrennt", function (v) { a.tags = v; touchAudio(a); })); bd.appendChild(tf);
+  }
+}
+function auMarkdown() {
+  var out = ["# " + (P.dungeon || "Æventh") + " – Audio", "", "- Stand: " + fmtDate(Date.now()), "- Einträge: " + (P.audio || []).length,
+    "- Standard-Musik: " + ((audioByUid((P.audioMap || {}).music) || {}).name || "–"), "- Standard-Ambience: " + ((audioByUid((P.audioMap || {}).amb) || {}).name || "–"), ""];
+  sortedAudio().forEach(function (a) { var u = audioUse(a), pre = audioByUid(a.after);
+    out.push("## " + a.name + " (" + kindName(a.kind) + ")", "", "| Feld | Wert |", "|---|---|", "| Status | " + statusName(a) + " |", "| Datei | " + (a.file ? "`" + a.file + "`" : "–") + " |",
+      "| Tempo / Tonart | " + (a.bpm ? a.bpm + " BPM" : "–") + " / " + (a.key || "–") + " |", "| Länge | " + (a.len || "–") + " |", "| Wiedergabe | " + (a.loop === "loop" ? "Loop" : "einmal") + (pre ? ", Vorlauf: " + pre.name + (a.offset ? " (Start nach " + a.offset + ")" : "") : "") + " |",
+      "| Kanäle | " + (a.chan || "–") + " |", "| Lautheit | " + (a.lufs ? a.lufs + " LUFS" : "–") + " |",
+      "| Zuordnung | " + ([].concat(u.dungeon.map(function () { return "Dungeon-Standard"; }), u.rooms.map(function (x) { return "Raum " + x[0].nr; }), u.objs.map(function (x) { return x[0].name + " (" + (x[1].ev || "?") + ")"; })).join(", ") || "–").replace(/\|/g, "\\|") + " |", "");
+    [["Beschreibung", "desc"], ["Referenzen", "ref"], ["Notizen", "notes"]].forEach(function (f) { if (a[f[1]]) out.push("### " + f[0], "", a[f[1]], ""); });
+    if (a.tags) out.push("Tags: " + a.tags, ""); });
+  return out.join("\n");
+}
+
 /* ================= export ================= */
 function cellCode(v) { var b = blockByUid(v.b); if (!b) return "??"; var c = ((b.code || "??") + "  ").slice(0, 2);
   if (v.p) c = c.charAt(0) + String(v.p).charAt(0); return c; }
@@ -1546,6 +1733,7 @@ function roomText(r) {
   ["bg", "fg"].forEach(function (lid) { var L = layerById(lid), l = (r.objs && r.objs[lid]) || [];
     if (l.length) { out.push("", "Ebene " + L.num + " " + L.name + " (Objekte, x,y in Pixeln, 16 px = 1 Zelle):"); l.slice().sort(function (a, c) { return a.y - c.y || a.x - c.x; }).forEach(function (o) { var b = blockByUid(o.b);
       out.push("- " + o.x + "," + o.y + " = " + (b ? b.id + " " + b.name + " (" + bw(b) + "×" + bh(b) + ")" : "?") + (o.p ? " [" + paramLabel(o.p) + "]" : "")); }); } });
+  out.push("- Musik: " + roomAudioText(r, "music"), "- Ambience: " + roomAudioText(r, "amb"));
   if (r.guides && r.guides.length) out.push("", "Hilfslinien (Zellen ab Raumecke): " + r.guides.map(function (g) { return (g.o === "v" ? "senkrecht " : "waagerecht ") + fmtCells(g.p); }).join(", "));
   out = out.concat(pathsText(r));
   if (r.texts.length) { out.push("", "Texte:"); r.texts.forEach(function (t) { out.push("- " + t.x + "," + t.y + ": " + t.text); }); }
@@ -1569,8 +1757,8 @@ function stamp() { var d = new Date(); return d.getFullYear() + ("0" + (d.getMon
 /* ================= pages ================= */
 function setPage(pg) {
   page = pg; var map = pg === "map";
-  if (!map) gameView = false; $("cv").style.display = map ? "block" : "none"; $("blockEditor").style.display = pg === "blocks" ? "block" : "none"; $("pixEditor").style.display = pg === "pixels" ? "block" : "none";
-  activeSim = null; showSimPad(); resize(); if (map) { buildTools(); buildBlockPanel(); render(); } else if (pg === "blocks") renderBlockEditor(); else pxLayout();
+  if (!map) gameView = false; $("cv").style.display = map ? "block" : "none"; $("blockEditor").style.display = pg === "blocks" ? "block" : "none"; $("pixEditor").style.display = pg === "pixels" ? "block" : "none"; $("audioEditor").style.display = pg === "audio" ? "block" : "none";
+  activeSim = null; showSimPad(); resize(); if (map) { buildTools(); buildBlockPanel(); render(); } else if (pg === "blocks") renderBlockEditor(); else if (pg === "audio") renderAudioEditor(); else pxLayout();
   updateStatus();
 }
 
@@ -1634,7 +1822,9 @@ var ACTIONS = {
   toggleBlockNames: function () { P.settings.blockNames = !P.settings.blockNames; resize(); buildBlockPanel(); buildTools(); updateStatus(); autosave(); },
   toggleBlocks: function () { P.settings.showBlocks = !P.settings.showBlocks; resize(); updateStatus(); autosave(); },
   toggleTools: function () { P.settings.showTools = !P.settings.showTools; buildTools(); autosave(); },
-  pageMap: function () { setPage("map"); }, pageBlocks: function () { setPage("blocks"); }, pagePixels: function () { openPix(curBlock); },
+  pageMap: function () { setPage("map"); }, pageBlocks: function () { setPage("blocks"); }, pagePixels: function () { openPix(curBlock); }, pageAudio: function () { setPage("audio"); },
+  exportAudio: function () { download("aeventh_audio_" + stamp() + ".md", auMarkdown(), "text/markdown"); toast("Audio exportiert (Download-Ordner)."); },
+  toggleAudioLbl: function () { P.settings.showAudio = !P.settings.showAudio; render(); autosave(); toast(P.settings.showAudio ? "Musik an Räumen an" : "Musik an Räumen aus"); },
   toggleEink: function () { P.settings.eink = !P.settings.eink; updateStatus(); autosave(); },
   toggleEraserUndo: function () { P.settings.eraserUndo = !P.settings.eraserUndo; updateStatus(); autosave(); },
   togglePenBtn: function () { P.settings.penBtnErase = !P.settings.penBtnErase; updateStatus(); autosave(); },
@@ -1650,9 +1840,9 @@ var ACTIONS = {
     "<p><b>Unten:</b> Werkzeuge (Verschieben bewegt einzelne Objekte), Zurück/Vor und Zoom (Tippen auf die Prozentzahl öffnet die Zoomstufen). „Zu“ blendet die Leiste aus. Die Ebene wechselt automatisch mit dem gewählten Objekt.</p>" +
     "<p><b>Räume:</b> Menü Raum → Neuer Raum. Mit „Auswahl“ verschieben, am Quadrat unten rechts Größe ändern, Doppeltippen auf den Namen öffnet die Eigenschaften.</p><p><b>Spielansicht</b> (Ansicht, Taste P): blendet Rahmen, Namen, Raster, Texte und alle Leisten aus und zeigt nur den Inhalt. Verschieben und Zoomen geht weiter.</p>" +
     "<p><b>Editor</b> (Menü): zwischen Mapeditor, Objekteditor und Pixeleditor wechseln. Im Pixeleditor zeichnest du das Bild eines Objekts in seiner Größe (schwarz/weiß, bis 128 px; größere Hintergründe als Bild hochladen); es ersetzt im Mapeditor das Symbol, die Funktion bleibt. Blöcke mit Parametern (Richtung, Tür-Nr. …) bekommen je Version ein eigenes Bild; ohne eigenes Bild gilt das Grundbild.</p>" +
-    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Hilfslinien:</b> Werkzeug „Hilfslinie“ (G) – Antippen im Raum setzt eine Linie, Ziehen verschiebt sie (rastet im Raster und an der Raummitte ein), erneutes Antippen des Werkzeugs wechselt senkrecht/waagerecht. Doppeltipp auf eine Linie öffnet die exakte Eingabe; Löschen durch Herausziehen aus dem Raum oder mit dem Radiererende. Raum → „Hilfslinien in die Mitte setzen“; Ansicht → „Raummitte anzeigen“ zeigt die Mitte jedes Raums ohne eigene Linien. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
+    "<p><b>Ebenen:</b> 1 Hintergrund, 2 Spielebene (Funktion, 16×16-Raster), 3 Vordergrund. Die Zahl unten in der Objektleiste zeigt die aktive Ebene – Antippen schaltet weiter. Objekte auf 1 und 3 haben eigene Größen, werden frei platziert (Raster einstellbar) und lassen sich mit „Verschieben“ bewegen. Bewegung (Parallax) und Animation stellst du im Objekteditor ein.</p><p><b>Ebene 4 Bewegung:</b> Spielerwege planen. „Rutsch-Simulation“: Startfeld antippen, dann Richtungen über das Pfeilfeld (oder Pfeiltasten/WASD) – der Weg gleitet nach den Regeln aus dem GDD bis zum nächsten Hindernis (Wand, Stein, zerstörbare Wand, erscheinender Block), geht durch Türen und markiert Treffer ✕ und Kristalle ✦. „Weg zeichnen“: freie Skizze. Radierer löscht einen Weg, Antippen eines Wegs führt ihn weiter. Nie in der Spielansicht.</p><p><b>Audioeditor</b> (Editor → Audioeditor, Alt+4): Musik, Stinger, Ambience, Soundeffekte und Stimmen planen – Status, Datei im Projektordner, Tempo, Tonart, Länge, Loop, Vorlauf (z. B. Stinger vor dem Encounter). Unter „Verwendung“ zuordnen: Standard für den Dungeon, einzelne Räume (auch in den Raum-Eigenschaften) und Objekte mit Ereignis (auch im Objekteditor unter „Sounds“). Die Raumbeschriftung zeigt eigene Musik mit ♪ (Ansicht → Musik an Räumen anzeigen).</p><p><b>Hilfslinien:</b> Werkzeug „Hilfslinie“ (G) – Antippen im Raum setzt eine Linie, Ziehen verschiebt sie (rastet im Raster und an der Raummitte ein), erneutes Antippen des Werkzeugs wechselt senkrecht/waagerecht. Doppeltipp auf eine Linie öffnet die exakte Eingabe; Löschen durch Herausziehen aus dem Raum oder mit dem Radiererende. Raum → „Hilfslinien in die Mitte setzen“; Ansicht → „Raummitte anzeigen“ zeigt die Mitte jedes Raums ohne eigene Linien. Nie in der Spielansicht.</p><p><b>Tastenkürzel:</b> Hilfe → Tastenkürzel und Stift (frei belegbar).</p><p><b>In die Inbox:</b> Datei → Raum als Text kopieren → in eine Obsidian-Notiz einfügen. Sicherung: Datei → Projekt speichern.</p></div>"); },
   checkUpdate: function () { checkUpdate(true); },
-  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor und Objekteditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
+  about: function () { modal("<h3>Æventh Planer " + VERSION + "</h3><div class='body help'><p>Planungs-App für Æventh: Survival – Mapeditor, Objekteditor, Pixeleditor und Audioeditor. Daten bleiben im Browser bzw. in deinen exportierten Dateien.</p></div>"); }
 };
 updateMenuKeys();
 document.querySelectorAll(".mitem").forEach(function (it) { it.addEventListener("click", function (ev) { ev.stopPropagation(); closeMenus(); var a = ACTIONS[it.getAttribute("data-act")]; if (a) a(); }); });
@@ -1940,6 +2130,11 @@ function renderInspector(insp, b) {
     if (num !== 2) {
       oeRow(bd, "Parallax", "Bewegt sich langsamer als die Kamera", oeSeg([["1", "Fest"], ["0.75", "75 %"], ["0.5", "50 %"], ["0.25", "25 %"]], String(+b.par || 1), function (v) { b.par = +v; touchBlock(b); commit(); }));
       oeRow(bd, "Animation", "", oeSeg([["off", "Aus"], ["on", "An"]], b.anim || "off", function (v) { b.anim = v; touchBlock(b); commit(); })); }
+    grp("Sounds");
+    (b.snd || []).forEach(function (sd, k) { var a = audioByUid(sd.a); oeRow(bd, sd.ev || "Ereignis", a ? a.name + " · " + kindName(a.kind) : "(gelöscht)", oeBtns([a ? oeBtn("Öffnen", function () { auSel = a.uid; setPage("audio"); }) : null,
+      oeBtn("Lösen", function () { b.snd.splice(k, 1); touchBlock(b); commit(); })])); });
+    if (!(b.snd || []).length) bd.appendChild(el("p", "sh", "Noch keine Sounds zugeordnet."));
+    oeRow(bd, "Zuordnen", "Ereignis wählen oder frei eintippen", sndAddCtl(function (ev, uid) { b.snd = b.snd || []; b.snd.push({ ev: ev, a: uid }); touchBlock(b); commit(); }, null));
     grp("Varianten");
     oeRow(bd, "Parameter", "Bezeichnung, z. B. Richtung oder Tür-Nr.", oeIn("text", b.plabel, "–", function (v) { b.plabel = v.trim(); touchBlock(b); commit(); }));
     oeRow(bd, "Werte", "Kommagetrennt, je 1 Zeichen. Im Mapeditor wechselt erneutes Antippen die Variante.", oeIn("text", b.pvals, "z. B. 1,2,3", function (v) { b.pvals = v.split(",").map(function (x) { return x.trim().charAt(0); }).filter(function (x) { return x; }).join(","); touchBlock(b); commit(); }));
@@ -2004,6 +2199,7 @@ function dbMarkdown() {
       "| Varianten | " + (pv.length ? (b.plabel || "Wert") + ": " + pv.map(paramLabel).join(", ").replace(/\|/g, "\\|") : "–") + " |", "| Vorkommen | " + usageByRoom(b.uid).map(function (u) { return "R" + u[0].nr + " (" + u[1] + "×)"; }).join(", ") + " |", "");
     [["Beschreibung", "desc"], ["Verhalten im Spiel", "behav"], ["Sound & Effekte", "sound"], ["Design-Notizen", "notes"]].forEach(function (f) { if (b[f[1]]) out.push("### " + f[0], "", b[f[1]], ""); });
     if (b.rel && b.rel.length) out.push("Verwandt: " + b.rel.map(function (u) { var o = blockByUid(u); return o ? o.name : ""; }).filter(Boolean).join(", "), "");
+    if (b.snd && b.snd.length) out.push("Sounds: " + b.snd.map(function (sd) { var a = audioByUid(sd.a); return (sd.ev || "?") + " → " + (a ? a.name : "?"); }).join(", "), "");
     if (b.tags) out.push("Tags: " + b.tags, "");
   });
   return out.join("\n");
@@ -2019,7 +2215,7 @@ var GDD_SEED; GDD_SEED = { wall: ["Hindernis", "Massives Hindernis. Die gleitend
   flyer: ["Gegner", "Gleitet fließend senkrecht oder waagerecht und kehrt an Wänden um (optional mit kurzer Pause). Ist er auf beiden Seiten eingeschlossen, bleibt er stehen."],
   shooter: ["Gegner", "Schießt entlang gerader Linien – Geschosse (Zelle für Zelle bis zur Wand) oder Laserstrahl (die ganze Linie ist kurz gefährlich). Viele Varianten als Gegner und Fallen."],
   teleporter: ["Gegner", "Teleportiert sich innerhalb des Raums – im Takt oder nach einem Schuss, zufällig oder an festgelegte Stellen, nie zu nah an die Spielfigur; blinkt vorher auf."] };
-function seedDb(p) { if (p.dbV1 || typeof GDD_SEED === "undefined") return; (p.blocks || []).forEach(function (b) { var g = GDD_SEED[b.icon]; if (!g) return; if (!b.cat) b.cat = g[0]; if (!b.behav) b.behav = g[1] + " (Quelle: GDD v15)"; if (g[2] && !b.ability) b.ability = g[2]; }); p.dbV1 = true; }
+function seedDb(p) { seedAudio(p); if (p.dbV1 || typeof GDD_SEED === "undefined") return; (p.blocks || []).forEach(function (b) { var g = GDD_SEED[b.icon]; if (!g) return; if (!b.cat) b.cat = g[0]; if (!b.behav) b.behav = g[1] + " (Quelle: GDD v15)"; if (g[2] && !b.ability) b.ability = g[2]; }); p.dbV1 = true; }
 function inp(type, val, cls) { var i = document.createElement("input"); i.type = type; i.value = val == null ? "" : val; i.className = cls; return i; }
 function sel(opts, val) { var s = document.createElement("select"); opts.forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; if (o[0] === val) op.selected = true; s.appendChild(op); }); return s; }
 function btn(t, fn) { var b = document.createElement("button"); b.className = "smallbtn"; b.textContent = t; b.onclick = fn; return b; }
