@@ -1,1 +1,1 @@
-{ "version": "0.4.7", "app": "0.4.7", "notes": "Blockleiste: Leisten per Kreis-Taste unten durchschalten, Markierung über die volle Breite. Werkzeugleiste: Zurück/Vor und Zoom statt 16/8. Radiererende = Rückgängig." }
+{ "version": "0.4.8", "app": "0.4.8", "notes": "Seitenleiste im Stil der Werkzeugleiste (gleiche Icon- und Zellengröße), Leisten heißen jetzt 1 und 2, neue Zurück/Vor-Icons." }
