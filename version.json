@@ -1,1 +1,1 @@
-{ "version": "0.6.1", "app": "0.6.1", "notes": "Fehler behoben: Auf der Spielebene ließ sich nichts mehr platzieren." }
+{ "version": "0.6.2", "app": "0.6.2", "notes": "Verbundene gleiche Objekte gemeinsam verschieben (einstellbar). Raster-Standard 16×16. Boox-Seitentaste klarer beschriftet. Code geprüft: mehrere Fehler behoben (Pixeleditor-Speichern, Handballen beendet Strich, Ebene leeren, Rückgängig/Wiederholen, Tastenkürzel ⇧1/⇧3, Export-Tabelle)." }

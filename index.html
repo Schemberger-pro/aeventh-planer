@@ -307,9 +307,9 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.6.1", APP_VERSION = "0.6.1", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.6.2", APP_VERSION = "0.6.2", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
-var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "8", labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
+var SETTINGS_DEFAULT = { eink: true, dots: true, raster: "16", moveGroup: true, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
 /* ================= default blocks / rooms ================= */
 function defaultBlocks() {
@@ -361,12 +361,16 @@ function ensureLayers(p) {
         var target = l.type === "deco" ? "fg" : "bg", f = (l.grid || 8) === 8 ? 8 : 16;
         Object.keys(m).forEach(function (k) { var a = k.split(","), v = m[k], o = { b: v.b, x: +a[0] * f, y: +a[1] * f }; if (v.p) o.p = v.p; r.objs[target].push(o); });
         delete r[l.id]; });
+      ["par", "bg"].forEach(function (id) { var m = r[id]; if (!m || Array.isArray(m) || defs.some(function (l) { return l.id === id; })) return;
+        Object.keys(m).forEach(function (k) { var a = k.split(","), v = m[k]; r.objs.bg.push({ b: v.b, x: +a[0] * 8, y: +a[1] * 8, p: v.p }); }); });
       if (r.design && !defs.some(function (l) { return l.id === "design"; })) { Object.keys(r.design).forEach(function (k) { var a = k.split(","), v = r.design[k]; r.objs.fg.push({ b: v.b, x: +a[0] * 8, y: +a[1] * 8, p: v.p }); }); }
       delete r.design; delete r.par; delete r.bg;
     });
     var vis = {}; old.forEach(function (l) { vis[l.type === "deco" ? "fg" : l.type === "func" ? "func" : "bg"] = l.visible !== false; });
     p.layers = LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: vis[L.id] !== false }; });
-    if (p.settings && p.settings.raster == null) p.settings.raster = p.settings.dots === false ? "0" : "8";
+    var onBg = {}, onFg = {}; (p.rooms || []).forEach(function (r) { (r.objs.bg || []).forEach(function (o) { onBg[o.b] = 1; }); (r.objs.fg || []).forEach(function (o) { onFg[o.b] = 1; }); });
+    (p.blocks || []).forEach(function (b) { if (!b.layer && b.kind !== "func" && onBg[b.uid] && !onFg[b.uid]) b.layer = 1; });
+    if (p.settings && p.settings.raster == null) p.settings.raster = p.settings.dots === false ? "0" : "16";
     p.layersV3 = true;
   }
   if (!p.layers || p.layers.length !== 3) p.layers = LAYERS.map(function (L) { return { id: L.id, num: L.num, name: L.name, visible: true }; });
@@ -422,6 +426,7 @@ function autosave() {
 function migrateSettings(st) {
   if (!st) return;
   if (!st.floatV2) { if (st.floatSecs === "4" || st.floatSecs == null) st.floatSecs = "2"; st.floatV2 = true; }
+  if (!st.rasterV2) { if (st.raster === "8" || st.raster == null) st.raster = "16"; if (st.moveGroup == null) st.moveGroup = true; st.rasterV2 = true; }
   if (st.pickEmpty == null) st.pickEmpty = true; if (!st.lang) st.lang = "de";
   if (!st.defV3) { st.labels = false; st.blockNames = false; st.penBarrel = "pick"; st.penEraser = "erase"; st.eraserUndo = false; st.penBtnErase = false; st.defV3 = true; }
   if (!st.penBarrel) st.penBarrel = "pick"; if (!st.penEraser) st.penEraser = "erase"; if (!st.keys) st.keys = {};
@@ -439,7 +444,9 @@ function loadSaved() {
   } catch (e) { return false; }
 }
 function snapshot() { return JSON.stringify(P.rooms); }
-function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 60) undoStack.shift(); redoStack = []; }
+var redoKeep = [];
+function pushUndo() { undoStack.push(snapshot()); if (undoStack.length > 60) undoStack.shift(); redoKeep = redoStack; redoStack = []; }
+function dropUndo() { undoStack.pop(); redoStack = redoKeep; }
 function undo() { if (page === "pixels") return pxAct("undo"); if (!undoStack.length) return; redoStack.push(snapshot()); P.rooms = JSON.parse(undoStack.pop()); if (selRoom && !roomById(selRoom)) selRoom = null; render(); autosave(); }
 function redo() { if (page === "pixels") return pxAct("redo"); if (!redoStack.length) return; undoStack.push(snapshot()); P.rooms = JSON.parse(redoStack.pop()); render(); autosave(); }
 
@@ -653,7 +660,7 @@ function drawObjs(room, layer, o, z, game) {
     var x = o[0] + ob.x * spp + dx, y = o[1] + ob.y * spp + dy, w = bw(b) * spp, h = bh(b) * spp;
     if (x > CW || y > CH || x + w < 0 || y + h < 0) return;
     drawBlockWH(ctx, b, x, y, w, h, ob.p, !game);
-    if (!game && ob === selObj) { ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = "#000"; ctx.strokeRect(x - 3, y - 3, w + 6, h + 6); ctx.restore(); }
+    if (!game && (ob === selObj || selGroup.indexOf(ob) >= 0)) { ctx.save(); ctx.setLineDash([6, 4]); ctx.lineWidth = 2; ctx.strokeStyle = "#000"; ctx.strokeRect(x - 3, y - 3, w + 6, h + 6); ctx.restore(); }
   });
   ctx.restore();
 }
@@ -690,13 +697,29 @@ function drawLayer(room, layer, o, s) {
 /* ================= Objekte (Ebene 1 und 3) ================= */
 function roomPx(p) { var w = s2w(p[0], p[1]), room = roomAtWorld(w[0], w[1]); if (!room) return null; return { room: room, x: (w[0] - room.x) * 16, y: (w[1] - room.y) * 16 }; }
 function snapV(v) { var s = snapPx(); return Math.round(v / s) * s; }
+function objGroup(room, layer, start) {
+  var list = room.objs[layer] || [], out = [start], seen = [start];
+  for (var i = 0; i < out.length; i++) { var a = out[i], ba = blockByUid(a.b), aw = bw(ba), ah = bh(ba);
+    list.forEach(function (o) { if (seen.indexOf(o) >= 0 || o.b !== a.b) return;
+      if (o.x <= a.x + aw && a.x <= o.x + aw && o.y <= a.y + ah && a.y <= o.y + ah && !((o.x === a.x + aw || a.x === o.x + aw) && (o.y === a.y + ah || a.y === o.y + ah))) { seen.push(o); out.push(o); } }); }
+  return out;
+}
+function cellGroup(cells, key) {
+  var v = cells[key]; if (!v) return []; var out = [key], seen = {}; seen[key] = 1;
+  for (var i = 0; i < out.length; i++) { var a = out[i].split(","), x = +a[0], y = +a[1];
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(function (d) { var k = (x + d[0]) + "," + (y + d[1]); if (!seen[k] && cells[k] && cells[k].b === v.b) { seen[k] = 1; out.push(k); } }); }
+  return out;
+}
+var selGroup = [];
 function topObj(room, layer, x, y) { var l = room.objs[layer] || []; for (var i = l.length - 1; i >= 0; i--) { var o = l[i], b = blockByUid(o.b); if (!b) continue; if (x >= o.x && y >= o.y && x < o.x + bw(b) && y < o.y + bh(b)) return o; } return null; }
 function objDown(p, useTool, byTouch) {
   var rp = roomPx(p); if (!rp) { if (useTool !== "pick") toast("Außerhalb eines Raums – zuerst einen Raum anlegen."); return; }
   selRoom = rp.room.rid; var list = rp.room.objs[mode];
   if (useTool === "pick") { var h = topObj(rp.room, mode, rp.x, rp.y); if (h) pickValue({ b: h.b, p: h.p }); else if (P.settings.pickEmpty) { tool = "erase"; buildTools(); buildBlockPanel(); render(); toast("Leer aufgenommen – Radierer aktiv."); } else render(); return; }
-  if (useTool === "move") { var m = topObj(rp.room, mode, rp.x, rp.y); selObj = m; if (!m) { render(); return; }
-    pushUndo(); drag = { type: "omove", room: rp.room, obj: m, ox: m.x, oy: m.y, sx: rp.x, sy: rp.y, moved: false, byTouch: byTouch, undoPushed: true }; render(); return; }
+  if (useTool === "move") { var m = topObj(rp.room, mode, rp.x, rp.y); selObj = m; selGroup = []; if (!m) { render(); return; }
+    var grp = P.settings.moveGroup ? objGroup(rp.room, mode, m) : [m]; selGroup = grp;
+    pushUndo(); drag = { type: "omove", room: rp.room, obj: m, grp: grp.map(function (o) { return [o, o.x, o.y]; }), ox: m.x, oy: m.y, sx: rp.x, sy: rp.y, moved: false, byTouch: byTouch, undoPushed: true };
+    if (grp.length > 1) toast(grp.length + " verbundene Objekte"); render(); return; }
   if (useTool === "erase") { pushUndo(); drag = { type: "oerase", room: rp.room, changed: false, byTouch: byTouch, undoPushed: true }; objMove(p); return; }
   var b = curValidBlock(); if (!b) { toast("Erst links ein Objekt dieser Ebene wählen."); return; }
   if (useTool === "rect") { pushUndo(); drag = { type: "orect", room: rp.room, x0: rp.x, y0: rp.y, x1: rp.x, y1: rp.y, byTouch: byTouch, undoPushed: true }; objMove(p); return; }
@@ -706,7 +729,7 @@ function objValue(b, x, y) { var o = { b: b.uid, x: x, y: y }, pv = pvalsOf(b); 
 function objMove(p) {
   var rp = roomPx(p); if (!rp || rp.room !== drag.room) return; var r = drag.room, list = r.objs[mode];
   if (drag.type === "omove") { var nx = snapV(drag.ox + rp.x - drag.sx), ny = snapV(drag.oy + rp.y - drag.sy);
-    if (nx !== drag.obj.x || ny !== drag.obj.y) { drag.obj.x = nx; drag.obj.y = ny; drag.moved = true; schedule(); } return; }
+    if (nx !== drag.obj.x || ny !== drag.obj.y) { var dx = nx - drag.ox, dy = ny - drag.oy; drag.grp.forEach(function (g) { g[0].x = g[1] + dx; g[0].y = g[2] + dy; }); drag.moved = true; schedule(); } return; }
   if (drag.type === "oerase") { var h = topObj(r, mode, rp.x, rp.y); if (h) { list.splice(list.indexOf(h), 1); if (selObj === h) selObj = null; drag.changed = true; schedule(); } return; }
   var b = curValidBlock(); if (!b) return; var w = bw(b), hh = bh(b);
   if (drag.type === "opaint") { var x = snapV(rp.x - w / 2), y = snapV(rp.y - hh / 2), L = drag.last;
@@ -759,7 +782,7 @@ cv.addEventListener("pointerdown", function (ev) {
   if (ev.pointerType === "touch") {
     if (P.settings.palm && penDown > 0) { delete pointers[ev.pointerId]; return; }
     var ids = touchIds();
-    if (ids.length === 2) { cancelPending(); if (drag && drag.byTouch) { if (drag.undoPushed) { P.rooms = JSON.parse(undoStack.pop()); } drag = null; preview = null; } startPinch(); return; }
+    if (ids.length === 2) { cancelPending(); if (drag && drag.byTouch) { if (drag.undoPushed) { P.rooms = JSON.parse(undoStack.pop()); redoStack = redoKeep; } drag = null; preview = null; } startPinch(); return; }
     if (ids.length > 2) return;
     var dragTools = { select: 1, rect: 1 };
     if (!gameView && dragTools[tool] || (P.settings.fingerPaint && (tool === "brush" || tool === "erase"))) { toolDown(p, tool, ev, true); return; }
@@ -782,6 +805,7 @@ cv.addEventListener("pointermove", function (ev) {
   toolMove(p);
 });
 function upHandler(ev) {
+  if (ev.pointerType === "touch" && !pointers[ev.pointerId]) return;
   var wasPen = pointers[ev.pointerId] && pointers[ev.pointerId].type === "pen";
   delete pointers[ev.pointerId]; if (wasPen) penDown = Math.max(0, penDown - 1);
   if (pinch) { if (touchIds().length < 2) endPinch(); return; }
@@ -851,9 +875,11 @@ function toolDown(p, useTool, ev, byTouch) {
   if (isObjLayer(mode) && useTool !== "text") { objDown(p, useTool, byTouch); return; }
   var ci = cellInfo(p[0], p[1], mode);
   if (!ci) { if (useTool !== "pick") toast("Außerhalb eines Raums – zuerst einen Raum anlegen."); return; }
-  if (useTool === "move") { selRoom = ci.room.rid; var cv0 = ci.room.func[ci.key]; if (!cv0) { render(); return; }
-    pushUndo(); drag = { type: "cmove", room: ci.room, from: ci.key, v: cv0, to: ci.key, byTouch: byTouch, undoPushed: true };
-    preview = { type: "cell", wx: ci.room.x + ci.x, wy: ci.room.y + ci.y, ww: 1, wh: 1 }; render(); return; }
+  if (useTool === "move") { selRoom = ci.room.rid; if (!ci.room.func[ci.key]) { render(); return; }
+    var keys = P.settings.moveGroup ? cellGroup(ci.room.func, ci.key) : [ci.key], xs = keys.map(function (k) { return +k.split(",")[0]; }), ys = keys.map(function (k) { return +k.split(",")[1]; });
+    var bx0 = Math.min.apply(null, xs), by0 = Math.min.apply(null, ys), bx1 = Math.max.apply(null, xs), by1 = Math.max.apply(null, ys);
+    pushUndo(); drag = { type: "cmove", room: ci.room, keys: keys, sx: ci.x, sy: ci.y, dx: 0, dy: 0, bx0: bx0, by0: by0, bx1: bx1, by1: by1, byTouch: byTouch, undoPushed: true };
+    preview = { type: "cell", wx: ci.room.x + bx0, wy: ci.room.y + by0, ww: bx1 - bx0 + 1, wh: by1 - by0 + 1 }; if (keys.length > 1) toast(keys.length + " verbundene Zellen"); render(); return; }
   selRoom = ci.room.rid;
   if (useTool === "pick") { var v = ci.room[mode][ci.key]; if (v) pickValue(v); else if (P.settings.pickEmpty) { tool = "erase"; buildTools(); buildBlockPanel(); render(); toast("Leer aufgenommen – Radierer aktiv."); } else render(); return; }
   if (useTool === "text") { editText(ci); return; }
@@ -887,19 +913,21 @@ function toolMove(p) {
     var lx = Math.max(0, Math.min(r.w * f - 1, Math.floor((w2[0] - r.x) * f))), ly = Math.max(0, Math.min(r.h * f - 1, Math.floor((w2[1] - r.y) * f)));
     preview.lx1 = lx; preview.ly1 = ly; preview.x1 = lx + r.x * f; preview.y1 = ly + r.y * f; schedule(); return; }
   if (drag.type === "paint") { var ci = cellInfo(p[0], p[1], mode); if (ci && ci.room === drag.room && paintAt(ci, drag.tool)) { drag.changed = true; schedule(); } }
-  if (drag.type === "cmove") { var c2 = cellInfo(p[0], p[1], "func"); if (c2 && c2.room === drag.room && c2.x >= 0 && c2.y >= 0 && c2.x < c2.room.w && c2.y < c2.room.h) { drag.to = c2.key; preview.wx = c2.room.x + c2.x; preview.wy = c2.room.y + c2.y; schedule(); } }
+  if (drag.type === "cmove") { var c2 = cellInfo(p[0], p[1], "func"); if (c2 && c2.room === drag.room) { var R = c2.room, cdx = Math.max(-drag.bx0, Math.min(R.w - 1 - drag.bx1, c2.x - drag.sx)), cdy = Math.max(-drag.by0, Math.min(R.h - 1 - drag.by1, c2.y - drag.sy));
+    if (cdx !== drag.dx || cdy !== drag.dy) { drag.dx = cdx; drag.dy = cdy; preview.wx = R.x + drag.bx0 + cdx; preview.wy = R.y + drag.by0 + cdy; schedule(); } } }
   if (drag.type === "opaint" || drag.type === "oerase" || drag.type === "omove" || drag.type === "orect") objMove(p);
 }
 function endDrag() {
   if (!drag) return;
   if (drag.type === "pan") { if (P.settings.eink) { view.px = drag.px + (drag.dx || 0); view.py = drag.py + (drag.dy || 0); cv.style.transform = ""; } }
-  if (drag.type === "move" && !drag.moved) undoStack.pop();
-  if (drag.type === "paint" && !drag.changed) undoStack.pop();
-  if ((drag.type === "opaint" || drag.type === "oerase") && !drag.changed) undoStack.pop();
-  if (drag.type === "omove" && !drag.moved) undoStack.pop();
-  if (drag.type === "cmove") { if (drag.to !== drag.from) { delete drag.room.func[drag.from]; drag.room.func[drag.to] = drag.v; } else undoStack.pop(); preview = null; }
+  if (drag.type === "move" && !drag.moved) dropUndo();
+  if (drag.type === "paint" && !drag.changed) dropUndo();
+  if ((drag.type === "opaint" || drag.type === "oerase") && !drag.changed) dropUndo();
+  if (drag.type === "omove" && !drag.moved) dropUndo();
+  if (drag.type === "cmove") { if (drag.dx || drag.dy) { var F = drag.room.func, vals = drag.keys.map(function (k) { return [k, F[k]]; });
+      vals.forEach(function (kv) { delete F[kv[0]]; }); vals.forEach(function (kv) { var a = kv[0].split(","); F[(+a[0] + drag.dx) + "," + (+a[1] + drag.dy)] = kv[1]; }); } else dropUndo(); preview = null; }
   if (drag.type === "orect") { objRectEnd(); preview = null; }
-  if (drag.type === "resize") clipRoom(drag.room);
+  if (drag.type === "resize") { if (drag.room.w === drag.w0 && drag.room.h === drag.h0) dropUndo(); else clipRoom(drag.room); }
   if (drag.type === "room") {
     var x = Math.min(preview.x0, preview.x1), y = Math.min(preview.y0, preview.y1);
     var w = Math.max(32, Math.abs(preview.x1 - preview.x0) + 1), h = Math.max(18, Math.abs(preview.y1 - preview.y0) + 1);
@@ -1067,7 +1095,7 @@ $("bpFoot").onclick = function () {
 $("bpTab").onclick = function () { P.settings.showBlocks = true; resize(); updateStatus(); autosave(); };
 $("gameExit").onclick = function () { setGame(false); };
 function setGame(on) { if (page !== "map") { setPage("map"); } gameView = on; preview = null; drag = null; resize(); updateStatus(); toast(on ? "Spielansicht – zum Beenden oben rechts tippen oder Taste P" : "Bearbeiten"); }
-function setMode(m, keepBlock) { if (m === "design") m = lastDecoLayer(); if (!layerById(m)) return; mode = m; selObj = null; if (isObjLayer(m)) P.lastDeco = m; var b = blockByUid(curBlock); if (!keepBlock && b && layerOfBlock(b) !== m) curBlock = null; buildTools(); buildBlockPanel(); render(); autosave(); }
+function setMode(m, keepBlock) { if (m === "design") m = lastDecoLayer(); if (!layerById(m)) return; mode = m; selObj = null; selGroup = []; if (isObjLayer(m)) P.lastDeco = m; var b = blockByUid(curBlock); if (!keepBlock && b && layerOfBlock(b) !== m) curBlock = null; buildTools(); buildBlockPanel(); render(); autosave(); }
 
 /* ================= text tool ================= */
 function editText(ci) {
@@ -1137,9 +1165,9 @@ function keyOf(id) { var o = P.settings.keys || {}; if (id in o) return o[id]; f
 function comboOf(ev) {
   var k = ev.key; if (!k || k === "Control" || k === "Shift" || k === "Alt" || k === "Meta") return "";
   if (k === " ") k = "Space"; if (k.length === 1) k = k.toUpperCase();
-  if (ev.altKey && ev.code && /^Digit\d$/.test(ev.code)) k = ev.code.slice(5);
+  if ((ev.altKey || ev.shiftKey) && ev.code && /^Digit\d$/.test(ev.code) && !/[\[\]{}\\|@~]/.test(ev.key)) k = ev.code.slice(5);
   var parts = []; if (ev.ctrlKey || ev.metaKey) parts.push("Ctrl"); if (ev.altKey) parts.push("Alt");
-  if (ev.shiftKey && (k.length > 1 || /[A-Z]/.test(k))) parts.push("Shift");
+  if (ev.shiftKey && (k.length > 1 || /[A-Z0-9]/.test(k))) parts.push("Shift");
   parts.push(k); return parts.join("+");
 }
 var KEYNAMES = { Ctrl: "Strg", Shift: "⇧", Alt: "Alt", Delete: "Entf", Enter: "Enter", Escape: "Esc", Space: "Leer", ArrowUp: "↑", ArrowDown: "↓", ArrowLeft: "←", ArrowRight: "→", Backspace: "⌫" };
@@ -1168,9 +1196,10 @@ function openSettings(tab) {
       tog("eink", "E-Ink-Modus", "Beim Zoomen und Verschieben erst beim Loslassen neu zeichnen.");
   } else if (setTab === "pen") {
     var acts = [["undo", "Rückgängig"], ["redo", "Wiederh."], ["erase", "Radieren"], ["hand", "Verschieben"], ["pick", "Pipette"], ["none", "Nichts"]];
-    html += seg("penEraser", "Radiererende", acts, "Was passiert, wenn du mit dem Radiererende des Stifts tippst bzw. ziehst.") +
-      seg("penBarrel", "Stifttaste", acts, "Gilt, solange die Taste am Stift gedrückt ist – sofern Stift und Browser sie melden.") +
+    html += seg("penEraser", "Radiererende / Boox-Seitentaste", acts, "Der Boox-Stift meldet seine Seitentaste wie ein Radiererende – diese Einstellung gilt also für die Seitentaste am Boox.") +
+      seg("penBarrel", "Stifttaste (andere Stifte)", acts, "Für Stifte, die ihre Seitentaste als eigene Taste melden (z. B. Wacom, S Pen). Am Boox ohne Wirkung.") +
       tog("palm", "Finger ignorieren, solange der Stift aufliegt") +
+      tog("moveGroup", "Verbundene gleiche Objekte gemeinsam verschieben", "„Verschieben“ greift alle direkt aneinanderliegenden Objekte derselben Art – z. B. vier 16×16-Steine, die zusammen einen großen bilden.") +
       tog("pickEmpty", "Pipette nimmt auch Leer auf", "Tippt die Pipette auf eine leere Zelle, wird der Radierer aktiv.") +
       seg("fingerPaint", "Ein Finger ziehen", [["false", "Verschiebt"], ["true", "Malt"]], "Mit zwei Fingern wird immer verschoben und gezoomt.");
   } else {
@@ -1252,7 +1281,7 @@ function roomText(r) {
 function legendText() {
   var l = ["## Legende", "", "2 Zeichen pro Zelle, `. ` = leer. Koordinaten ab 0 oben links (x rechts, y unten). Bei Parametern ersetzt der Wert das 2. Zeichen.", "",
     "| ID | Kürzel | Name | Ebene | Parameter |", "|---|---|---|---|---|"];
-  sortedBlocks().forEach(function (b) { l.push("| " + b.id + " | `" + b.code + "` | " + b.name + " | " + blockLayerNum(b) + " " + LAYER_TYPES[layerOfBlock(b)] + (blockLayerNum(b) === 2 ? "" : " " + bw(b) + "×" + bh(b)) + " | " + (b.pvals ? (b.plabel || "Wert") + ": " + b.pvals : "") + " |"); });
+  sortedBlocks().forEach(function (b) { var pe = function (t) { return String(t).replace(/\|/g, "\\|"); }; l.push("| " + b.id + " | `" + pe(b.code) + "` | " + pe(b.name) + " | " + blockLayerNum(b) + " " + LAYER_TYPES[layerOfBlock(b)] + (blockLayerNum(b) === 2 ? "" : " " + bw(b) + "×" + bh(b)) + " | " + (b.pvals ? pe(b.plabel || "Wert") + ": " + pe(b.pvals) : "") + " |"); });
   return l.join("\n");
 }
 function projectMd() { return ["# " + (P.dungeon || "Dungeon") + " – Räume", "", "- Format: " + FORMAT, "- Räume: " + P.rooms.length, "", legendText(), ""].concat(P.rooms.map(roomText)).join("\n\n"); }
@@ -1286,7 +1315,7 @@ function setTool(t) {
 }
 function needRoom() { var r = roomById(selRoom); if (!r) toast("Erst einen Raum auswählen (Auswahl-Werkzeug oder lange drücken)."); return r; }
 var ACTIONS = {
-  newProject: function () { if (confirm("Neues Projekt anlegen? Nicht gespeicherte Änderungen gehen verloren (vorher „Projekt speichern“).")) { var s = P.settings; P = defaultProject(); P.settings = s; selRoom = null; undoStack = []; redoStack = []; curBlock = null; buildTools(); buildBlockPanel(); renderBlockEditor(); fitRoom(); autosave(); } },
+  newProject: function () { px.uid = null; if (page === "pixels") setPage("map"); if (confirm("Neues Projekt anlegen? Nicht gespeicherte Änderungen gehen verloren (vorher „Projekt speichern“).")) { var s = P.settings; P = defaultProject(); P.settings = s; selRoom = null; undoStack = []; redoStack = []; curBlock = null; buildTools(); buildBlockPanel(); renderBlockEditor(); fitRoom(); autosave(); } },
   openProject: function () { $("fileOpen").click(); },
   saveProject: function () { download("aeventh_projekt_" + stamp() + ".json", JSON.stringify({ P: P }, null, 1), "application/json"); toast("Projekt gespeichert (Download-Ordner)."); },
   copyRoom: function () { var r = roomById(selRoom) || P.rooms[0]; if (r) copyText(legendText() + "\n\n" + roomText(r)); },
@@ -1309,7 +1338,7 @@ var ACTIONS = {
     var wall = P.blocks.filter(function (b) { return b.icon === "wall" && b.kind === "func"; })[0]; if (!wall) { toast("Kein Block mit Symbol „Wand“ vorhanden."); return; }
     pushUndo(); for (var x = 0; x < r.w; x++) { r.func[x + ",0"] = { b: wall.uid }; r.func[x + "," + (r.h - 1)] = { b: wall.uid }; }
     for (var y = 0; y < r.h; y++) { r.func["0," + y] = { b: wall.uid }; r.func[(r.w - 1) + "," + y] = { b: wall.uid }; } render(); autosave(); },
-  clearRoom: function () { var r = needRoom(); if (!r) return; if (!confirm("Ebene „" + layerById(mode).name + "“ von Raum " + r.nr + " leeren?")) return; pushUndo(); r[mode] = {}; render(); autosave(); },
+  clearRoom: function () { var r = needRoom(); if (!r) return; if (!confirm("Ebene „" + layerById(mode).name + "“ von Raum " + r.nr + " leeren?")) return; pushUndo(); if (isObjLayer(mode)) r.objs[mode] = []; else r.func = {}; render(); autosave(); },
   delRoom: function () { var r = needRoom(); if (!r) return; if (!confirm("Raum " + r.nr + " löschen?")) return; pushUndo(); P.rooms.splice(P.rooms.indexOf(r), 1); selRoom = null; render(); autosave(); },
   zoomIn: function () { zoomStep(1); }, zoomOut: function () { zoomStep(-1); }, fitRoom: fitRoom, fitAll: fitAll,
   modeFunc: function () { setMode("func"); }, modeDesign: function () { setMode("design"); },
@@ -1329,7 +1358,7 @@ var ACTIONS = {
   toggleDots: function () { var S = P.settings; if (+S.raster) { S.lastRaster = S.raster; S.raster = "0"; } else S.raster = S.lastRaster || "8"; render(); updateStatus(); autosave(); toast("Raster: " + (+S.raster ? S.raster + "×" + S.raster : "Aus")); },
   toggleLabels: function () { P.settings.labels = !P.settings.labels; buildTools(); autosave(); },
   help: function () { modal("<h3>Kurzanleitung</h3><div class='body help'>" +
-    "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Radiererende antippen = Rückgängig, Stifttaste = Radieren. Beides ist umstellbar unter Datei → Einstellungen → Stift & Werkzeuge.</p>" +
+    "<p><b>Stift:</b> malt mit dem gewählten Werkzeug. Am Boox gilt die Einstellung „Radiererende / Boox-Seitentaste“ für die Seitentaste des Stifts. Umstellbar unter Datei → Einstellungen → Stift & Werkzeuge.</p>" +
     "<p><b>Ein Finger:</b> Tippen wendet das Werkzeug auf eine Zelle an. Ziehen verschiebt die Ansicht (umstellbar unter Datei → Einstellungen).</p>" +
     "<p><b>Zwei Finger:</b> verschieben und zoomen (Pinch). Beim Loslassen rastet der Zoom auf die nächste Stufe ein.</p>" +
     "<p><b>Links:</b> Objekte der aktiven Ebene. Der Kreis unten mit der Zahl schaltet zur nächsten Ebene. Antippen = Pinsel mit diesem Objekt. Daneben öffnet sich eine senkrechte Leiste mit den Varianten (Tür-Nr., Richtung …); sie schließt sich nach der Auswahl oder nach einigen Sekunden (einstellbar). Erneutes Antippen schaltet die Variante weiter.</p>" +
@@ -1345,7 +1374,7 @@ document.querySelectorAll(".mitem").forEach(function (it) { it.addEventListener(
 $("fileOpen").addEventListener("change", function () {
   var f = this.files[0]; if (!f) return; var rd = new FileReader();
   rd.onload = function () { try { var o = JSON.parse(rd.result), np = o.P || o; if (!np.rooms || !np.blocks) throw new Error();
-      P = np; stripShy(P); P.settings = Object.assign({}, SETTINGS_DEFAULT, P.settings || {}); migrateSettings(P.settings); selRoom = null; undoStack = []; redoStack = []; curBlock = null;
+      px.uid = null; if (page === "pixels") setPage("map"); P = np; stripShy(P); P.settings = Object.assign({}, SETTINGS_DEFAULT, P.settings || {}); migrateSettings(P.settings); selRoom = null; undoStack = []; redoStack = []; curBlock = null;
       buildTools(); buildBlockPanel(); renderBlockEditor(); resize(); fitAll(); autosave(); toast("Projekt geöffnet."); }
     catch (e) { toast("Datei ist kein gültiges Planer-Projekt."); } };
   rd.readAsText(f); this.value = "";
@@ -1354,9 +1383,9 @@ $("fileOpen").addEventListener("change", function () {
 /* ================= keyboard ================= */
 document.addEventListener("keydown", function (ev) {
   if (keyCapture) { ev.preventDefault(); ev.stopPropagation(); if (ev.key === "Escape") { keyCapture = null; openSettings(); return; }
-    var c = comboOf(ev); if (!c) return; var id = keyCapture; keyCapture = null; setKey(id, c); openSettings(); return; }
+    var c = comboOf(ev); if (!c) return; var cid = keyCapture; keyCapture = null; setKey(cid, c); openSettings(); return; }
+  if (ev.key === "Escape") { closeMenus(); closeModal(); $("zoomPop").classList.remove("show"); if (gameView) setGame(false); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); return; }
   if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { if (ev.key === "Enter" && $("mOk") && $("modalBg").classList.contains("show") && document.activeElement.tagName === "INPUT") $("mOk").click(); return; }
-  if (ev.key === "Escape") { closeMenus(); closeModal(); $("zoomPop").classList.remove("show"); if (gameView) setGame(false); return; }
   if ($("modalBg").classList.contains("show")) return;
   var id = actionForCombo(comboOf(ev)); if (!id) return;
   var a = ACTIONS[id]; if (!a) return; ev.preventDefault(); a();
@@ -1432,7 +1461,7 @@ function pxRender() {
 }
 function pxPreview() {
   var W = px.w, H = px.h, m = Math.max(W, H), s1 = Math.max(1, Math.floor(64 / m)), c1 = $("pxP1"), c3 = $("pxP3");
-  if (px.big) { var b = blockByUid(px.uid); c1.width = 1; c1.height = 1; c3.width = 1; c3.height = 1; return; }
+  if (px.big) { c1.width = 1; c1.height = 1; c3.width = 1; c3.height = 1; return; }
   c1.width = W; c1.height = H; c1.style.width = W * s1 + "px"; c1.style.height = H * s1 + "px";
   var s3 = Math.max(1, Math.floor(s1 / 2)); c3.width = W * 3; c3.height = H * 3; c3.style.width = W * 3 * s3 + "px"; c3.style.height = H * 3 * s3 + "px";
   var g1 = c1.getContext("2d"), id = g1.createImageData(W, H);
@@ -1442,7 +1471,7 @@ function pxPreview() {
 }
 function pxSave() {
   var b = blockByUid(px.uid); if (!b) return;
-  if (px.big) return; var data = { w: px.w, h: px.h, d: px.d.join("") }, url = $("pxP1").toDataURL("image/png");
+  if (px.big) return; pxPreview(); var data = { w: px.w, h: px.h, d: px.d.join("") }, url = $("pxP1").toDataURL("image/png");
   if (px.v) { b.pixV = b.pixV || {}; b.imgV = b.imgV || {}; b.pixV[px.v] = data; b.imgV[px.v] = url; }
   else { b.pix = data; b.image = url; }
   dropImgs(b); $("pxInfo").textContent = ""; pxMarkVar(b); autosave();
@@ -1550,7 +1579,7 @@ function renderBlockEditor() {
     if (b.image || b.imgV) imgBox.appendChild(btn("Entfernen", function () { if (!confirm("Alle Bilder von „" + b.name + "“ entfernen (inkl. Versionen)?")) return; b.image = null; delete b.pix; delete b.pixV; delete b.imgV; dropImgs(b); commit(); })); td(imgBox);
     td(btn("Löschen", function () { var n = usage(b.uid); if (!confirm("Objekt „" + b.name + "“ löschen?" + (n ? " Es ist " + n + "× gesetzt – diese Platzierungen werden entfernt." : ""))) return;
       P.rooms.forEach(function (r) { for (var k in r.func) if (r.func[k].b === b.uid) delete r.func[k]; ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.b !== b.uid; }); }); });
-      P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; commit(); }));
+      P.blocks.splice(P.blocks.indexOf(b), 1); if (curBlock === b.uid) curBlock = null; undoStack = []; redoStack = []; commit(); }));
     body.appendChild(tr);
   });
 }
@@ -1571,9 +1600,10 @@ function setBlockLayer(b, n) {
   P.rooms.forEach(function (r) {
     if (from === "func") { for (var k in r.func) if (r.func[k].b === b.uid) { var a = k.split(","), v = r.func[k]; var o = { b: b.uid, x: +a[0] * 16, y: +a[1] * 16 }; if (v.p) o.p = v.p; r.objs[to].push(o); delete r.func[k]; } }
     else { var keep = []; (r.objs[from] || []).forEach(function (o) { if (o.b !== b.uid) { keep.push(o); return; }
-      if (to === "func") { var v = { b: b.uid }; if (o.p) v.p = o.p; r.func[Math.floor(o.x / 16) + "," + Math.floor(o.y / 16)] = v; } else r.objs[to].push(o); }); r.objs[from] = keep; }
+      if (to === "func") { var cx = Math.floor(o.x / 16), cy = Math.floor(o.y / 16), key = cx + "," + cy; if (o.x < 0 || o.y < 0 || cx >= r.w || cy >= r.h || (r.func[key] && r.func[key].b === b.uid)) return; var v = { b: b.uid }; if (o.p) v.p = o.p; r.func[key] = v; } else r.objs[to].push(o); }); r.objs[from] = keep; }
   });
-  if (curBlock === b.uid && page === "map") setMode(to, true);
+  if (curBlock === b.uid) { mode = to; if (isObjLayer(to)) P.lastDeco = to; }
+  undoStack = []; redoStack = [];
 }
 $("b-addFunc").onclick = function () { addBlock(2); }; $("b-addBg").onclick = function () { addBlock(1); };
 $("b-addDesign").onclick = function () { addBlock(3); };
@@ -1599,7 +1629,7 @@ function checkUpdate(manual) {
   fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (v) {
     var nv = v.app || v.version; if (cmpVer(nv, APP_VERSION) > 0) {
       if (manual) modal("<h3>Update verfügbar</h3><div class='body help'><p>Installiert: " + APP_VERSION + "<br>Neu: <b>" + esc(nv) + "</b></p>" + (v.notes ? "<p>" + esc(v.notes) + "</p>" : "") + "<p>Deine Räume und Blöcke bleiben erhalten.</p></div>", function () { applyUpdate(); }, "Jetzt aktualisieren");
-      else toast("Update " + v.version + " verfügbar – Hilfe → Nach Update suchen");
+      else toast("Update " + nv + " verfügbar – Hilfe → Nach Update suchen");
     } else if (manual) toast("Du hast die neueste Version (" + APP_VERSION + ").");
   }).catch(function () { if (manual) toast("Update-Server nicht erreichbar."); });
 }
