@@ -222,6 +222,7 @@
   .ltag { font-weight:600; border:1.5px dashed var(--line); border-radius:9px; padding:7px 10px; }
   .kclr:disabled { border-style:dashed; }
   .mitem small { font-size:calc(11px*var(--fs)); font-weight:400; }
+  #modal .ask p { margin:12px 0 4px; line-height:1.45; } #modal .ask p.sh { margin:6px 0 0; font-size:calc(13px*var(--fs)); }
   #modal .help p { margin:8px 0; font-size:calc(14px*var(--fs)); line-height:1.45; }
   #toast { position:fixed; left:50%; top:56px; transform:translateX(-50%); background:var(--ink); color:var(--paper);
     border-radius:10px; padding:9px 16px; font-size:calc(14px*var(--fs)); display:none; z-index:60; max-width:90vw; text-align:center; }
@@ -348,7 +349,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 0.9.1", APP_VERSION = "0.9.1", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 0.9.2", APP_VERSION = "0.9.2", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { showGuides: true, guideCenter: false, eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
@@ -1418,7 +1419,7 @@ function openSettings(tab) {
   $("modal").querySelectorAll("[data-set]").forEach(function (b) { b.onclick = function () { var v = b.getAttribute("data-val"); applySetting(b.getAttribute("data-set"), v === "true" ? true : v === "false" ? false : v); openSettings(); }; });
   $("modal").querySelectorAll("[data-key]").forEach(function (b) { b.onclick = function () { keyCapture = keyCapture === b.getAttribute("data-key") ? null : b.getAttribute("data-key"); openSettings(); }; });
   $("modal").querySelectorAll("[data-clr]").forEach(function (b) { b.onclick = function () { P.settings.keys[b.getAttribute("data-clr")] = ""; keyCapture = null; autosave(); updateMenuKeys(); openSettings(); }; });
-  if ($("keysReset")) $("keysReset").onclick = function () { if (!confirm("Alle Tastenkürzel auf Standard zurücksetzen?")) return; P.settings.keys = {}; keyCapture = null; autosave(); updateMenuKeys(); openSettings(); };
+  if ($("keysReset")) $("keysReset").onclick = function () { ask("Tastenkürzel zurücksetzen", ["Alle Tastenkürzel und Stift-Belegungen auf Standard zurücksetzen?"], "Zurücksetzen", function () { P.settings.keys = {}; keyCapture = null; autosave(); updateMenuKeys(); openSettings(); }, function () { openSettings(); }); };
 }
 function applySetting(key, val) {
   var S = P.settings; S[key] = val;
@@ -1448,6 +1449,13 @@ function modal(html, onOk, okLabel) {
   if (onOk) $("mOk").onclick = function () { if (onOk() !== false) closeModal(); };
 }
 function closeModal() { $("modalBg").classList.remove("show"); keyCapture = null; }
+// eigene Rückfrage im App-Stil (statt Browser-Dialog): Titel, Textzeilen, OK-Beschriftung, Aktion, optional Abbrechen-Aktion
+function ask(title, lines, okLabel, fn, onCancel) {
+  modal("<h3>" + esc(title) + '</h3><div class="body ask">' + [].concat(lines).filter(Boolean).map(function (l, i) { return "<p" + (i ? ' class="sh"' : "") + ">" + esc(l) + "</p>"; }).join("") + "</div>",
+    function () { closeModal(); fn(); return false; }, okLabel || "OK");
+  if (onCancel) $("mCancel").onclick = function () { closeModal(); onCancel(); };
+  try { $("mOk").focus(); } catch (e) {}
+}
 $("modalBg").addEventListener("pointerdown", function (ev) { if (ev.target === $("modalBg")) closeModal(); });
 function esc(s) { return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 function openRoomProps() {
@@ -1579,7 +1587,7 @@ function setTool(t) {
 }
 function needRoom() { var r = roomById(selRoom); if (!r) toast("Erst einen Raum auswählen (Auswahl-Werkzeug oder lange drücken)."); return r; }
 var ACTIONS = {
-  newProject: function () { px.uid = null; if (page === "pixels") setPage("map"); if (confirm("Neues Projekt anlegen? Nicht gespeicherte Änderungen gehen verloren (vorher „Projekt speichern“).")) { var s = P.settings; P = defaultProject(); P.settings = s; selRoom = null; undoStack = []; redoStack = []; curBlock = null; buildTools(); buildBlockPanel(); renderBlockEditor(); fitRoom(); autosave(); } },
+  newProject: function () { px.uid = null; if (page === "pixels") setPage("map"); ask("Neues Projekt", ["Ein leeres Projekt anlegen?", "Nicht gespeicherte Änderungen gehen verloren – vorher Datei → Projekt speichern."], "Neues Projekt", function () { var s = P.settings; P = defaultProject(); P.settings = s; selRoom = null; undoStack = []; redoStack = []; curBlock = null; buildTools(); buildBlockPanel(); renderBlockEditor(); fitRoom(); autosave(); }); },
   openProject: function () { $("fileOpen").click(); },
   saveProject: function () { download("aeventh_projekt_" + stamp() + ".json", JSON.stringify({ P: P }, null, 1), "application/json"); toast("Projekt gespeichert (Download-Ordner)."); },
   copyRoom: function () { var r = roomById(selRoom) || P.rooms[0]; if (r) copyText(legendText() + "\n\n" + roomText(r)); },
@@ -1613,10 +1621,10 @@ var ACTIONS = {
     var pathsIn = (P.paths || []).filter(function (pa) { return pa.kind === "sim" ? inR(pa.start) : pa.pts && pa.pts.length && inR(pa.pts[0]); });
     var n = mode === "move" ? pathsIn.length : isObjLayer(mode) ? (r.objs[mode] || []).length : Object.keys(r.func).length;
     if (!n) { toast("Ebene " + L.num + " " + L.name + " ist in Raum " + r.nr + " schon leer."); return; }
-    if (!confirm("Alles auf Ebene " + L.num + " „" + L.name + "“ in Raum " + r.nr + " löschen (" + n + (mode === "move" ? " Weg(e)" : " Einträge") + ")? Andere Ebenen und Räume bleiben unverändert.")) return;
-    pushUndo(); if (mode === "move") P.paths = P.paths.filter(function (pa) { return pathsIn.indexOf(pa) < 0; }); else if (isObjLayer(mode)) r.objs[mode] = []; else r.func = {};
-    activeSim = null; render(); autosave(); toast("Ebene " + L.num + " in Raum " + r.nr + " geleert – Rückgängig möglich."); },
-  delRoom: function () { var r = needRoom(); if (!r) return; if (!confirm("Raum " + r.nr + " löschen?")) return; pushUndo(); P.rooms.splice(P.rooms.indexOf(r), 1); selRoom = null; render(); autosave(); },
+    ask("Ebene leeren", ["Ebene " + L.num + " „" + L.name + "“ in Raum " + r.nr + " leeren – " + n + (mode === "move" ? (n === 1 ? " Weg wird" : " Wege werden") : (n === 1 ? " Eintrag wird" : " Einträge werden")) + " gelöscht.", "Andere Ebenen und Räume bleiben unverändert. Rückgängig ist möglich."], "Leeren", function () {
+      pushUndo(); if (mode === "move") P.paths = P.paths.filter(function (pa) { return pathsIn.indexOf(pa) < 0; }); else if (isObjLayer(mode)) r.objs[mode] = []; else r.func = {};
+      activeSim = null; render(); autosave(); toast("Ebene " + L.num + " in Raum " + r.nr + " geleert"); }); },
+  delRoom: function () { var r = needRoom(); if (!r) return; ask("Raum löschen", ["Raum " + r.nr + (r.name ? " „" + r.name + "“" : "") + " mit allen Ebenen löschen?", "Rückgängig ist möglich."], "Löschen", function () { pushUndo(); P.rooms.splice(P.rooms.indexOf(r), 1); selRoom = null; render(); autosave(); }); },
   zoomIn: function () { zoomStep(1); }, zoomOut: function () { zoomStep(-1); }, fitRoom: fitRoom, fitAll: fitAll,
   modeFunc: function () { setMode("func"); }, modeDesign: function () { setMode("design"); },
   toggleOther: function () { if (P.settings.soloLayer) { P.settings.soloLayer = false; P.settings.showOther = true; } else P.settings.showOther = !P.settings.showOther; render(); updateStatus(); autosave(); toast(P.settings.showOther ? "Andere Ebenen blass" : "Andere Ebenen ausgeblendet"); },
@@ -1664,6 +1672,7 @@ document.addEventListener("keydown", function (ev) {
   if (activeSim && !$("modalBg").classList.contains("show")) { var SK = { ArrowUp: "u", ArrowDown: "d", ArrowLeft: "l", ArrowRight: "r", w: "u", s: "d", a: "l", d: "r", W: "u", S: "d", A: "l", D: "r", Backspace: "back", Enter: "done", Escape: "done" };
     if (SK[ev.key]) { ev.preventDefault(); simPress(SK[ev.key]); return; } }
   if (ev.key === "Escape") { closeMenus(); closeModal(); $("zoomPop").classList.remove("show"); if (gameView) setGame(false); if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); return; }
+  if ($("modalBg").classList.contains("show") && document.activeElement.tagName !== "TEXTAREA" && document.activeElement.tagName !== "SELECT") { if (ev.key === "Enter" && $("mOk")) { ev.preventDefault(); $("mOk").click(); return; } if (document.activeElement.tagName !== "INPUT") return; }
   if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { if (ev.key === "Enter" && $("mOk") && $("modalBg").classList.contains("show") && document.activeElement.tagName === "INPUT") $("mOk").click(); return; }
   if ($("modalBg").classList.contains("show")) return;
   var id = actionForCombo(comboOf(ev)); if (!id) return;
@@ -1760,10 +1769,10 @@ function pxAct(a) {
   var W = px.w, H = px.h, d = px.d, o = [], x, y; if (px.big && a !== "remove") return;
   if (a === "undo") { if (!px.undo.length) return; px.redo.push(d.join("")); px.d = px.undo.pop().split("").map(Number); }
   else if (a === "redo") { if (!px.redo.length) return; px.undo.push(d.join("")); px.d = px.redo.pop().split("").map(Number); }
-  else if (a === "remove") { var b = blockByUid(px.uid); if (!b) return;
-    if (px.v) { if (!confirm("Eigenes Bild der Version „" + paramLabel(px.v) + "“ entfernen? Sie nutzt dann das Grundbild bzw. Symbol.")) return; if (b.pixV) delete b.pixV[px.v]; if (b.imgV) delete b.imgV[px.v]; }
-    else { if (!confirm("Grundbild von „" + b.name + "“ entfernen? Der Block nutzt dann wieder sein Symbol.")) return; b.image = null; delete b.pix; }
-    dropImgs(b); autosave(); openPix(b.uid, px.v); toast("Bild entfernt."); return; }
+  else if (a === "remove") { var b = blockByUid(px.uid); if (!b) return; var pv0 = px.v;
+    ask("Bild entfernen", pv0 ? ["Eigenes Bild der Variante „" + paramLabel(pv0) + "“ von „" + b.name + "“ entfernen?", "Die Variante nutzt dann das Grundbild bzw. das Symbol."] : ["Grundbild von „" + b.name + "“ entfernen?", "Das Objekt zeigt dann wieder sein Symbol."], "Entfernen", function () {
+      if (pv0) { if (b.pixV) delete b.pixV[pv0]; if (b.imgV) delete b.imgV[pv0]; } else { b.image = null; delete b.pix; }
+      dropImgs(b); autosave(); openPix(b.uid, pv0); toast("Bild entfernt."); }); return; }
   else {
     if (a === "rot" && W !== H) { toast("Drehen geht nur bei quadratischen Objekten."); return; }
     pxPush();
@@ -1919,7 +1928,8 @@ function renderInspector(insp, b) {
     oeRow(bd, "Benötigt", "Fähigkeit, die das Objekt voraussetzt", oeIn("text", b.ability || "", "z. B. Bomben Stufe 2", function (v) { b.ability = v.trim(); touchBlock(b); }));
     grp("Ebene & Darstellung");
     oeRow(bd, "Ebene", "Wechsel verschiebt alle Platzierungen mit", oeSeg([["1", "1 Hintergrund"], ["2", "2 Spielebene"], ["3", "3 Vordergrund"]], String(num), function (v) {
-      if (+v === num) return; if (n && !confirm("„" + b.name + "“ auf Ebene " + v + " verschieben? " + n + " Platzierung(en) wandern mit (Rückgängig wird geleert).")) return; setBlockLayer(b, +v); touchBlock(b); commit(); }));
+      if (+v === num) return; var go = function () { setBlockLayer(b, +v); touchBlock(b); commit(); }; if (!n) { go(); return; }
+      ask("Ebene wechseln", ["„" + b.name + "“ auf Ebene " + v + " verschieben?", n + (n === 1 ? " Platzierung wandert" : " Platzierungen wandern") + " mit. Der Rückgängig-Verlauf wird dabei geleert."], "Verschieben", go); }));
     if (num === 2) oeRow(bd, "Größe", "", el("div", "oeVal", "16 × 16 px"));
     else { var sz = el("div", "oeSz"), setSz = function () { var w = Math.max(1, Math.min(2048, parseInt(wI.value, 10) || bw(b))), h = Math.max(1, Math.min(2048, parseInt(hI.value, 10) || bh(b))); if (w === bw(b) && h === bh(b)) return; b.w = w; b.h = h; dropImgs(b); touchBlock(b); commit(); };
       var wI = oeIn("number", bw(b), "", setSz, "w-sz"), hI = oeIn("number", bh(b), "", setSz, "w-sz"); sz.appendChild(wI); sz.appendChild(el("span", "", "×")); sz.appendChild(hI); sz.appendChild(el("span", "", "px"));
@@ -1939,8 +1949,8 @@ function renderInspector(insp, b) {
       l.appendChild(iconCanvas(function (g, sz) { drawBlock(g, b, 2, 2, sz - 4, v || pv[0]); }, 48));
       var t = el("div"); t.appendChild(el("div", "sl", title)); t.appendChild(el("div", "sh", own ? ((v ? b.pixV && b.pixV[v] : b.pix) ? "Pixelbild" : "Geladenes Bild") : (v ? "Nutzt das Grundbild" : "Kein Bild – Symbol wird gezeigt"))); l.appendChild(t); r.appendChild(l);
       r.appendChild(oeBtns([big ? null : oeBtn("Zeichnen", function () { openPix(b.uid, v || undefined); }), oeBtn("Laden", function () { imgTarget = b; imgTargetV = v || null; $("fileImg").click(); }),
-        own ? oeBtn("Entfernen", function () { if (!confirm("Bild " + (v ? "der Variante „" + paramLabel(v) + "“" : "„Grundbild“") + " entfernen?")) return;
-          if (v) { delete b.imgV[v]; if (b.pixV) delete b.pixV[v]; } else { b.image = null; delete b.pix; } dropImgs(b); touchBlock(b); commit(); }) : null])); bd.appendChild(r); };
+        own ? oeBtn("Entfernen", function () { ask("Bild entfernen", [(v ? "Bild der Variante „" + paramLabel(v) + "“" : "Grundbild") + " von „" + b.name + "“ entfernen?", v ? "Die Variante nutzt dann das Grundbild bzw. das Symbol." : "Das Objekt zeigt dann wieder sein Symbol."], "Entfernen", function () {
+          if (v) { delete b.imgV[v]; if (b.pixV) delete b.pixV[v]; } else { b.image = null; delete b.pix; } dropImgs(b); touchBlock(b); commit(); }); }) : null])); bd.appendChild(r); };
     grp("Grundbild"); imgRow(bw(b) + " × " + bh(b) + " px", null);
     if (big) bd.appendChild(el("p", "sh", "Größer als " + PX_MAX + " px – zum Zeichnen zu groß. Skizze (z. B. vom Boox) als Bild laden."));
     grp("Varianten" + (pv.length ? " · " + (b.plabel || "Wert") : ""));
@@ -1976,7 +1986,10 @@ function dupBlock(b) {
   o.id = id; o.name = b.name + " (Kopie)"; o.rel = []; o.created = o.updated = Date.now(); P.blocks.push(o); dbSel = o.uid; commit(); toast("Kopie angelegt: #" + id);
 }
 function delBlock(b) {
-  var n = usage(b.uid); if (!confirm("Objekt „" + b.name + "“ löschen?" + (n ? " Es ist " + n + "× platziert – diese Platzierungen werden entfernt." : ""))) return;
+  var n = usage(b.uid);
+  ask("Objekt löschen", ["Objekt „" + b.name + "“ (#" + ("00" + b.id).slice(-3) + ") löschen?", n ? "Es ist " + n + "× platziert – diese Platzierungen werden ebenfalls entfernt. Rückgängig ist danach nicht möglich." : "Rückgängig ist danach nicht möglich."], "Löschen", function () { delBlockNow(b); });
+}
+function delBlockNow(b) {
   var list = oeFiltered(), k = list.indexOf(b), next = list[k + 1] || list[k - 1];
   P.rooms.forEach(function (r) { for (var key in r.func) if (r.func[key].b === b.uid) delete r.func[key]; ["bg", "fg"].forEach(function (l) { r.objs[l] = (r.objs[l] || []).filter(function (o) { return o.b !== b.uid; }); }); });
   P.blocks.forEach(function (o) { if (o.rel) o.rel = o.rel.filter(function (x) { return x !== b.uid; }); });
