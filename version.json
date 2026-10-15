@@ -1,1 +1,1 @@
-{ "version": "2026.41.3", "app": "2026.41.3", "notes": "Audioeditor spielt die Spieldateien ab (Abspielen/Pause/Stopp, Position, Mit Vorlauf). Statusleiste jetzt unten unter der Werkzeugleiste, oben rechts erscheinen wichtige Hinweise wie verfügbare Updates." }
+{ "release": "2026.10.1", "app": "2026.41.4", "version": "2026.41.4", "notes": "Neue Versionierung: Alpha JJJJ.MM.Änderung (Jahr . Monat . laufende Änderung im Monat). Diese Version heißt 2026.10.1 und folgt auf 2026.41.3 – inhaltlich unverändert." }

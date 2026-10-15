@@ -369,7 +369,7 @@
 <script>
 (function () {
 "use strict";
-var VERSION = "Alpha 2026.41.3", APP_VERSION = "2026.41.3", FORMAT = "aeventh-planer v2";
+var VERSION = "Alpha 2026.10.1", APP_VERSION = "2026.10.1", FORMAT = "aeventh-planer v2";
 var $ = function (id) { return document.getElementById(id); };
 var SETTINGS_DEFAULT = { showAudio: true, showGuides: true, guideCenter: false, eink: true, dots: true, raster: "16", moveGroup: true, simRedirect: false, simYoku: true, soloLayer: false, labels: false, parallaxAnim: false, showOther: true, penBtnErase: true, palm: true, fingerPaint: false, eraserUndo: true, penEraser: null, penBarrel: null, keys: {}, showBlocks: true, showTools: true, blockNames: false, floatSecs: "2", pickEmpty: true, lang: "de", fontSize: "L", bold: false };
 
@@ -2341,7 +2341,8 @@ function checkUpdate(manual) {
   if (!/^https?:/.test(location.protocol)) { if (manual) toast("Update-Suche geht nur in der Web-App, nicht in der lokalen Datei."); return; }
   if (!navigator.onLine) { if (manual) toast("Keine Internetverbindung – Update-Suche später erneut versuchen."); return; }
   fetch("version.json?t=" + Date.now(), { cache: "no-store" }).then(function (r) { return r.json(); }).then(function (v) {
-    var nv = v.app || v.version; if (cmpVer(nv, APP_VERSION) > 0) {
+    // ab 2026.10.1 (Schema JJJJ.MM.Änderung) steht die Version in "release"; "app"/"version" bleiben als Brücke für alte Installationen auf 2026.41.4
+    var nv = v.release || v.app || v.version; if (cmpVer(nv, APP_VERSION) > 0) {
       if (manual) modal("<h3>Update verfügbar</h3><div class='body help'><p>Installiert: " + APP_VERSION + "<br>Neu: <b>" + esc(nv) + "</b></p>" + (v.notes ? "<p>" + esc(v.notes) + "</p>" : "") + "<p>Deine Räume und Blöcke bleiben erhalten.</p></div>", function () { applyUpdate(); }, "Jetzt aktualisieren");
       else setNotice("update", "Update " + nv + " verfügbar", function () { checkUpdate(true); });
     } else if (manual) toast("Du hast die neueste Version (" + APP_VERSION + ").");
